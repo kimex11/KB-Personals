@@ -44,7 +44,7 @@ export default function HomePage() {
                   <Button
                     data-testid="add-event-button"
                     aria-label="Add event"
-                    className="pointer-events-auto absolute right-4 h-14 w-14 rounded-full bg-neutral-900 text-2xl text-white shadow-lg"
+                    className="pointer-events-auto absolute bottom-0 right-4 h-14 w-14 rounded-full bg-neutral-900 text-2xl text-white shadow-lg"
                   />
                 }
               >
