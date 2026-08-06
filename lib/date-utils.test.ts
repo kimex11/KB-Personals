@@ -16,4 +16,11 @@ describe('date-utils', () => {
     expect(grid[0].date.getDay()).toBe(0);
     expect(grid.filter((day) => day.isCurrentMonth).length).toBe(31);
   });
+
+  it('always returns exactly 42 days, even for a 4-week month like February', () => {
+    const grid = getMonthGrid(new Date(2026, 1, 1));
+    expect(grid.length).toBe(42);
+    expect(grid[0].date.getDay()).toBe(0);
+    expect(grid.filter((day) => day.isCurrentMonth).length).toBe(28);
+  });
 });

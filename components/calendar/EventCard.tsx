@@ -1,16 +1,5 @@
 import type { CalendarEvent } from '@/lib/types';
-
-const TYPE_LABEL: Record<CalendarEvent['type'], string> = {
-  bill: 'Bill',
-  reminder: 'Reminder',
-  task: 'Task',
-};
-
-const TYPE_DOT_CLASS: Record<CalendarEvent['type'], string> = {
-  bill: 'bg-gold',
-  reminder: 'bg-neutral-400',
-  task: 'border border-neutral-400 bg-transparent',
-};
+import { TYPE_LABEL, TYPE_DOT_CLASS } from '@/lib/event-style';
 
 export function EventCard({ event }: { event: CalendarEvent }) {
   return (

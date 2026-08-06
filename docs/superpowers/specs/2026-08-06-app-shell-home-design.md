@@ -98,7 +98,7 @@ interface CalendarEvent {
 ## Testing
 
 - Manual verification via dev server + browser tool: navigate all 5 tabs, confirm placeholder screens render, confirm calendar renders current month with sample events, confirm day-tap expands detail panel correctly, confirm empty-day state, confirm responsive behavior at mobile viewport width
-- No automated test suite this phase (no business logic yet beyond static mock data rendering)
+- Automated test suite: Vitest + React Testing Library, with one test file per component/module (15 test files) covering date utilities, mock data, the `useCalendarEvents` hook, and all calendar/shell/shared components
 
 ## Open Questions / Future Phases
 

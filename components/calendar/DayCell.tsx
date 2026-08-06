@@ -3,12 +3,7 @@
 import { isToday } from 'date-fns';
 import type { CalendarDay } from '@/lib/date-utils';
 import type { CalendarEvent } from '@/lib/types';
-
-const TYPE_DOT_CLASS: Record<CalendarEvent['type'], string> = {
-  bill: 'bg-gold',
-  reminder: 'bg-neutral-400',
-  task: 'border border-neutral-400',
-};
+import { TYPE_DOT_CLASS } from '@/lib/event-style';
 
 interface DayCellProps {
   day: CalendarDay;

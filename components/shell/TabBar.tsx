@@ -11,7 +11,7 @@ export function TabBar() {
   return (
     <nav
       data-testid="tab-bar"
-      className="fixed inset-x-0 bottom-0 flex justify-around border-t border-neutral-200 bg-white pb-[env(safe-area-inset-bottom)] pt-2"
+      className="fixed inset-x-0 bottom-0 mx-auto flex max-w-md justify-around border-t border-neutral-200 bg-white pb-[env(safe-area-inset-bottom)] pt-2"
     >
       {TAB_ITEMS.map(({ href, label, icon: Icon }) => {
         const isActive = pathname === href;
