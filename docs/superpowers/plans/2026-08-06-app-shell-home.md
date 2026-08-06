@@ -25,7 +25,7 @@
 ### Task 1: Project Scaffold & Testing Tooling
 
 **Files:**
-- Create: full Next.js project (via CLI) — `package.json`, `tsconfig.json`, `next.config.mjs`, `tailwind.config.ts`, `app/layout.tsx`, `app/page.tsx`, `app/globals.css`
+- Create: full Next.js project (via CLI) — `package.json`, `tsconfig.json`, `next.config.ts`, `app/layout.tsx`, `app/page.tsx`, `app/globals.css` (Tailwind v4 — no `tailwind.config.ts`; theme lives in `app/globals.css`'s `@theme inline` block)
 - Create: `components/ui/button.tsx`, `components/ui/sheet.tsx` (via shadcn CLI)
 - Create: `vitest.config.ts`
 - Create: `vitest.setup.ts`
@@ -145,34 +145,32 @@ git commit -m "chore: scaffold Next.js app with Tailwind, shadcn/ui, and Vitest"
 ### Task 2: Design Tokens (Colors, Fonts)
 
 **Files:**
-- Modify: `tailwind.config.ts`
+- Modify: `app/globals.css` (Tailwind v4 theme — no `tailwind.config.ts` exists in this project; theme tokens are CSS custom properties inside the existing `@theme inline { ... }` block)
 - Modify: `app/layout.tsx`
-- Test: `tailwind.config.test.ts`
+- Test: `globals-theme.test.ts`
 
 **Interfaces:**
-- Produces: Tailwind theme colors `gold` (`#B08D57`) and `ink` (`#0B0B0C`); Tailwind font families `serif` and `sans` mapped to CSS variables `--font-serif` / `--font-sans`.
+- Produces: Tailwind utility classes `bg-gold`/`text-gold` (`#B08D57`) and `bg-ink`/`text-ink` (`#0B0B0C`) via `--color-gold`/`--color-ink` theme tokens; `font-serif` utility backed by `--font-serif` (set at runtime by next/font's `variable` option on the Fraunces loader). `--font-sans` already exists in the generated file, backed by the Inter loader.
 
 - [ ] **Step 1: Write the failing test**
 
-Create `tailwind.config.test.ts`:
+Create `globals-theme.test.ts`:
 
 ```ts
 import { describe, expect, it } from 'vitest';
-import config from './tailwind.config';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 
-describe('tailwind theme tokens', () => {
-  it('defines the gold accent and ink colors', () => {
-    expect(config.theme?.extend?.colors).toMatchObject({
-      gold: '#B08D57',
-      ink: '#0B0B0C',
-    });
+const css = readFileSync(resolve(__dirname, 'app/globals.css'), 'utf-8');
+
+describe('design tokens in app/globals.css', () => {
+  it('defines the gold accent and ink colors in the Tailwind v4 theme', () => {
+    expect(css).toMatch(/--color-gold:\s*#B08D57;/);
+    expect(css).toMatch(/--color-ink:\s*#0B0B0C;/);
   });
 
-  it('defines serif and sans font families backed by CSS variables', () => {
-    expect(config.theme?.extend?.fontFamily).toMatchObject({
-      serif: ['var(--font-serif)', 'serif'],
-      sans: ['var(--font-sans)', 'sans-serif'],
-    });
+  it('maps a serif font family token backed by the next/font CSS variable', () => {
+    expect(css).toMatch(/--font-serif:\s*var\(--font-serif\);/);
   });
 });
 ```
@@ -180,31 +178,19 @@ describe('tailwind theme tokens', () => {
 - [ ] **Step 2: Run test to verify it fails**
 
 ```bash
-npx vitest run tailwind.config.test.ts
+npx vitest run globals-theme.test.ts
 ```
 
-Expected: FAIL — `colors`/`fontFamily` don't yet contain these keys.
+Expected: FAIL — `app/globals.css` doesn't yet declare `--color-gold`, `--color-ink`, or `--font-serif`.
 
-- [ ] **Step 3: Extend the Tailwind theme**
+- [ ] **Step 3: Extend the Tailwind v4 theme**
 
-In `tailwind.config.ts`, extend `theme.extend`:
+In `app/globals.css`, add to the existing `@theme inline { ... }` block (alongside the `--font-sans` line already there):
 
-```ts
-theme: {
-  extend: {
-    colors: {
-      gold: '#B08D57',
-      ink: '#0B0B0C',
-    },
-    fontFamily: {
-      serif: ['var(--font-serif)', 'serif'],
-      sans: ['var(--font-sans)', 'sans-serif'],
-    },
-    borderRadius: {
-      xl: '16px',
-    },
-  },
-},
+```css
+  --color-gold: #B08D57;
+  --color-ink: #0B0B0C;
+  --font-serif: var(--font-serif);
 ```
 
 - [ ] **Step 4: Wire the fonts and background in the root layout**
@@ -237,7 +223,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 - [ ] **Step 5: Run test to verify it passes**
 
 ```bash
-npx vitest run tailwind.config.test.ts
+npx vitest run globals-theme.test.ts
 ```
 
 Expected: PASS
@@ -245,7 +231,7 @@ Expected: PASS
 - [ ] **Step 6: Commit**
 
 ```bash
-git add tailwind.config.ts tailwind.config.test.ts app/layout.tsx
+git add app/globals.css globals-theme.test.ts app/layout.tsx
 git commit -m "feat: add gold/ink design tokens and serif/sans font wiring"
 ```
 
