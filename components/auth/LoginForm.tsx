@@ -50,12 +50,16 @@ export function LoginForm() {
         <Input
           id="email"
           type="email"
+          name="email"
+          autoComplete="email"
           data-testid="email-input"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
+          aria-invalid={!!errors.email}
+          aria-describedby={errors.email ? 'email-error' : undefined}
         />
         {errors.email && (
-          <p data-testid="email-error" className="text-xs text-red-600">
+          <p id="email-error" role="alert" data-testid="email-error" className="text-xs text-red-600">
             {errors.email}
           </p>
         )}
@@ -65,12 +69,16 @@ export function LoginForm() {
         <Input
           id="password"
           type="password"
+          name="password"
+          autoComplete="current-password"
           data-testid="password-input"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
+          aria-invalid={!!errors.password}
+          aria-describedby={errors.password ? 'password-error' : undefined}
         />
         {errors.password && (
-          <p data-testid="password-error" className="text-xs text-red-600">
+          <p id="password-error" role="alert" data-testid="password-error" className="text-xs text-red-600">
             {errors.password}
           </p>
         )}
@@ -79,7 +87,7 @@ export function LoginForm() {
         Sign in
       </Button>
       {submitted && (
-        <p data-testid="login-stub-message" className="text-center text-sm text-neutral-400">
+        <p role="status" data-testid="login-stub-message" className="text-center text-sm text-neutral-400">
           Sign-in coming soon
         </p>
       )}
