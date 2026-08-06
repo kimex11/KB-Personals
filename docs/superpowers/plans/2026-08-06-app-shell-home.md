@@ -1129,14 +1129,16 @@ export default function HomePage() {
       <MonthGrid getEventsForDate={getEventsForDate} selectedDate={selectedDate} onSelectDate={setSelectedDate} />
       <DayDetailPanel date={selectedDate} events={getEventsForDate(selectedDate)} />
       <Sheet>
-        <SheetTrigger asChild>
-          <Button
-            data-testid="add-event-button"
-            aria-label="Add event"
-            className="fixed bottom-24 right-4 h-14 w-14 rounded-full bg-neutral-900 text-2xl text-white shadow-lg"
-          >
-            +
-          </Button>
+        <SheetTrigger
+          render={
+            <Button
+              data-testid="add-event-button"
+              aria-label="Add event"
+              className="fixed bottom-24 right-4 h-14 w-14 rounded-full bg-neutral-900 text-2xl text-white shadow-lg"
+            />
+          }
+        >
+          +
         </SheetTrigger>
         <SheetContent side="bottom" data-testid="add-event-sheet">
           <p className="py-8 text-center text-neutral-500">Coming soon</p>
@@ -1146,6 +1148,8 @@ export default function HomePage() {
   );
 }
 ```
+
+Note: this project's shadcn scaffold (Task 1) generates `Sheet` on Base UI (`@base-ui/react`), not Radix — Base UI's trigger composition uses a `render` prop instead of the classic Radix `asChild` pattern. `render={<Button .../>}` above is that adaptation; `asChild` would compile under older shadcn but produces a `<button>` nested inside another `<button>` here.
 
 - [ ] **Step 4: Run test to verify it passes**
 
