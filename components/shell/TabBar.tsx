@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { motion } from 'framer-motion';
 import { TAB_ITEMS } from './tab-config';
 
 export function TabBar() {
@@ -24,6 +25,14 @@ export function TabBar() {
           >
             <Icon className={isActive ? 'h-5 w-5 text-gold' : 'h-5 w-5 text-neutral-400'} strokeWidth={isActive ? 2.5 : 2} />
             <span className={isActive ? 'text-gold' : 'text-neutral-400'}>{label}</span>
+            {isActive && (
+              <motion.span
+                layoutId="tab-indicator"
+                data-testid="tab-indicator"
+                className="absolute -top-2 h-0.5 w-6 rounded-full bg-gold"
+                transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+              />
+            )}
           </Link>
         );
       })}

@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 
 vi.mock('next/navigation', () => ({
   usePathname: () => '/',
@@ -21,5 +21,11 @@ describe('TabBar', () => {
     render(<TabBar />);
     expect(screen.getByTestId('tab-home')).toHaveAttribute('aria-current', 'page');
     expect(screen.getByTestId('tab-budget')).not.toHaveAttribute('aria-current');
+  });
+
+  it('renders an animated indicator under the active tab', () => {
+    render(<TabBar />);
+    const homeLink = screen.getByTestId('tab-home');
+    expect(within(homeLink).getByTestId('tab-indicator')).toBeInTheDocument();
   });
 });
