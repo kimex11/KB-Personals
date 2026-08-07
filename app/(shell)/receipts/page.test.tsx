@@ -11,10 +11,13 @@ const listReceiptsMock = vi.fn();
 const uploadReceiptMock = vi.fn();
 const deleteReceiptMock = vi.fn();
 
+const updateReceiptFieldsMock = vi.fn().mockResolvedValue(undefined);
+
 vi.mock('@/lib/receipts-repository', () => ({
   listReceipts: () => listReceiptsMock(),
   uploadReceipt: (file: File) => uploadReceiptMock(file),
   deleteReceipt: (id: string, path: string) => deleteReceiptMock(id, path),
+  updateReceiptFields: (id: string, fields: unknown) => updateReceiptFieldsMock(id, fields),
 }));
 
 vi.mock('@/lib/receipt-ocr', () => ({
@@ -69,6 +72,34 @@ describe('ReceiptsPage', () => {
 
     await waitFor(() => expect(screen.getByTestId('receipt-card')).toHaveTextContent('new.jpg'));
     expect(uploadReceiptMock).toHaveBeenCalled();
+  });
+
+  it('persists OCR-extracted fields back to the receipt once scanning finishes', async () => {
+    listReceiptsMock.mockResolvedValue([]);
+    const newReceipt: StoredReceipt = {
+      id: 'receipt-3',
+      fileName: 'scan.jpg',
+      fileType: 'image/jpeg',
+      fileSize: 2000,
+      previewUrl: 'https://signed.example/scan.jpg',
+      storagePath: 'user-1/scan.jpg',
+      uploadedAt: '2026-08-15T11:00:00.000Z',
+    };
+    uploadReceiptMock.mockResolvedValue(newReceipt);
+
+    render(<ReceiptsPage />);
+    await waitFor(() => expect(screen.getByTestId('empty-state')).toBeInTheDocument());
+
+    fireEvent.change(screen.getByTestId('receipt-file-input'), {
+      target: { files: [makeFile('scan.jpg', 'image/jpeg')] },
+    });
+
+    await waitFor(() =>
+      expect(updateReceiptFieldsMock).toHaveBeenCalledWith(
+        'receipt-3',
+        expect.objectContaining({ merchant: 'Corner Cafe', amount: 12.5 })
+      )
+    );
   });
 
   it('shows an error message when upload fails', async () => {

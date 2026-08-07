@@ -1,10 +1,10 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ReceiptUploadZone } from '@/components/receipts/ReceiptUploadZone';
 import { ReceiptGrid } from '@/components/receipts/ReceiptGrid';
 import { useReceiptOcr } from '@/lib/use-receipt-ocr';
-import { listReceipts, uploadReceipt, deleteReceipt } from '@/lib/receipts-repository';
+import { listReceipts, uploadReceipt, deleteReceipt, updateReceiptFields } from '@/lib/receipts-repository';
 import type { StoredReceipt } from '@/lib/receipts-types';
 
 export default function ReceiptsPage() {
@@ -12,6 +12,7 @@ export default function ReceiptsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { statusById, resultById, processReceipt } = useReceiptOcr();
+  const persistedOcrIds = useRef<Set<string>>(new Set());
 
   useEffect(() => {
     listReceipts()
@@ -19,6 +20,15 @@ export default function ReceiptsPage() {
       .catch(() => setError('Could not load receipts.'))
       .finally(() => setIsLoading(false));
   }, []);
+
+  useEffect(() => {
+    for (const [id, fields] of Object.entries(resultById)) {
+      if (!persistedOcrIds.current.has(id)) {
+        persistedOcrIds.current.add(id);
+        updateReceiptFields(id, fields).catch(() => {});
+      }
+    }
+  }, [resultById]);
 
   async function handleFilesSelected(files: File[]) {
     setError(null);
