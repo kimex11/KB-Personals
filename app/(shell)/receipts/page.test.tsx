@@ -31,6 +31,9 @@ const existingReceipt: StoredReceipt = {
   fileSize: 1000,
   previewUrl: 'https://signed.example/existing.jpg',
   storagePath: 'user-1/existing.jpg',
+  merchant: null,
+  receiptDate: null,
+  amount: null,
   uploadedAt: '2026-08-15T10:00:00.000Z',
 };
 
@@ -59,6 +62,9 @@ describe('ReceiptsPage', () => {
       fileSize: 2000,
       previewUrl: 'https://signed.example/new.jpg',
       storagePath: 'user-1/new.jpg',
+      merchant: null,
+      receiptDate: null,
+      amount: null,
       uploadedAt: '2026-08-15T11:00:00.000Z',
     };
     uploadReceiptMock.mockResolvedValue(newReceipt);
@@ -74,6 +80,21 @@ describe('ReceiptsPage', () => {
     expect(uploadReceiptMock).toHaveBeenCalled();
   });
 
+  it('shows previously-persisted OCR fields for a receipt loaded from Supabase, without waiting on new OCR', async () => {
+    const receiptWithFields: StoredReceipt = {
+      ...existingReceipt,
+      merchant: 'Whole Foods Market',
+      receiptDate: '2026-08-15',
+      amount: 42.18,
+    };
+    listReceiptsMock.mockResolvedValue([receiptWithFields]);
+
+    render(<ReceiptsPage />);
+
+    await waitFor(() => expect(screen.getByTestId('receipt-card')).toHaveTextContent('Whole Foods Market'));
+    expect(screen.getByTestId('receipt-card')).toHaveTextContent('₱42.18');
+  });
+
   it('persists OCR-extracted fields back to the receipt once scanning finishes', async () => {
     listReceiptsMock.mockResolvedValue([]);
     const newReceipt: StoredReceipt = {
@@ -83,6 +104,9 @@ describe('ReceiptsPage', () => {
       fileSize: 2000,
       previewUrl: 'https://signed.example/scan.jpg',
       storagePath: 'user-1/scan.jpg',
+      merchant: null,
+      receiptDate: null,
+      amount: null,
       uploadedAt: '2026-08-15T11:00:00.000Z',
     };
     uploadReceiptMock.mockResolvedValue(newReceipt);

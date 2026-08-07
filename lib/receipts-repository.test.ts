@@ -63,6 +63,9 @@ describe('uploadReceipt', () => {
         file_size: 1000,
         storage_path: 'user-1/123-receipt.jpg',
         created_at: '2026-08-15T10:00:00.000Z',
+        merchant: null,
+        receipt_date: null,
+        amount: null,
       },
       error: null,
     });
@@ -81,6 +84,9 @@ describe('uploadReceipt', () => {
       storagePath: 'user-1/123-receipt.jpg',
       previewUrl: 'https://signed.example/url',
       uploadedAt: '2026-08-15T10:00:00.000Z',
+      merchant: null,
+      receiptDate: null,
+      amount: null,
     });
   });
 
@@ -102,6 +108,9 @@ describe('listReceipts', () => {
           file_size: 500,
           storage_path: 'user-1/a.jpg',
           created_at: '2026-08-15T10:00:00.000Z',
+          merchant: 'Whole Foods Market',
+          receipt_date: '2026-08-15',
+          amount: 42.18,
         },
       ],
       error: null,
@@ -119,6 +128,9 @@ describe('listReceipts', () => {
         storagePath: 'user-1/a.jpg',
         previewUrl: 'https://signed.example/a',
         uploadedAt: '2026-08-15T10:00:00.000Z',
+        merchant: 'Whole Foods Market',
+        receiptDate: '2026-08-15',
+        amount: 42.18,
       },
     ]);
   });

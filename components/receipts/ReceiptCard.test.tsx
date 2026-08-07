@@ -10,6 +10,9 @@ const imageReceipt: StoredReceipt = {
   fileSize: 204800,
   previewUrl: 'blob:mock-url',
   storagePath: 'user-1/electricity-receipt.jpg',
+  merchant: null,
+  receiptDate: null,
+  amount: null,
   uploadedAt: '2026-08-15T10:00:00.000Z',
 };
 
@@ -20,6 +23,9 @@ const pdfReceipt: StoredReceipt = {
   fileSize: 1048576,
   previewUrl: 'blob:mock-url-2',
   storagePath: 'user-1/rent-invoice.pdf',
+  merchant: null,
+  receiptDate: null,
+  amount: null,
   uploadedAt: '2026-08-15T10:00:00.000Z',
 };
 

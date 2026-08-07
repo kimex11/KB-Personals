@@ -12,6 +12,9 @@ interface ReceiptRow {
   file_size: number;
   storage_path: string;
   created_at: string;
+  merchant: string | null;
+  receipt_date: string | null;
+  amount: number | null;
 }
 
 async function getSignedPreviewUrl(storagePath: string): Promise<string> {
@@ -30,6 +33,9 @@ function rowToStoredReceipt(row: ReceiptRow, previewUrl: string): StoredReceipt 
     storagePath: row.storage_path,
     previewUrl,
     uploadedAt: row.created_at,
+    merchant: row.merchant ?? null,
+    receiptDate: row.receipt_date ?? null,
+    amount: row.amount ?? null,
   };
 }
 

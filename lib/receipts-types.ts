@@ -6,4 +6,7 @@ export interface StoredReceipt {
   previewUrl: string;
   storagePath: string;
   uploadedAt: string; // ISO datetime
+  merchant: string | null;
+  receiptDate: string | null;
+  amount: number | null;
 }

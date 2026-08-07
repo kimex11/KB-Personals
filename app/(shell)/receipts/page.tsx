@@ -6,6 +6,7 @@ import { ReceiptGrid } from '@/components/receipts/ReceiptGrid';
 import { useReceiptOcr } from '@/lib/use-receipt-ocr';
 import { listReceipts, uploadReceipt, deleteReceipt, updateReceiptFields } from '@/lib/receipts-repository';
 import type { StoredReceipt } from '@/lib/receipts-types';
+import type { ExtractedReceiptFields, OcrStatus } from '@/lib/receipt-ocr-types';
 
 export default function ReceiptsPage() {
   const [receipts, setReceipts] = useState<StoredReceipt[]>([]);
@@ -43,6 +44,22 @@ export default function ReceiptsPage() {
     }
   }
 
+  const persistedResultById: Record<string, ExtractedReceiptFields> = {};
+  const persistedStatusById: Record<string, OcrStatus> = {};
+  for (const receipt of receipts) {
+    if (receipt.merchant !== null || receipt.receiptDate !== null || receipt.amount !== null) {
+      persistedResultById[receipt.id] = {
+        merchant: receipt.merchant,
+        date: receipt.receiptDate,
+        amount: receipt.amount,
+        rawText: '',
+      };
+      persistedStatusById[receipt.id] = 'done';
+    }
+  }
+  const mergedResultById = { ...persistedResultById, ...resultById };
+  const mergedStatusById = { ...persistedStatusById, ...statusById };
+
   async function handleRemove(id: string) {
     const target = receipts.find((receipt) => receipt.id === id);
     if (!target) return;
@@ -69,7 +86,12 @@ export default function ReceiptsPage() {
           Loading receipts…
         </p>
       ) : (
-        <ReceiptGrid receipts={receipts} onRemove={handleRemove} ocrStatusById={statusById} ocrResultById={resultById} />
+        <ReceiptGrid
+          receipts={receipts}
+          onRemove={handleRemove}
+          ocrStatusById={mergedStatusById}
+          ocrResultById={mergedResultById}
+        />
       )}
     </div>
   );
