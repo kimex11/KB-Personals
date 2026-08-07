@@ -36,8 +36,10 @@ describe('HomePage', () => {
     expect(screen.getByTestId('quick-actions-row')).toBeInTheDocument();
   });
 
-  it('does not render the calendar month grid', () => {
+  it('renders the calendar card after the alerts banner', () => {
     render(<HomePage />);
-    expect(screen.queryByTestId('month-grid')).not.toBeInTheDocument();
+    const alertsBanner = screen.getByTestId('alerts-banner');
+    const calendarCard = screen.getByTestId('dashboard-calendar-card');
+    expect(alertsBanner.compareDocumentPosition(calendarCard) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 });
