@@ -30,6 +30,20 @@ describe('CardDueRow', () => {
     expect(screen.getByTestId('card-due-status-badge')).toBeInTheDocument();
   });
 
+  it('colors the balance and left border to match status: overdue', () => {
+    const overdue: CreditCardDue = { ...card, dueDate: '2026-08-01' };
+    render(<CardDueRow card={overdue} referenceDate={referenceDate} />);
+    expect(screen.getByTestId('card-due-balance')).toHaveClass('text-status-critical');
+    expect(screen.getByTestId('card-due-row')).toHaveClass('border-l-status-critical');
+  });
+
+  it('colors the balance and left border to match status: due-soon', () => {
+    const dueSoon: CreditCardDue = { ...card, dueDate: '2026-08-16' };
+    render(<CardDueRow card={dueSoon} referenceDate={referenceDate} />);
+    expect(screen.getByTestId('card-due-balance')).toHaveClass('text-status-warning');
+    expect(screen.getByTestId('card-due-row')).toHaveClass('border-l-status-warning');
+  });
+
   it('does not render edit/delete actions when no handlers are given', () => {
     render(<CardDueRow card={card} referenceDate={referenceDate} />);
     expect(screen.queryByRole('button', { name: /edit visa platinum/i })).not.toBeInTheDocument();

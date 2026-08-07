@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { STROKE_COLOR_CLASS, DOT_COLOR_CLASS, BAR_COLOR_CLASS, CATEGORY_COLOR_SLOTS } from './category-colors';
+import {
+  STROKE_COLOR_CLASS,
+  DOT_COLOR_CLASS,
+  BAR_COLOR_CLASS,
+  ICON_BG_COLOR_CLASS,
+  ICON_TEXT_COLOR_CLASS,
+  CATEGORY_COLOR_SLOTS,
+} from './category-colors';
 
 describe('category-colors', () => {
   it('defines 12 color slots', () => {
@@ -11,6 +18,8 @@ describe('category-colors', () => {
       expect(STROKE_COLOR_CLASS[slot]).toMatch(/^stroke-budget-\d+$/);
       expect(DOT_COLOR_CLASS[slot]).toMatch(/^bg-budget-\d+$/);
       expect(BAR_COLOR_CLASS[slot]).toMatch(/^bg-budget-\d+$/);
+      expect(ICON_BG_COLOR_CLASS[slot]).toMatch(/^bg-budget-\d+\/15$/);
+      expect(ICON_TEXT_COLOR_CLASS[slot]).toMatch(/^text-budget-\d+$/);
     });
   });
 

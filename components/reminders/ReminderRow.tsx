@@ -1,8 +1,14 @@
 import { Pencil, Trash2 } from 'lucide-react';
-import type { Reminder } from '@/lib/reminders-types';
+import type { Priority, Reminder } from '@/lib/reminders-types';
 import { PriorityBadge } from './PriorityBadge';
 import { Button } from '@/components/ui/button';
 import { formatRelativeDate } from '@/lib/date-utils';
+
+const PRIORITY_ACCENT_BORDER: Record<Priority, string> = {
+  high: 'border-l-status-critical',
+  medium: 'border-l-status-warning',
+  low: 'border-l-neutral-300',
+};
 
 interface ReminderRowProps {
   reminder: Reminder;
@@ -17,7 +23,9 @@ export function ReminderRow({ reminder, onToggleComplete, onSnooze, referenceDat
   return (
     <div
       data-testid="reminder-row"
-      className="flex items-center justify-between gap-3 rounded-2xl border border-neutral-200 bg-white px-4 py-3"
+      className={`flex items-center justify-between gap-3 rounded-2xl border border-l-4 border-neutral-200 bg-white px-4 py-3 ${
+        reminder.completed ? 'border-l-status-success' : PRIORITY_ACCENT_BORDER[reminder.priority]
+      }`}
     >
       <button
         type="button"

@@ -54,6 +54,20 @@ describe('BillRow', () => {
     expect(screen.queryByTestId('bill-duplicate-warning')).not.toBeInTheDocument();
   });
 
+  it('colors the amount and left border to match status: overdue', () => {
+    const overdue: Bill = { ...bill, dueDate: '2026-08-01' };
+    render(<BillRow bill={overdue} onTogglePaid={vi.fn()} referenceDate={referenceDate} />);
+    expect(screen.getByTestId('bill-amount')).toHaveClass('text-status-critical');
+    expect(screen.getByTestId('bill-row')).toHaveClass('border-l-status-critical');
+  });
+
+  it('colors the amount and left border to match status: paid', () => {
+    const paidBill: Bill = { ...bill, paid: true };
+    render(<BillRow bill={paidBill} onTogglePaid={vi.fn()} referenceDate={referenceDate} />);
+    expect(screen.getByTestId('bill-amount')).toHaveClass('text-status-success');
+    expect(screen.getByTestId('bill-row')).toHaveClass('border-l-status-success');
+  });
+
   it('does not render edit/delete actions when no handlers are given', () => {
     render(<BillRow bill={bill} onTogglePaid={vi.fn()} referenceDate={referenceDate} />);
     expect(screen.queryByRole('button', { name: /edit internet bill/i })).not.toBeInTheDocument();

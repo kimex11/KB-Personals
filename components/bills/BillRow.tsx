@@ -1,5 +1,5 @@
 import { Pencil, Trash2 } from 'lucide-react';
-import type { Bill } from '@/lib/bills-types';
+import type { Bill, BillStatus } from '@/lib/bills-types';
 import { getBillStatus } from '@/lib/bills-selectors';
 import { BillStatusBadge } from './BillStatusBadge';
 import { Button } from '@/components/ui/button';
@@ -10,6 +10,20 @@ const RECURRENCE_LABEL: Record<NonNullable<Bill['recurrence']>, string> = {
   monthly: 'Monthly',
   quarterly: 'Quarterly',
   yearly: 'Yearly',
+};
+
+const STATUS_ACCENT_BORDER: Record<BillStatus, string> = {
+  overdue: 'border-l-status-critical',
+  'due-soon': 'border-l-status-warning',
+  paid: 'border-l-status-success',
+  upcoming: 'border-l-neutral-200',
+};
+
+const STATUS_AMOUNT_COLOR: Record<BillStatus, string> = {
+  overdue: 'text-status-critical',
+  'due-soon': 'text-status-warning',
+  paid: 'text-status-success',
+  upcoming: 'text-neutral-900',
 };
 
 interface BillRowProps {
@@ -27,8 +41,8 @@ export function BillRow({ bill, onTogglePaid, referenceDate = new Date(), isDupl
   return (
     <div
       data-testid="bill-row"
-      className={`flex flex-col gap-2 rounded-2xl border bg-white px-4 py-3 ${
-        isDuplicate ? 'border-status-warning' : 'border-neutral-200'
+      className={`flex flex-col gap-2 rounded-2xl border border-l-4 bg-white px-4 py-3 ${
+        isDuplicate ? 'border-status-warning' : `border-neutral-200 ${STATUS_ACCENT_BORDER[status]}`
       }`}
     >
       {isDuplicate && (
@@ -63,7 +77,9 @@ export function BillRow({ bill, onTogglePaid, referenceDate = new Date(), isDupl
           </p>
         </div>
         <div className="flex flex-col items-end gap-1">
-          <span className="font-serif text-sm text-neutral-900">₱{bill.amount.toFixed(2)}</span>
+          <span data-testid="bill-amount" className={`font-serif text-sm ${STATUS_AMOUNT_COLOR[status]}`}>
+            ₱{bill.amount.toFixed(2)}
+          </span>
           <BillStatusBadge status={status} />
         </div>
         {(onEdit || onDelete) && (

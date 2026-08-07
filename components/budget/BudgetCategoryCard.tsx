@@ -1,5 +1,5 @@
 import type { BudgetCategory } from '@/lib/budget-types';
-import { BAR_COLOR_CLASS } from '@/lib/category-colors';
+import { BAR_COLOR_CLASS, ICON_BG_COLOR_CLASS, ICON_TEXT_COLOR_CLASS } from '@/lib/category-colors';
 
 export function BudgetCategoryCard({ category }: { category: BudgetCategory }) {
   const { icon: Icon, name, limit, spent, colorSlot } = category;
@@ -13,7 +13,9 @@ export function BudgetCategoryCard({ category }: { category: BudgetCategory }) {
     >
       <div className="flex items-center justify-between">
         <span className="flex items-center gap-2">
-          <Icon className="h-4 w-4 text-neutral-500" />
+          <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${ICON_BG_COLOR_CLASS[colorSlot]}`}>
+            <Icon className={`h-4 w-4 ${ICON_TEXT_COLOR_CLASS[colorSlot]}`} />
+          </span>
           <span className="text-sm font-medium text-neutral-900">{name}</span>
         </span>
         {isOverBudget && (

@@ -49,6 +49,17 @@ describe('ReminderRow', () => {
     expect(screen.queryByTestId('reminder-snooze-button')).not.toBeInTheDocument();
   });
 
+  it('colors the left border to match priority: high', () => {
+    render(<ReminderRow reminder={reminder} onToggleComplete={vi.fn()} onSnooze={vi.fn()} referenceDate={referenceDate} />);
+    expect(screen.getByTestId('reminder-row')).toHaveClass('border-l-status-critical');
+  });
+
+  it('colors the left border to match priority: low', () => {
+    const low: Reminder = { ...reminder, priority: 'low' };
+    render(<ReminderRow reminder={low} onToggleComplete={vi.fn()} onSnooze={vi.fn()} referenceDate={referenceDate} />);
+    expect(screen.getByTestId('reminder-row')).toHaveClass('border-l-neutral-300');
+  });
+
   it('calls onEdit/onDelete when the action buttons are clicked', () => {
     const onEdit = vi.fn();
     const onDelete = vi.fn();

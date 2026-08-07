@@ -5,6 +5,7 @@ interface AccountsSummaryProps {
 
 export function AccountsSummary({ totalDue, totalMonthlyIncome }: AccountsSummaryProps) {
   const net = totalMonthlyIncome - totalDue;
+  const isNegative = net < 0;
 
   return (
     <div data-testid="accounts-summary" className="grid grid-cols-3 gap-2">
@@ -16,11 +17,15 @@ export function AccountsSummary({ totalDue, totalMonthlyIncome }: AccountsSummar
         <span className="text-xs text-status-success">Income</span>
         <span className="font-serif text-lg text-status-success">₱{totalMonthlyIncome.toFixed(0)}</span>
       </div>
-      <div className="flex flex-col items-center gap-1 rounded-2xl border border-neutral-200 bg-white px-2 py-3">
-        <span className="text-xs text-neutral-500">Net</span>
+      <div
+        className={`flex flex-col items-center gap-1 rounded-2xl border px-2 py-3 ${
+          isNegative ? 'border-status-critical/30 bg-status-critical/5' : 'border-status-success/30 bg-status-success/5'
+        }`}
+      >
+        <span className={`text-xs ${isNegative ? 'text-status-critical' : 'text-status-success'}`}>Net</span>
         <span
           data-testid="accounts-net"
-          className={`font-serif text-lg ${net < 0 ? 'text-status-critical' : 'text-status-success'}`}
+          className={`font-serif text-lg ${isNegative ? 'text-status-critical' : 'text-status-success'}`}
         >
           ₱{net.toFixed(0)}
         </span>

@@ -9,4 +9,9 @@ describe('RemindersSummary', () => {
     expect(summary).toHaveTextContent('2');
     expect(summary).toHaveTextContent('1');
   });
+
+  it('gives the Due Today tile a gold brand tint', () => {
+    render(<RemindersSummary dueTodayCount={2} overdueCount={1} />);
+    expect(screen.getByText('Due Today').parentElement).toHaveClass('bg-gold/5');
+  });
 });

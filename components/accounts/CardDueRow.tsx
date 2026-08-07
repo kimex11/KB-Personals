@@ -1,9 +1,21 @@
 import { Pencil, Trash2 } from 'lucide-react';
-import type { CreditCardDue } from '@/lib/accounts-types';
+import type { CreditCardDue, DueStatus } from '@/lib/accounts-types';
 import { getDueStatus } from '@/lib/accounts-selectors';
 import { CardDueStatusBadge } from './CardDueStatusBadge';
 import { Button } from '@/components/ui/button';
 import { formatRelativeDate } from '@/lib/date-utils';
+
+const STATUS_ACCENT_BORDER: Record<DueStatus, string> = {
+  overdue: 'border-l-status-critical',
+  'due-soon': 'border-l-status-warning',
+  upcoming: 'border-l-neutral-200',
+};
+
+const STATUS_BALANCE_COLOR: Record<DueStatus, string> = {
+  overdue: 'text-status-critical',
+  'due-soon': 'text-status-warning',
+  upcoming: 'text-neutral-900',
+};
 
 interface CardDueRowProps {
   card: CreditCardDue;
@@ -18,7 +30,7 @@ export function CardDueRow({ card, referenceDate = new Date(), onEdit, onDelete 
   return (
     <div
       data-testid="card-due-row"
-      className="flex items-center justify-between gap-3 rounded-2xl border border-neutral-200 bg-white px-4 py-3"
+      className={`flex items-center justify-between gap-3 rounded-2xl border border-l-4 border-neutral-200 bg-white px-4 py-3 ${STATUS_ACCENT_BORDER[status]}`}
     >
       <div className="flex-1">
         <p className="text-sm font-medium text-neutral-900">{card.cardName}</p>
@@ -27,7 +39,9 @@ export function CardDueRow({ card, referenceDate = new Date(), onEdit, onDelete 
         </p>
       </div>
       <div className="flex flex-col items-end gap-1">
-        <span className="font-serif text-sm text-neutral-900">₱{card.statementBalance.toFixed(2)}</span>
+        <span data-testid="card-due-balance" className={`font-serif text-sm ${STATUS_BALANCE_COLOR[status]}`}>
+          ₱{card.statementBalance.toFixed(2)}
+        </span>
         <span className="text-[10px] text-neutral-400">Min ₱{card.minimumPayment.toFixed(2)}</span>
         <CardDueStatusBadge status={status} />
       </div>

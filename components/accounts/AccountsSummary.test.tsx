@@ -20,4 +20,9 @@ describe('AccountsSummary', () => {
     render(<AccountsSummary totalDue={4000} totalMonthlyIncome={3000} />);
     expect(screen.getByTestId('accounts-net').className).toContain('text-status-critical');
   });
+
+  it('tints the Net tile background to match its status', () => {
+    render(<AccountsSummary totalDue={500} totalMonthlyIncome={3000} />);
+    expect(screen.getByTestId('accounts-net').parentElement).toHaveClass('bg-status-success/5');
+  });
 });

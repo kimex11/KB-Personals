@@ -10,4 +10,9 @@ describe('BillsSummary', () => {
     expect(summary).toHaveTextContent('2');
     expect(summary).toHaveTextContent('3');
   });
+
+  it('gives the This Month tile a gold brand tint', () => {
+    render(<BillsSummary monthlyTotal={2124} overdueCount={2} dueSoonCount={3} />);
+    expect(screen.getByText('This Month').parentElement).toHaveClass('bg-gold/5');
+  });
 });
