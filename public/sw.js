@@ -7,7 +7,7 @@
 const CACHE_NAME = 'kb-personals-shell-v1';
 const CACHEABLE_PATH_PREFIXES = ['/_next/static/', '/icon', '/apple-icon'];
 
-self.addEventListener('install', (event) => {
+self.addEventListener('install', () => {
   self.skipWaiting();
 });
 
