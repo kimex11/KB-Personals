@@ -12,12 +12,14 @@ const uploadReceiptMock = vi.fn();
 const deleteReceiptMock = vi.fn();
 
 const updateReceiptFieldsMock = vi.fn().mockResolvedValue(undefined);
+const linkReceiptToBillMock = vi.fn().mockResolvedValue(undefined);
 
 vi.mock('@/lib/receipts-repository', () => ({
   listReceipts: () => listReceiptsMock(),
   uploadReceipt: (file: File) => uploadReceiptMock(file),
   deleteReceipt: (id: string, path: string) => deleteReceiptMock(id, path),
   updateReceiptFields: (id: string, fields: unknown) => updateReceiptFieldsMock(id, fields),
+  linkReceiptToBill: (id: string, billId: string | null) => linkReceiptToBillMock(id, billId),
 }));
 
 vi.mock('@/lib/receipt-ocr', () => ({
@@ -34,6 +36,7 @@ const existingReceipt: StoredReceipt = {
   merchant: null,
   receiptDate: null,
   amount: null,
+  linkedBillId: null,
   uploadedAt: '2026-08-15T10:00:00.000Z',
 };
 
@@ -65,6 +68,7 @@ describe('ReceiptsPage', () => {
       merchant: null,
       receiptDate: null,
       amount: null,
+      linkedBillId: null,
       uploadedAt: '2026-08-15T11:00:00.000Z',
     };
     uploadReceiptMock.mockResolvedValue(newReceipt);
@@ -107,6 +111,7 @@ describe('ReceiptsPage', () => {
       merchant: null,
       receiptDate: null,
       amount: null,
+      linkedBillId: null,
       uploadedAt: '2026-08-15T11:00:00.000Z',
     };
     uploadReceiptMock.mockResolvedValue(newReceipt);
@@ -151,6 +156,18 @@ describe('ReceiptsPage', () => {
 
     await waitFor(() => expect(screen.getByTestId('empty-state')).toBeInTheDocument());
     expect(deleteReceiptMock).toHaveBeenCalledWith('receipt-1', 'user-1/existing.jpg');
+  });
+
+  it('links a receipt to a bill via the bill-link picker', async () => {
+    listReceiptsMock.mockResolvedValue([existingReceipt]);
+
+    render(<ReceiptsPage />);
+    await waitFor(() => expect(screen.getByTestId('receipt-card')).toBeInTheDocument());
+
+    fireEvent.change(screen.getByTestId('receipt-bill-link-select'), { target: { value: 'bill-0' } });
+
+    await waitFor(() => expect(linkReceiptToBillMock).toHaveBeenCalledWith('receipt-1', 'bill-0'));
+    expect(screen.getByTestId('receipt-bill-link-select')).toHaveValue('bill-0');
   });
 
   it('restores the receipt and shows an error when delete fails', async () => {

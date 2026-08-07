@@ -4,9 +4,12 @@ import { useEffect, useRef, useState } from 'react';
 import { ReceiptUploadZone } from '@/components/receipts/ReceiptUploadZone';
 import { ReceiptGrid } from '@/components/receipts/ReceiptGrid';
 import { useReceiptOcr } from '@/lib/use-receipt-ocr';
-import { listReceipts, uploadReceipt, deleteReceipt, updateReceiptFields } from '@/lib/receipts-repository';
+import { listReceipts, uploadReceipt, deleteReceipt, updateReceiptFields, linkReceiptToBill } from '@/lib/receipts-repository';
+import { mockBills } from '@/lib/bills-data';
 import type { StoredReceipt } from '@/lib/receipts-types';
 import type { ExtractedReceiptFields, OcrStatus } from '@/lib/receipt-ocr-types';
+
+const LINKABLE_BILLS = mockBills.map((bill) => ({ id: bill.id, title: bill.title }));
 
 export default function ReceiptsPage() {
   const [receipts, setReceipts] = useState<StoredReceipt[]>([]);
@@ -60,6 +63,15 @@ export default function ReceiptsPage() {
   const mergedResultById = { ...persistedResultById, ...resultById };
   const mergedStatusById = { ...persistedStatusById, ...statusById };
 
+  async function handleLinkBill(receiptId: string, billId: string | null) {
+    setReceipts((prev) => prev.map((r) => (r.id === receiptId ? { ...r, linkedBillId: billId } : r)));
+    try {
+      await linkReceiptToBill(receiptId, billId);
+    } catch {
+      setError('Could not link receipt to bill.');
+    }
+  }
+
   async function handleRemove(id: string) {
     const target = receipts.find((receipt) => receipt.id === id);
     if (!target) return;
@@ -91,6 +103,8 @@ export default function ReceiptsPage() {
           onRemove={handleRemove}
           ocrStatusById={mergedStatusById}
           ocrResultById={mergedResultById}
+          bills={LINKABLE_BILLS}
+          onLinkBill={handleLinkBill}
         />
       )}
     </div>
