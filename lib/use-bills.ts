@@ -1,0 +1,75 @@
+'use client';
+
+import { useCallback, useEffect, useState } from 'react';
+import { listBills, createBill, updateBill, deleteBill } from './bills-repository';
+import type { Bill, RecurrenceInterval } from './bills-types';
+
+interface BillWithCategoryId extends Bill {
+  categoryId: string;
+}
+
+export interface UseBillsResult {
+  bills: BillWithCategoryId[];
+  loading: boolean;
+  error: string | null;
+  refresh: () => Promise<void>;
+  createBill: (input: { title: string; categoryId: string; amount: number; dueDate: string; recurrence: RecurrenceInterval }) => Promise<void>;
+  updateBill: (
+    id: string,
+    patch: Partial<{ title: string; categoryId: string; amount: number; dueDate: string; recurrence: RecurrenceInterval; paid: boolean }>
+  ) => Promise<void>;
+  deleteBill: (id: string) => Promise<void>;
+  togglePaid: (id: string) => Promise<void>;
+}
+
+export function useBills(): UseBillsResult {
+  const [bills, setBills] = useState<BillWithCategoryId[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const refresh = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      setBills(await listBills());
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load bills');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    refresh();
+  }, [refresh]);
+
+  const runMutation = useCallback(
+    async (fn: () => Promise<unknown>) => {
+      setError(null);
+      try {
+        await fn();
+        await refresh();
+      } catch (err) {
+        const message = err instanceof Error ? err.message : 'Action failed';
+        setError(message);
+        throw err;
+      }
+    },
+    [refresh]
+  );
+
+  return {
+    bills,
+    loading,
+    error,
+    refresh,
+    createBill: (input) => runMutation(() => createBill(input)),
+    updateBill: (id, patch) => runMutation(() => updateBill(id, patch)),
+    deleteBill: (id) => runMutation(() => deleteBill(id)),
+    togglePaid: (id) => {
+      const bill = bills.find((b) => b.id === id);
+      return runMutation(() => updateBill(id, { paid: !bill?.paid }));
+    },
+  };
+}
