@@ -1,50 +1,75 @@
 'use client';
 
 import { useState } from 'react';
-import { addDays, parseISO } from 'date-fns';
-import { mockReminders } from '@/lib/reminders-data';
+import { Plus } from 'lucide-react';
+import { useReminders } from '@/lib/use-reminders';
 import { RemindersListView } from '@/components/reminders/RemindersListView';
-import { toISODateString } from '@/lib/date-utils';
+import { ReminderForm } from '@/components/reminders/ReminderForm';
+import { ConfirmDeleteDialog } from '@/components/shared/ConfirmDeleteDialog';
+import { Button } from '@/components/ui/button';
 import { useIsMounted } from '@/lib/use-is-mounted';
+import type { Reminder } from '@/lib/reminders-types';
 
 export default function RemindersPage() {
-  const [completedOverrides, setCompletedOverrides] = useState<Set<string>>(new Set());
-  const [snoozedDates, setSnoozedDates] = useState<Map<string, string>>(new Map());
   const isMounted = useIsMounted();
+  const { reminders, error, createReminder, updateReminder, deleteReminder, toggleComplete, snooze } = useReminders();
 
-  const reminders = mockReminders.map((reminder) => ({
-    ...reminder,
-    completed: reminder.completed || completedOverrides.has(reminder.id),
-    dueDate: snoozedDates.get(reminder.id) ?? reminder.dueDate,
-  }));
+  const [formOpen, setFormOpen] = useState(false);
+  const [editingReminder, setEditingReminder] = useState<Reminder | undefined>(undefined);
+  const [deleteTarget, setDeleteTarget] = useState<Reminder | null>(null);
 
-  function toggleComplete(id: string) {
-    setCompletedOverrides((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
+  function openAddForm() {
+    setEditingReminder(undefined);
+    setFormOpen(true);
   }
 
-  function snooze(id: string) {
-    const reminder = reminders.find((r) => r.id === id);
-    if (!reminder) return;
-    setSnoozedDates((prev) => {
-      const next = new Map(prev);
-      next.set(id, toISODateString(addDays(parseISO(reminder.dueDate), 1)));
-      return next;
-    });
+  function openEditForm(reminder: Reminder) {
+    setEditingReminder(reminder);
+    setFormOpen(true);
+  }
+
+  async function handleSubmit(input: { title: string; category: string; dueDate: string; priority: Reminder['priority'] }) {
+    if (editingReminder) {
+      await updateReminder(editingReminder.id, input);
+    } else {
+      await createReminder(input);
+    }
   }
 
   return (
     <div data-testid="reminders-page" className="flex flex-col gap-4 px-4 pb-24 pt-4">
+      <div className="flex justify-end">
+        <Button size="sm" onClick={openAddForm}>
+          <Plus className="h-4 w-4" />
+          Add Reminder
+        </Button>
+      </div>
+      {error && <p className="text-sm text-status-critical">{error}</p>}
       {isMounted && (
         <RemindersListView
           reminders={reminders}
           onToggleComplete={toggleComplete}
           onSnooze={snooze}
           referenceDate={new Date()}
+          onEdit={openEditForm}
+          onDelete={setDeleteTarget}
+        />
+      )}
+
+      <ReminderForm
+        key={`${editingReminder?.id ?? 'new'}-${formOpen}`}
+        open={formOpen}
+        onOpenChange={setFormOpen}
+        initialReminder={editingReminder}
+        onSubmit={handleSubmit}
+      />
+      {deleteTarget && (
+        <ConfirmDeleteDialog
+          open={!!deleteTarget}
+          onOpenChange={(open) => !open && setDeleteTarget(null)}
+          title={`Delete ${deleteTarget.title}?`}
+          description="This can't be undone."
+          onConfirm={() => deleteReminder(deleteTarget.id)}
         />
       )}
     </div>
