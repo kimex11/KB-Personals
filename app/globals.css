@@ -11,6 +11,13 @@
   --color-gold: #B08D57;
   --color-ink: #0B0B0C;
   --font-serif: var(--font-serif);
+  --color-budget-1: #2a78d6;
+  --color-budget-2: #eb6834;
+  --color-budget-3: #1baf7a;
+  --color-budget-4: #eda100;
+  --color-budget-5: #e87ba4;
+  --color-budget-6: #008300;
+  --color-status-critical: #d03b3b;
   --font-mono: var(--font-geist-mono);
   --font-heading: var(--font-sans);
   --color-sidebar-ring: var(--sidebar-ring);
