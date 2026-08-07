@@ -4,5 +4,6 @@ export interface StoredReceipt {
   fileType: string;
   fileSize: number;
   previewUrl: string;
+  storagePath: string;
   uploadedAt: string; // ISO datetime
 }
