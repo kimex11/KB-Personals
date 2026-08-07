@@ -10,6 +10,6 @@ export const TYPE_LABEL: Record<CalendarEvent['type'], string> = {
 
 export const TYPE_DOT_CLASS: Record<CalendarEvent['type'], string> = {
   bill: 'bg-gold',
-  reminder: 'bg-neutral-400',
-  task: 'border border-neutral-400 bg-transparent',
+  reminder: 'bg-calendar-reminder',
+  task: 'bg-calendar-task',
 };
