@@ -5,10 +5,12 @@ import { addDays, parseISO } from 'date-fns';
 import { mockReminders } from '@/lib/reminders-data';
 import { RemindersListView } from '@/components/reminders/RemindersListView';
 import { toISODateString } from '@/lib/date-utils';
+import { useIsMounted } from '@/lib/use-is-mounted';
 
 export default function RemindersPage() {
   const [completedOverrides, setCompletedOverrides] = useState<Set<string>>(new Set());
   const [snoozedDates, setSnoozedDates] = useState<Map<string, string>>(new Map());
+  const isMounted = useIsMounted();
 
   const reminders = mockReminders.map((reminder) => ({
     ...reminder,
@@ -37,7 +39,14 @@ export default function RemindersPage() {
 
   return (
     <div data-testid="reminders-page" className="flex flex-col gap-4 px-4 pb-24 pt-4">
-      <RemindersListView reminders={reminders} onToggleComplete={toggleComplete} onSnooze={snooze} />
+      {isMounted && (
+        <RemindersListView
+          reminders={reminders}
+          onToggleComplete={toggleComplete}
+          onSnooze={snooze}
+          referenceDate={new Date()}
+        />
+      )}
     </div>
   );
 }

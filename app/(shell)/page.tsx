@@ -33,9 +33,13 @@ export default function HomePage() {
   const permission: NotificationPermission =
     requestedPermission ?? (isMounted && isNotificationSupported() ? Notification.permission : 'default');
 
-  const overdueBills = getOverdueBills(events);
-  const weeklyBills = getBillsDueWithinDays(events, 7);
-  const upcomingReminders = getUpcomingReminders(events, 3);
+  // Only meaningful once isMounted is true (see the gated return below) —
+  // computed here regardless since it's a cheap pure calculation, but never
+  // rendered until mount, so it can never disagree with server-rendered HTML.
+  const now = new Date();
+  const overdueBills = getOverdueBills(events, now);
+  const weeklyBills = getBillsDueWithinDays(events, 7, now);
+  const upcomingReminders = getUpcomingReminders(events, 3, now);
 
   const alertItems: AlertItem[] = overdueBills.map((bill) => ({
     id: bill.id,
@@ -50,26 +54,28 @@ export default function HomePage() {
 
   return (
     <div data-testid="home-page" className="flex flex-col gap-6 px-4 pb-24 pt-4">
-      <AlertsBanner overdueBills={overdueBills} />
-      <NotificationSettings
-        permission={permission}
-        onRequestPermission={handleRequestPermission}
-        soundEnabled={soundEnabled}
-        onToggleSound={() => setSoundEnabled((prev) => !prev)}
-      />
       {isMounted && (
-        <DashboardCalendarCard
-          getEventsForDate={getEventsForDate}
-          selectedDate={selectedDate}
-          onSelectDate={setSelectedDate}
-        />
+        <>
+          <AlertsBanner overdueBills={overdueBills} referenceDate={now} />
+          <NotificationSettings
+            permission={permission}
+            onRequestPermission={handleRequestPermission}
+            soundEnabled={soundEnabled}
+            onToggleSound={() => setSoundEnabled((prev) => !prev)}
+          />
+          <DashboardCalendarCard
+            getEventsForDate={getEventsForDate}
+            selectedDate={selectedDate}
+            onSelectDate={setSelectedDate}
+          />
+          <WeeklyBillsPanel bills={weeklyBills} referenceDate={now} />
+          <SpendingSnapshot budgeted={totals.budgeted} spent={totals.spent} remaining={totals.remaining} />
+          <RecentTransactionsPanel transactions={mockTransactions} referenceDate={now} />
+          <RemindersPanel reminders={upcomingReminders} referenceDate={now} />
+          <GoalProgressPanel goal={mockGoal} />
+          <QuickActionsRow />
+        </>
       )}
-      <WeeklyBillsPanel bills={weeklyBills} />
-      <SpendingSnapshot budgeted={totals.budgeted} spent={totals.spent} remaining={totals.remaining} />
-      <RecentTransactionsPanel transactions={mockTransactions} />
-      <RemindersPanel reminders={upcomingReminders} />
-      <GoalProgressPanel goal={mockGoal} />
-      <QuickActionsRow />
     </div>
   );
 }

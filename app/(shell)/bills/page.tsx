@@ -50,16 +50,15 @@ export default function BillsPage() {
           Calendar
         </Button>
       </div>
-      {view === 'list' ? (
-        <BillsListView bills={bills} onTogglePaid={togglePaid} />
-      ) : (
-        isMounted && (
+      {isMounted &&
+        (view === 'list' ? (
+          <BillsListView bills={bills} onTogglePaid={togglePaid} referenceDate={new Date()} />
+        ) : (
           <>
             <MonthGrid getEventsForDate={getEventsForDate} selectedDate={selectedDate} onSelectDate={setSelectedDate} />
             <DayDetailPanel date={selectedDate} events={getEventsForDate(selectedDate)} />
           </>
-        )
-      )}
+        ))}
     </div>
   );
 }
