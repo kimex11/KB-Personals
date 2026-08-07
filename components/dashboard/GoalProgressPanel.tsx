@@ -9,7 +9,14 @@ export function GoalProgressPanel({ goal }: { goal: SavingsGoal }) {
       className="flex flex-col gap-2 rounded-2xl border border-neutral-200 bg-white p-4"
     >
       <h2 className="font-serif text-lg text-neutral-900">{goal.title}</h2>
-      <div className="h-2 w-full overflow-hidden rounded-full bg-neutral-100">
+      <div
+        role="progressbar"
+        aria-label={`${goal.title} progress`}
+        aria-valuenow={Math.round(progress)}
+        aria-valuemin={0}
+        aria-valuemax={100}
+        className="h-2 w-full overflow-hidden rounded-full bg-neutral-100"
+      >
         <div
           data-testid="goal-progress-fill"
           className="h-full rounded-full bg-gold"

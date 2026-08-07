@@ -22,7 +22,14 @@ export function BudgetCategoryCard({ category }: { category: BudgetCategory }) {
           </span>
         )}
       </div>
-      <div className="h-2 w-full overflow-hidden rounded-full bg-neutral-100">
+      <div
+        role="progressbar"
+        aria-label={`${name} spending`}
+        aria-valuenow={Math.round(progress)}
+        aria-valuemin={0}
+        aria-valuemax={100}
+        className="h-2 w-full overflow-hidden rounded-full bg-neutral-100"
+      >
         <div
           data-testid="progress-bar-fill"
           className={`h-full rounded-full ${isOverBudget ? 'bg-status-critical' : BAR_COLOR_CLASS[colorSlot]}`}

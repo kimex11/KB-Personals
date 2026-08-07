@@ -23,7 +23,14 @@ export function SpendingSnapshot({ budgeted, spent, remaining }: SpendingSnapsho
       <p className="text-sm text-neutral-500">
         ₱{spent.toFixed(0)} of ₱{budgeted.toFixed(0)} spent
       </p>
-      <div className="h-2 w-full overflow-hidden rounded-full bg-neutral-100">
+      <div
+        role="progressbar"
+        aria-label="Spending progress"
+        aria-valuenow={Math.round(progress)}
+        aria-valuemin={0}
+        aria-valuemax={100}
+        className="h-2 w-full overflow-hidden rounded-full bg-neutral-100"
+      >
         <div
           data-testid="spending-progress-fill"
           className={`h-full rounded-full ${remaining < 0 ? 'bg-status-critical' : 'bg-gold'}`}
