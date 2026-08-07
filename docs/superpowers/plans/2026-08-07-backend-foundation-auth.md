@@ -316,6 +316,7 @@ git commit -m "feat: add auth proxy for session refresh and route protection"
 **Files:**
 - Modify: `components/auth/LoginForm.tsx`
 - Modify: `components/auth/LoginForm.test.tsx`
+- Modify: `app/login/page.test.tsx` (add `next/navigation` + `@/lib/supabase/client` mocks — `LoginForm` now calls `useRouter`, which throws outside a router context in RTL)
 
 **Interfaces:**
 - Consumes: `createClient` from `@/lib/supabase/client`; `useRouter` from `next/navigation`.

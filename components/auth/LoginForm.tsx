@@ -1,12 +1,16 @@
 'use client';
 
 import { useState, type FormEvent } from 'react';
+import { useRouter } from 'next/navigation';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
+import { createClient } from '@/lib/supabase/client';
 
 const EMAIL_PATTERN = /^\S+@\S+\.\S+$/;
 const MIN_PASSWORD_LENGTH = 8;
+
+type Status = 'idle' | 'pending' | 'error' | 'success';
 
 interface FormErrors {
   email?: string;
@@ -14,10 +18,12 @@ interface FormErrors {
 }
 
 export function LoginForm() {
+  const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [errors, setErrors] = useState<FormErrors>({});
-  const [submitted, setSubmitted] = useState(false);
+  const [status, setStatus] = useState<Status>('idle');
+  const [formError, setFormError] = useState<string | null>(null);
 
   function validate(): FormErrors {
     const nextErrors: FormErrors = {};
@@ -34,14 +40,33 @@ export function LoginForm() {
     return nextErrors;
   }
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const nextErrors = validate();
     setErrors(nextErrors);
-    setSubmitted(Object.keys(nextErrors).length === 0);
+    setFormError(null);
+
+    if (Object.keys(nextErrors).length > 0) {
+      setStatus('idle');
+      return;
+    }
+
+    setStatus('pending');
+    const supabase = createClient();
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+
+    if (error) {
+      setStatus('error');
+      setFormError(error.message);
+      return;
+    }
+
+    setStatus('success');
+    router.push('/');
+    router.refresh();
   }
 
-  const isDisabled = email.trim() === '' || password === '';
+  const isDisabled = email.trim() === '' || password === '' || status === 'pending';
 
   return (
     <form data-testid="login-form" onSubmit={handleSubmit} noValidate className="flex flex-col gap-4">
@@ -83,14 +108,14 @@ export function LoginForm() {
           </p>
         )}
       </div>
-      <Button type="submit" disabled={isDisabled} className="mt-2 bg-neutral-900 text-white">
-        Sign in
-      </Button>
-      {submitted && (
-        <p role="status" data-testid="login-stub-message" className="text-center text-sm text-neutral-400">
-          Sign-in coming soon
+      {formError && (
+        <p data-testid="form-error" role="alert" className="text-sm text-status-critical">
+          {formError}
         </p>
       )}
+      <Button type="submit" disabled={isDisabled} className="mt-2 bg-neutral-900 text-white">
+        {status === 'pending' ? 'Signing in…' : 'Sign in'}
+      </Button>
     </form>
   );
 }

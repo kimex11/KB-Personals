@@ -1,6 +1,25 @@
-import { describe, expect, it } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { describe, expect, it, vi, beforeEach } from 'vitest';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { LoginForm } from './LoginForm';
+
+const pushMock = vi.fn();
+const refreshMock = vi.fn();
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({ push: pushMock, refresh: refreshMock }),
+}));
+
+const signInWithPasswordMock = vi.fn();
+vi.mock('@/lib/supabase/client', () => ({
+  createClient: () => ({
+    auth: { signInWithPassword: signInWithPasswordMock },
+  }),
+}));
+
+beforeEach(() => {
+  pushMock.mockClear();
+  refreshMock.mockClear();
+  signInWithPasswordMock.mockClear();
+});
 
 describe('LoginForm', () => {
   it('shows required errors when submitted empty', () => {
@@ -8,6 +27,7 @@ describe('LoginForm', () => {
     fireEvent.submit(screen.getByTestId('login-form'));
     expect(screen.getByTestId('email-error')).toHaveTextContent('Email is required');
     expect(screen.getByTestId('password-error')).toHaveTextContent('Password is required');
+    expect(signInWithPasswordMock).not.toHaveBeenCalled();
   });
 
   it('shows an email format error for an invalid email', () => {
@@ -18,24 +38,33 @@ describe('LoginForm', () => {
     expect(screen.getByTestId('email-error')).toHaveTextContent('Enter a valid email address');
   });
 
-  it('shows a password length error for a short password', () => {
-    render(<LoginForm />);
-    fireEvent.change(screen.getByTestId('email-input'), { target: { value: 'user@example.com' } });
-    fireEvent.change(screen.getByTestId('password-input'), { target: { value: 'short' } });
-    fireEvent.submit(screen.getByTestId('login-form'));
-    expect(screen.getByTestId('password-error')).toHaveTextContent(
-      'Password must be at least 8 characters'
-    );
-  });
-
-  it('shows the stub message on a valid submit and clears prior errors', () => {
+  it('calls signInWithPassword and redirects to / on success', async () => {
+    signInWithPasswordMock.mockResolvedValue({ error: null });
     render(<LoginForm />);
     fireEvent.change(screen.getByTestId('email-input'), { target: { value: 'user@example.com' } });
     fireEvent.change(screen.getByTestId('password-input'), { target: { value: 'longenough' } });
     fireEvent.submit(screen.getByTestId('login-form'));
-    expect(screen.getByTestId('login-stub-message')).toHaveTextContent('Sign-in coming soon');
-    expect(screen.queryByTestId('email-error')).not.toBeInTheDocument();
-    expect(screen.queryByTestId('password-error')).not.toBeInTheDocument();
+
+    await waitFor(() =>
+      expect(signInWithPasswordMock).toHaveBeenCalledWith({
+        email: 'user@example.com',
+        password: 'longenough',
+      })
+    );
+    await waitFor(() => expect(pushMock).toHaveBeenCalledWith('/'));
+  });
+
+  it('shows the Supabase error message on failed sign-in', async () => {
+    signInWithPasswordMock.mockResolvedValue({ error: { message: 'Invalid login credentials' } });
+    render(<LoginForm />);
+    fireEvent.change(screen.getByTestId('email-input'), { target: { value: 'user@example.com' } });
+    fireEvent.change(screen.getByTestId('password-input'), { target: { value: 'longenough' } });
+    fireEvent.submit(screen.getByTestId('login-form'));
+
+    await waitFor(() =>
+      expect(screen.getByTestId('form-error')).toHaveTextContent('Invalid login credentials')
+    );
+    expect(pushMock).not.toHaveBeenCalled();
   });
 
   it('disables the submit button until both fields are filled', () => {
