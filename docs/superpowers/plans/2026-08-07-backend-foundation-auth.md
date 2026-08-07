@@ -962,13 +962,13 @@ export function Header() {
 }
 ```
 
-- [ ] **Step 6: Run the existing `Header` and `AppShell` tests to confirm no regressions**
+- [ ] **Step 6: Run the existing `Header`, `AppShell`, and `ShellLayout` tests — fix the mocks they need**
 
 ```bash
-npx vitest run components/shell/Header.test.tsx components/shell/AppShell.test.tsx
+npx vitest run components/shell/Header.test.tsx "components/shell/AppShell.test.tsx" "app/(shell)/layout.test.tsx"
 ```
 
-Expected: PASS — neither test clicks the logout button, so no new mocking is required; this just confirms `LogoutButton`'s addition doesn't break existing rendering assertions.
+Expected: initially FAILS — `LogoutButton` calls `useRouter()` at render time (not only inside the click handler), and none of these three test files mock `useRouter` (only `usePathname`), so rendering throws outside a router context. Add `useRouter: () => ({ push: vi.fn(), refresh: vi.fn() })` alongside the existing `usePathname` mock in all three files' `vi.mock('next/navigation', ...)` calls. Re-run — expected: PASS.
 
 - [ ] **Step 7: Commit**
 

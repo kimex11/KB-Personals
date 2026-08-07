@@ -3,6 +3,7 @@ import { render, screen } from '@testing-library/react';
 
 vi.mock('next/navigation', () => ({
   usePathname: () => '/',
+  useRouter: () => ({ push: vi.fn(), refresh: vi.fn() }),
 }));
 
 import { AppShell } from './AppShell';

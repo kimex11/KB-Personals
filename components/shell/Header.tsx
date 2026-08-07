@@ -2,6 +2,7 @@
 
 import { usePathname } from 'next/navigation';
 import { TAB_ITEMS } from './tab-config';
+import { LogoutButton } from '@/components/auth/LogoutButton';
 
 export function Header() {
   const pathname = usePathname();
@@ -13,6 +14,9 @@ export function Header() {
         KB
       </span>
       <h1 className="font-serif text-xl text-neutral-900">{title}</h1>
+      <div className="ml-auto">
+        <LogoutButton />
+      </div>
     </header>
   );
 }
