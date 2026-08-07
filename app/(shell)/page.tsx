@@ -3,8 +3,8 @@
 import { useState } from 'react';
 import { useCalendarEvents } from '@/lib/use-calendar-events';
 import { useBudget } from '@/lib/use-budget';
+import { useBills } from '@/lib/use-bills';
 import { useIsMounted } from '@/lib/use-is-mounted';
-import { mockTransactions, mockGoal } from '@/lib/dashboard-data';
 import { getOverdueBills, getBillsDueWithinDays, getUpcomingReminders } from '@/lib/dashboard-selectors';
 import { isNotificationSupported, requestNotificationPermission } from '@/lib/notifications';
 import { useOverdueAlerts, type AlertItem } from '@/lib/use-overdue-alerts';
@@ -13,14 +13,13 @@ import { NotificationSettings } from '@/components/dashboard/NotificationSetting
 import { DashboardCalendarCard } from '@/components/dashboard/DashboardCalendarCard';
 import { WeeklyBillsPanel } from '@/components/dashboard/WeeklyBillsPanel';
 import { SpendingSnapshot } from '@/components/dashboard/SpendingSnapshot';
-import { RecentTransactionsPanel } from '@/components/dashboard/RecentTransactionsPanel';
 import { RemindersPanel } from '@/components/dashboard/RemindersPanel';
-import { GoalProgressPanel } from '@/components/dashboard/GoalProgressPanel';
 import { QuickActionsRow } from '@/components/dashboard/QuickActionsRow';
 
 export default function HomePage() {
   const { events, getEventsForDate } = useCalendarEvents();
   const { totals } = useBudget();
+  const { bills, togglePaid } = useBills();
   const [selectedDate, setSelectedDate] = useState(() => new Date());
   const [requestedPermission, setRequestedPermission] = useState<NotificationPermission | null>(null);
   const [soundEnabled, setSoundEnabled] = useState(true);
@@ -38,7 +37,8 @@ export default function HomePage() {
   // rendered until mount, so it can never disagree with server-rendered HTML.
   const now = new Date();
   const overdueBills = getOverdueBills(events, now);
-  const weeklyBills = getBillsDueWithinDays(events, 7, now);
+  const paidBillIds = new Set(bills.filter((bill) => bill.paid).map((bill) => bill.id));
+  const weeklyBills = getBillsDueWithinDays(events, 7, now).filter((event) => !paidBillIds.has(event.id));
   const upcomingReminders = getUpcomingReminders(events, 3, now);
 
   const alertItems: AlertItem[] = overdueBills.map((bill) => ({
@@ -68,11 +68,9 @@ export default function HomePage() {
             selectedDate={selectedDate}
             onSelectDate={setSelectedDate}
           />
-          <WeeklyBillsPanel bills={weeklyBills} referenceDate={now} />
+          <WeeklyBillsPanel bills={weeklyBills} referenceDate={now} onMarkPaid={togglePaid} />
           <SpendingSnapshot budgeted={totals.budgeted} spent={totals.spent} remaining={totals.remaining} />
-          <RecentTransactionsPanel transactions={mockTransactions} referenceDate={now} />
           <RemindersPanel reminders={upcomingReminders} referenceDate={now} />
-          <GoalProgressPanel goal={mockGoal} />
           <QuickActionsRow />
         </>
       )}

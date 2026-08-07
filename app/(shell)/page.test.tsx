@@ -20,20 +20,38 @@ vi.mock('@/lib/use-budget', () => ({
   }),
 }));
 
+const togglePaidMock = vi.fn().mockResolvedValue(undefined);
+vi.mock('@/lib/use-bills', () => ({
+  useBills: () => ({
+    bills: [],
+    loading: false,
+    error: null,
+    refresh: vi.fn(),
+    createBill: vi.fn(),
+    updateBill: vi.fn(),
+    deleteBill: vi.fn(),
+    togglePaid: togglePaidMock,
+  }),
+}));
+
 describe('HomePage', () => {
   it('renders the alerts banner when there are overdue bills', () => {
     render(<HomePage />);
     expect(screen.getByTestId('alerts-banner')).toBeInTheDocument();
   });
 
-  it('renders the weekly bills panel, spending snapshot, transactions, reminders, goal, and quick actions', () => {
+  it('renders the weekly bills panel, spending snapshot, reminders, and quick actions', () => {
     render(<HomePage />);
     expect(screen.getByTestId('weekly-bills-panel')).toBeInTheDocument();
     expect(screen.getByTestId('spending-snapshot')).toBeInTheDocument();
-    expect(screen.getByTestId('recent-transactions-panel')).toBeInTheDocument();
     expect(screen.getByTestId('reminders-panel')).toBeInTheDocument();
-    expect(screen.getByTestId('goal-progress-panel')).toBeInTheDocument();
     expect(screen.getByTestId('quick-actions-row')).toBeInTheDocument();
+  });
+
+  it('does not render Recent Transactions or Goal Progress (no backing feature)', () => {
+    render(<HomePage />);
+    expect(screen.queryByTestId('recent-transactions-panel')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('goal-progress-panel')).not.toBeInTheDocument();
   });
 
   it('renders the calendar card after the alerts banner', () => {

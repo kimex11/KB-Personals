@@ -1,6 +1,3 @@
-'use client';
-
-import { useState } from 'react';
 import type { CalendarEvent } from '@/lib/types';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { formatRelativeDate } from '@/lib/date-utils';
@@ -8,11 +5,10 @@ import { formatRelativeDate } from '@/lib/date-utils';
 interface WeeklyBillsPanelProps {
   bills: CalendarEvent[];
   referenceDate?: Date;
+  onMarkPaid: (id: string) => void;
 }
 
-export function WeeklyBillsPanel({ bills, referenceDate = new Date() }: WeeklyBillsPanelProps) {
-  const [paidIds, setPaidIds] = useState<Set<string>>(new Set());
-
+export function WeeklyBillsPanel({ bills, referenceDate = new Date(), onMarkPaid }: WeeklyBillsPanelProps) {
   return (
     <div data-testid="weekly-bills-panel" className="flex flex-col gap-3">
       <h2 className="font-serif text-lg text-neutral-900">This Week&apos;s Bills</h2>
@@ -33,18 +29,14 @@ export function WeeklyBillsPanel({ bills, referenceDate = new Date() }: WeeklyBi
                   {bill.amount !== undefined ? ` · ₱${bill.amount.toFixed(2)}` : ''}
                 </p>
               </div>
-              {paidIds.has(bill.id) ? (
-                <span className="text-xs text-neutral-400">Coming soon</span>
-              ) : (
-                <button
-                  type="button"
-                  data-testid="mark-paid-button"
-                  className="rounded-full border border-neutral-200 px-3 py-1 text-xs font-medium text-neutral-700"
-                  onClick={() => setPaidIds((prev) => new Set(prev).add(bill.id))}
-                >
-                  Mark as Paid
-                </button>
-              )}
+              <button
+                type="button"
+                data-testid="mark-paid-button"
+                className="rounded-full border border-neutral-200 px-3 py-1 text-xs font-medium text-neutral-700"
+                onClick={() => onMarkPaid(bill.id)}
+              >
+                Mark as Paid
+              </button>
             </div>
           ))}
         </div>
