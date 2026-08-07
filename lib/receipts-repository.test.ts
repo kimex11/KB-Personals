@@ -11,10 +11,12 @@ const uploadMock = vi.fn();
 const removeMock = vi.fn();
 const createSignedUrlMock = vi.fn();
 const insertSelectSingleMock = vi.fn();
-const deleteEqMock = vi.fn();
 const selectOrderMock = vi.fn();
 const getUserMock = vi.fn();
-const updateEqMock = vi.fn();
+const deleteUserEqMock = vi.fn();
+const deleteEqMock = vi.fn(() => ({ eq: deleteUserEqMock }));
+const updateUserEqMock = vi.fn();
+const updateEqMock = vi.fn(() => ({ eq: updateUserEqMock }));
 const updateMock = vi.fn(() => ({ eq: updateEqMock }));
 
 vi.mock('./supabase/client', () => ({
@@ -146,20 +148,28 @@ describe('listReceipts', () => {
 });
 
 describe('deleteReceipt', () => {
-  it('removes the storage object and the row', async () => {
+  it('removes the storage object and the row, scoped to the owning user', async () => {
+    getUserMock.mockResolvedValue({ data: { user: mockUser } });
     removeMock.mockResolvedValue({ error: null });
-    deleteEqMock.mockResolvedValue({ error: null });
+    deleteUserEqMock.mockResolvedValue({ error: null });
 
     await deleteReceipt('receipt-1', 'user-1/a.jpg');
 
     expect(removeMock).toHaveBeenCalledWith(['user-1/a.jpg']);
     expect(deleteEqMock).toHaveBeenCalledWith('id', 'receipt-1');
+    expect(deleteUserEqMock).toHaveBeenCalledWith('user_id', 'user-1');
+  });
+
+  it('throws when there is no authenticated user', async () => {
+    getUserMock.mockResolvedValue({ data: { user: null } });
+    await expect(deleteReceipt('receipt-1', 'user-1/a.jpg')).rejects.toThrow('Not authenticated');
   });
 });
 
 describe('updateReceiptFields', () => {
-  it('updates the merchant, date, and amount columns for the given receipt id', async () => {
-    updateEqMock.mockResolvedValue({ error: null });
+  it('updates the merchant, date, and amount columns for the given receipt id, scoped to the owning user', async () => {
+    getUserMock.mockResolvedValue({ data: { user: mockUser } });
+    updateUserEqMock.mockResolvedValue({ error: null });
 
     await updateReceiptFields('receipt-1', {
       merchant: 'Whole Foods Market',
@@ -174,20 +184,36 @@ describe('updateReceiptFields', () => {
       amount: 42.18,
     });
     expect(updateEqMock).toHaveBeenCalledWith('id', 'receipt-1');
+    expect(updateUserEqMock).toHaveBeenCalledWith('user_id', 'user-1');
+  });
+
+  it('throws when there is no authenticated user', async () => {
+    getUserMock.mockResolvedValue({ data: { user: null } });
+    await expect(
+      updateReceiptFields('receipt-1', { merchant: 'X', date: '2026-08-15', amount: 1, rawText: '' })
+    ).rejects.toThrow('Not authenticated');
   });
 });
 
 describe('linkReceiptToBill', () => {
-  it('sets linked_bill_id to the given bill id', async () => {
-    updateEqMock.mockResolvedValue({ error: null });
+  it('sets linked_bill_id to the given bill id, scoped to the owning user', async () => {
+    getUserMock.mockResolvedValue({ data: { user: mockUser } });
+    updateUserEqMock.mockResolvedValue({ error: null });
     await linkReceiptToBill('receipt-1', 'bill-0');
     expect(updateMock).toHaveBeenCalledWith({ linked_bill_id: 'bill-0' });
     expect(updateEqMock).toHaveBeenCalledWith('id', 'receipt-1');
+    expect(updateUserEqMock).toHaveBeenCalledWith('user_id', 'user-1');
   });
 
   it('sets linked_bill_id to null to unlink', async () => {
-    updateEqMock.mockResolvedValue({ error: null });
+    getUserMock.mockResolvedValue({ data: { user: mockUser } });
+    updateUserEqMock.mockResolvedValue({ error: null });
     await linkReceiptToBill('receipt-1', null);
     expect(updateMock).toHaveBeenCalledWith({ linked_bill_id: null });
+  });
+
+  it('throws when there is no authenticated user', async () => {
+    getUserMock.mockResolvedValue({ data: { user: null } });
+    await expect(linkReceiptToBill('receipt-1', 'bill-0')).rejects.toThrow('Not authenticated');
   });
 });

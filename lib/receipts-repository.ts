@@ -80,14 +80,24 @@ export async function listReceipts(): Promise<StoredReceipt[]> {
   );
 }
 
+async function requireUserId(supabase: ReturnType<typeof createClient>): Promise<string> {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error('Not authenticated');
+  return user.id;
+}
+
 export async function deleteReceipt(id: string, storagePath: string): Promise<void> {
   const supabase = createClient();
+  const userId = await requireUserId(supabase);
   await supabase.storage.from(BUCKET).remove([storagePath]);
-  await supabase.from('receipts').delete().eq('id', id);
+  await supabase.from('receipts').delete().eq('id', id).eq('user_id', userId);
 }
 
 export async function updateReceiptFields(id: string, fields: ExtractedReceiptFields): Promise<void> {
   const supabase = createClient();
+  const userId = await requireUserId(supabase);
   await supabase
     .from('receipts')
     .update({
@@ -95,10 +105,12 @@ export async function updateReceiptFields(id: string, fields: ExtractedReceiptFi
       receipt_date: fields.date,
       amount: fields.amount,
     })
-    .eq('id', id);
+    .eq('id', id)
+    .eq('user_id', userId);
 }
 
 export async function linkReceiptToBill(id: string, billId: string | null): Promise<void> {
   const supabase = createClient();
-  await supabase.from('receipts').update({ linked_bill_id: billId }).eq('id', id);
+  const userId = await requireUserId(supabase);
+  await supabase.from('receipts').update({ linked_bill_id: billId }).eq('id', id).eq('user_id', userId);
 }
