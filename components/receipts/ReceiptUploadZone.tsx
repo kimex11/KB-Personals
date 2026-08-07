@@ -32,6 +32,12 @@ export function ReceiptUploadZone({ onFilesSelected }: ReceiptUploadZoneProps) {
         handleFiles(e.dataTransfer.files);
       }}
       onClick={() => inputRef.current?.click()}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          inputRef.current?.click();
+        }
+      }}
       className={`flex cursor-pointer flex-col items-center justify-center gap-2 rounded-3xl border-2 border-dashed px-4 py-10 text-center transition-colors ${
         isDragging ? 'border-gold bg-gold/5' : 'border-neutral-200'
       }`}

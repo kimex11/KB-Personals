@@ -24,4 +24,20 @@ describe('ReceiptUploadZone', () => {
     });
     expect(onFilesSelected).toHaveBeenCalledWith([file]);
   });
+
+  it('opens the file picker on Enter for keyboard-only users', () => {
+    render(<ReceiptUploadZone onFilesSelected={vi.fn()} />);
+    const input = screen.getByTestId('receipt-file-input') as HTMLInputElement;
+    const clickSpy = vi.spyOn(input, 'click');
+    fireEvent.keyDown(screen.getByTestId('receipt-upload-zone'), { key: 'Enter' });
+    expect(clickSpy).toHaveBeenCalled();
+  });
+
+  it('opens the file picker on Space for keyboard-only users', () => {
+    render(<ReceiptUploadZone onFilesSelected={vi.fn()} />);
+    const input = screen.getByTestId('receipt-file-input') as HTMLInputElement;
+    const clickSpy = vi.spyOn(input, 'click');
+    fireEvent.keyDown(screen.getByTestId('receipt-upload-zone'), { key: ' ' });
+    expect(clickSpy).toHaveBeenCalled();
+  });
 });
