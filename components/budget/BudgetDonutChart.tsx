@@ -28,14 +28,21 @@ const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
 export function BudgetDonutChart({ categories }: BudgetDonutChartProps) {
   const totalSpent = categories.reduce((sum, c) => sum + c.spent, 0);
 
-  let cumulative = 0;
-  const slices = categories.map((category) => {
-    const fraction = totalSpent > 0 ? category.spent / totalSpent : 0;
-    const dash = fraction * CIRCUMFERENCE;
-    const dashoffset = -cumulative;
-    cumulative += dash;
-    return { category, dasharray: `${dash} ${CIRCUMFERENCE - dash}`, dashoffset };
-  });
+  const { slices } = categories.reduce<{
+    slices: { category: BudgetCategory; dasharray: string; dashoffset: number }[];
+    cumulative: number;
+  }>(
+    (acc, category) => {
+      const fraction = totalSpent > 0 ? category.spent / totalSpent : 0;
+      const dash = fraction * CIRCUMFERENCE;
+      const dashoffset = -acc.cumulative;
+      return {
+        slices: [...acc.slices, { category, dasharray: `${dash} ${CIRCUMFERENCE - dash}`, dashoffset }],
+        cumulative: acc.cumulative + dash,
+      };
+    },
+    { slices: [], cumulative: 0 }
+  );
 
   return (
     <div data-testid="budget-donut-chart">
