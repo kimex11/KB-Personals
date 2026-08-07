@@ -18,7 +18,7 @@ export function EventCard({ event }: { event: CalendarEvent }) {
         </div>
       </div>
       {event.amount !== undefined && (
-        <span className="font-serif text-sm text-neutral-900">${event.amount.toFixed(2)}</span>
+        <span className="font-serif text-sm text-neutral-900">₱{event.amount.toFixed(2)}</span>
       )}
     </div>
   );

@@ -76,7 +76,7 @@ export function BudgetDonutChart({ categories }: BudgetDonutChartProps) {
               />
               <span className="text-neutral-900">{category.name}</span>
             </span>
-            <span className="text-neutral-500">${category.spent.toFixed(0)}</span>
+            <span className="text-neutral-500">₱{category.spent.toFixed(0)}</span>
           </li>
         ))}
       </ul>

@@ -38,7 +38,7 @@ export function BudgetCategoryCard({ category }: { category: BudgetCategory }) {
         />
       </div>
       <span className="text-xs text-neutral-500">
-        ${spent.toFixed(0)} of ${limit.toFixed(0)}
+        ₱{spent.toFixed(0)} of ₱{limit.toFixed(0)}
       </span>
     </div>
   );

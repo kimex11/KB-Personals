@@ -43,6 +43,6 @@ describe('BudgetCategoryCard', () => {
 
   it('displays the spent-of-limit amounts', () => {
     render(<BudgetCategoryCard category={underBudget} />);
-    expect(screen.getByText('$400 of $500')).toBeInTheDocument();
+    expect(screen.getByText('₱400 of ₱500')).toBeInTheDocument();
   });
 });

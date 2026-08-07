@@ -19,8 +19,8 @@ describe('BudgetDonutChart', () => {
   it('shows each category name and spent amount in the legend', () => {
     render(<BudgetDonutChart categories={categories} />);
     expect(screen.getByText('Category A')).toBeInTheDocument();
-    expect(screen.getByText('$60')).toBeInTheDocument();
+    expect(screen.getByText('₱60')).toBeInTheDocument();
     expect(screen.getByText('Category B')).toBeInTheDocument();
-    expect(screen.getByText('$40')).toBeInTheDocument();
+    expect(screen.getByText('₱40')).toBeInTheDocument();
   });
 });
