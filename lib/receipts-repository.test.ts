@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { uploadReceipt, listReceipts, deleteReceipt, updateReceiptFields } from './receipts-repository';
+import { uploadReceipt, listReceipts, deleteReceipt, updateReceiptFields, linkReceiptToBill } from './receipts-repository';
 
 const mockUser = { id: 'user-1' };
 
@@ -66,6 +66,7 @@ describe('uploadReceipt', () => {
         merchant: null,
         receipt_date: null,
         amount: null,
+        linked_bill_id: null,
       },
       error: null,
     });
@@ -87,6 +88,7 @@ describe('uploadReceipt', () => {
       merchant: null,
       receiptDate: null,
       amount: null,
+      linkedBillId: null,
     });
   });
 
@@ -111,6 +113,7 @@ describe('listReceipts', () => {
           merchant: 'Whole Foods Market',
           receipt_date: '2026-08-15',
           amount: 42.18,
+          linked_bill_id: 'bill-0',
         },
       ],
       error: null,
@@ -131,6 +134,7 @@ describe('listReceipts', () => {
         merchant: 'Whole Foods Market',
         receiptDate: '2026-08-15',
         amount: 42.18,
+        linkedBillId: 'bill-0',
       },
     ]);
   });
@@ -170,5 +174,20 @@ describe('updateReceiptFields', () => {
       amount: 42.18,
     });
     expect(updateEqMock).toHaveBeenCalledWith('id', 'receipt-1');
+  });
+});
+
+describe('linkReceiptToBill', () => {
+  it('sets linked_bill_id to the given bill id', async () => {
+    updateEqMock.mockResolvedValue({ error: null });
+    await linkReceiptToBill('receipt-1', 'bill-0');
+    expect(updateMock).toHaveBeenCalledWith({ linked_bill_id: 'bill-0' });
+    expect(updateEqMock).toHaveBeenCalledWith('id', 'receipt-1');
+  });
+
+  it('sets linked_bill_id to null to unlink', async () => {
+    updateEqMock.mockResolvedValue({ error: null });
+    await linkReceiptToBill('receipt-1', null);
+    expect(updateMock).toHaveBeenCalledWith({ linked_bill_id: null });
   });
 });

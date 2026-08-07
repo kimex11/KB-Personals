@@ -15,6 +15,7 @@ interface ReceiptRow {
   merchant: string | null;
   receipt_date: string | null;
   amount: number | null;
+  linked_bill_id: string | null;
 }
 
 async function getSignedPreviewUrl(storagePath: string): Promise<string> {
@@ -36,6 +37,7 @@ function rowToStoredReceipt(row: ReceiptRow, previewUrl: string): StoredReceipt 
     merchant: row.merchant ?? null,
     receiptDate: row.receipt_date ?? null,
     amount: row.amount ?? null,
+    linkedBillId: row.linked_bill_id ?? null,
   };
 }
 
@@ -94,4 +96,9 @@ export async function updateReceiptFields(id: string, fields: ExtractedReceiptFi
       amount: fields.amount,
     })
     .eq('id', id);
+}
+
+export async function linkReceiptToBill(id: string, billId: string | null): Promise<void> {
+  const supabase = createClient();
+  await supabase.from('receipts').update({ linked_bill_id: billId }).eq('id', id);
 }
