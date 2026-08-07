@@ -1,8 +1,37 @@
-import { PlaceholderScreen } from '@/components/shared/PlaceholderScreen';
-import { TAB_ITEMS } from '@/components/shell/tab-config';
+'use client';
 
-const icon = TAB_ITEMS.find((tab) => tab.href === '/receipts')!.icon;
+import { useState } from 'react';
+import { ReceiptUploadZone } from '@/components/receipts/ReceiptUploadZone';
+import { ReceiptGrid } from '@/components/receipts/ReceiptGrid';
+import type { StoredReceipt } from '@/lib/receipts-types';
 
 export default function ReceiptsPage() {
-  return <PlaceholderScreen icon={icon} />;
+  const [receipts, setReceipts] = useState<StoredReceipt[]>([]);
+
+  function handleFilesSelected(files: File[]) {
+    const newReceipts: StoredReceipt[] = files.map((file, index) => ({
+      id: `receipt-${Date.now()}-${index}`,
+      fileName: file.name,
+      fileType: file.type,
+      fileSize: file.size,
+      previewUrl: URL.createObjectURL(file),
+      uploadedAt: new Date().toISOString(),
+    }));
+    setReceipts((prev) => [...newReceipts, ...prev]);
+  }
+
+  function handleRemove(id: string) {
+    setReceipts((prev) => {
+      const target = prev.find((receipt) => receipt.id === id);
+      if (target) URL.revokeObjectURL(target.previewUrl);
+      return prev.filter((receipt) => receipt.id !== id);
+    });
+  }
+
+  return (
+    <div data-testid="receipts-page" className="flex flex-col gap-4 px-4 pb-24 pt-4">
+      <ReceiptUploadZone onFilesSelected={handleFilesSelected} />
+      <ReceiptGrid receipts={receipts} onRemove={handleRemove} />
+    </div>
+  );
 }
