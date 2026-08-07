@@ -1,0 +1,83 @@
+'use client';
+
+import { useCallback, useEffect, useState } from 'react';
+import {
+  listCategories,
+  createCategory,
+  updateCategory,
+  archiveCategory,
+  unarchiveCategory,
+  deleteCategory,
+  mergeCategories,
+  reorderCategories,
+} from './categories-repository';
+import type { Category, CategoryIconKey } from './categories-types';
+
+export interface UseCategoriesResult {
+  categories: Category[];
+  activeCategories: Category[];
+  archivedCategories: Category[];
+  loading: boolean;
+  error: string | null;
+  refresh: () => Promise<void>;
+  create: (input: { name: string; icon: CategoryIconKey; colorSlot: number }) => Promise<void>;
+  update: (id: string, patch: Partial<Pick<Category, 'name' | 'icon' | 'colorSlot'>>) => Promise<void>;
+  archive: (id: string) => Promise<void>;
+  unarchive: (id: string) => Promise<void>;
+  remove: (id: string, reassignToId?: string) => Promise<void>;
+  merge: (sourceId: string, targetId: string) => Promise<void>;
+  reorder: (orderedIds: string[]) => Promise<void>;
+}
+
+export function useCategories(): UseCategoriesResult {
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const refresh = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      setCategories(await listCategories());
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load categories');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    refresh();
+  }, [refresh]);
+
+  const runMutation = useCallback(
+    async (fn: () => Promise<unknown>) => {
+      setError(null);
+      try {
+        await fn();
+        await refresh();
+      } catch (err) {
+        const message = err instanceof Error ? err.message : 'Action failed';
+        setError(message);
+        throw err;
+      }
+    },
+    [refresh]
+  );
+
+  return {
+    categories,
+    activeCategories: categories.filter((c) => !c.archived),
+    archivedCategories: categories.filter((c) => c.archived),
+    loading,
+    error,
+    refresh,
+    create: (input) => runMutation(() => createCategory(input)),
+    update: (id, patch) => runMutation(() => updateCategory(id, patch)),
+    archive: (id) => runMutation(() => archiveCategory(id)),
+    unarchive: (id) => runMutation(() => unarchiveCategory(id)),
+    remove: (id, reassignToId) => runMutation(() => deleteCategory(id, reassignToId)),
+    merge: (sourceId, targetId) => runMutation(() => mergeCategories(sourceId, targetId)),
+    reorder: (orderedIds) => runMutation(() => reorderCategories(orderedIds)),
+  };
+}
