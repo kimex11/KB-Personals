@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { uploadReceipt, listReceipts, deleteReceipt } from './receipts-repository';
+import { uploadReceipt, listReceipts, deleteReceipt, updateReceiptFields } from './receipts-repository';
 
 const mockUser = { id: 'user-1' };
 
@@ -14,6 +14,8 @@ const insertSelectSingleMock = vi.fn();
 const deleteEqMock = vi.fn();
 const selectOrderMock = vi.fn();
 const getUserMock = vi.fn();
+const updateEqMock = vi.fn();
+const updateMock = vi.fn(() => ({ eq: updateEqMock }));
 
 vi.mock('./supabase/client', () => ({
   createClient: () => ({
@@ -39,6 +41,7 @@ vi.mock('./supabase/client', () => ({
         delete: () => ({
           eq: deleteEqMock,
         }),
+        update: updateMock,
       };
     },
   }),
@@ -135,5 +138,25 @@ describe('deleteReceipt', () => {
 
     expect(removeMock).toHaveBeenCalledWith(['user-1/a.jpg']);
     expect(deleteEqMock).toHaveBeenCalledWith('id', 'receipt-1');
+  });
+});
+
+describe('updateReceiptFields', () => {
+  it('updates the merchant, date, and amount columns for the given receipt id', async () => {
+    updateEqMock.mockResolvedValue({ error: null });
+
+    await updateReceiptFields('receipt-1', {
+      merchant: 'Whole Foods Market',
+      date: '2026-08-15',
+      amount: 42.18,
+      rawText: 'irrelevant',
+    });
+
+    expect(updateMock).toHaveBeenCalledWith({
+      merchant: 'Whole Foods Market',
+      receipt_date: '2026-08-15',
+      amount: 42.18,
+    });
+    expect(updateEqMock).toHaveBeenCalledWith('id', 'receipt-1');
   });
 });

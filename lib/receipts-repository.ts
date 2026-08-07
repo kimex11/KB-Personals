@@ -1,5 +1,6 @@
 import { createClient } from './supabase/client';
 import type { StoredReceipt } from './receipts-types';
+import type { ExtractedReceiptFields } from './receipt-ocr-types';
 
 const BUCKET = 'receipts';
 const SIGNED_URL_TTL_SECONDS = 60 * 60;
@@ -75,4 +76,16 @@ export async function deleteReceipt(id: string, storagePath: string): Promise<vo
   const supabase = createClient();
   await supabase.storage.from(BUCKET).remove([storagePath]);
   await supabase.from('receipts').delete().eq('id', id);
+}
+
+export async function updateReceiptFields(id: string, fields: ExtractedReceiptFields): Promise<void> {
+  const supabase = createClient();
+  await supabase
+    .from('receipts')
+    .update({
+      merchant: fields.merchant,
+      receipt_date: fields.date,
+      amount: fields.amount,
+    })
+    .eq('id', id);
 }
