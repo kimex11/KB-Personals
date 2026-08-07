@@ -1,10 +1,58 @@
 import { describe, expect, it, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
-import BillsPage from './page';
+import userEvent from '@testing-library/user-event';
 
 vi.mock('@/lib/use-calendar-events', () => ({
   useCalendarEvents: () => ({ events: [], getEventsForDate: () => [] }),
 }));
+
+const bills = [
+  { id: 'bill-1', title: 'Rent', category: 'Housing', categoryId: 'cat-1', amount: 1450, dueDate: '2026-08-01', recurrence: 'monthly' as const, paid: true },
+  { id: 'bill-2', title: 'Electricity', category: 'Utilities', categoryId: 'cat-2', amount: 85, dueDate: '2026-08-20', recurrence: 'monthly' as const, paid: false },
+];
+
+const categories = [
+  { id: 'cat-1', name: 'Housing', icon: 'building-2' as const, colorSlot: 1, sortOrder: 0, archived: false, createdAt: '2026-08-15T10:00:00.000Z' },
+  { id: 'cat-2', name: 'Utilities', icon: 'zap' as const, colorSlot: 5, sortOrder: 1, archived: false, createdAt: '2026-08-15T10:00:00.000Z' },
+];
+
+const createBillMock = vi.fn().mockResolvedValue(undefined);
+const updateBillMock = vi.fn().mockResolvedValue(undefined);
+const deleteBillMock = vi.fn().mockResolvedValue(undefined);
+const togglePaidMock = vi.fn().mockResolvedValue(undefined);
+
+vi.mock('@/lib/use-bills', () => ({
+  useBills: () => ({
+    bills,
+    loading: false,
+    error: null,
+    refresh: vi.fn(),
+    createBill: createBillMock,
+    updateBill: updateBillMock,
+    deleteBill: deleteBillMock,
+    togglePaid: togglePaidMock,
+  }),
+}));
+
+vi.mock('@/lib/use-categories', () => ({
+  useCategories: () => ({
+    categories,
+    activeCategories: categories,
+    archivedCategories: [],
+    loading: false,
+    error: null,
+    refresh: vi.fn(),
+    create: vi.fn(),
+    update: vi.fn(),
+    archive: vi.fn(),
+    unarchive: vi.fn(),
+    remove: vi.fn(),
+    merge: vi.fn(),
+    reorder: vi.fn(),
+  }),
+}));
+
+import BillsPage from './page';
 
 describe('BillsPage', () => {
   it('shows the list view by default', () => {
@@ -26,20 +74,42 @@ describe('BillsPage', () => {
     expect(screen.getByTestId('bills-list-view')).toBeInTheDocument();
   });
 
-  it('marks a bill as paid when its toggle is clicked', () => {
+  it('calls togglePaid when a bill toggle is clicked', () => {
     render(<BillsPage />);
-    const unpaidCountBefore = screen
-      .getAllByTestId('bill-paid-toggle')
-      .filter((el) => el.getAttribute('aria-pressed') === 'false').length;
-
     const firstUnpaid = screen
       .getAllByTestId('bill-paid-toggle')
       .find((el) => el.getAttribute('aria-pressed') === 'false')!;
     fireEvent.click(firstUnpaid);
+    expect(togglePaidMock).toHaveBeenCalledWith('bill-2');
+  });
 
-    const unpaidCountAfter = screen
-      .getAllByTestId('bill-paid-toggle')
-      .filter((el) => el.getAttribute('aria-pressed') === 'false').length;
-    expect(unpaidCountAfter).toBe(unpaidCountBefore - 1);
+  it('renders an Add Bill button that opens the form and creates a bill on submit', async () => {
+    const user = userEvent.setup();
+    render(<BillsPage />);
+    await user.click(screen.getByRole('button', { name: /add bill/i }));
+    expect(screen.getByRole('heading', { name: /add bill/i })).toBeInTheDocument();
+
+    await user.type(screen.getByLabelText(/title/i), 'Water Bill');
+    await user.type(screen.getByLabelText(/amount/i), '30');
+    await user.type(screen.getByLabelText(/due date/i), '2026-09-01');
+    await user.click(screen.getByRole('button', { name: /^save$/i }));
+
+    expect(createBillMock).toHaveBeenCalledWith({ title: 'Water Bill', categoryId: 'cat-1', amount: 30, dueDate: '2026-09-01', recurrence: null });
+  });
+
+  it('opens the edit form pre-filled when a bill row Edit is clicked', async () => {
+    const user = userEvent.setup();
+    render(<BillsPage />);
+    await user.click(screen.getByRole('button', { name: /edit rent/i }));
+    expect(screen.getByRole('heading', { name: /edit bill/i })).toBeInTheDocument();
+    expect(screen.getByLabelText(/title/i)).toHaveValue('Rent');
+  });
+
+  it('deletes a bill after confirming', async () => {
+    const user = userEvent.setup();
+    render(<BillsPage />);
+    await user.click(screen.getByRole('button', { name: /delete rent/i }));
+    await user.click(screen.getByRole('button', { name: /^delete$/i }));
+    expect(deleteBillMock).toHaveBeenCalledWith('bill-1');
   });
 });

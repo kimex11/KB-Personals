@@ -5,13 +5,13 @@ import { ReceiptUploadZone } from '@/components/receipts/ReceiptUploadZone';
 import { ReceiptGrid } from '@/components/receipts/ReceiptGrid';
 import { useReceiptOcr } from '@/lib/use-receipt-ocr';
 import { listReceipts, uploadReceipt, deleteReceipt, updateReceiptFields, linkReceiptToBill } from '@/lib/receipts-repository';
-import { mockBills } from '@/lib/bills-data';
+import { useBills } from '@/lib/use-bills';
 import type { StoredReceipt } from '@/lib/receipts-types';
 import type { ExtractedReceiptFields, OcrStatus } from '@/lib/receipt-ocr-types';
 
-const LINKABLE_BILLS = mockBills.map((bill) => ({ id: bill.id, title: bill.title }));
-
 export default function ReceiptsPage() {
+  const { bills } = useBills();
+  const linkableBills = bills.map((bill) => ({ id: bill.id, title: bill.title }));
   const [receipts, setReceipts] = useState<StoredReceipt[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -103,7 +103,7 @@ export default function ReceiptsPage() {
           onRemove={handleRemove}
           ocrStatusById={mergedStatusById}
           ocrResultById={mergedResultById}
-          bills={LINKABLE_BILLS}
+          bills={linkableBills}
           onLinkBill={handleLinkBill}
         />
       )}

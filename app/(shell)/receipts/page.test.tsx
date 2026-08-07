@@ -26,6 +26,19 @@ vi.mock('@/lib/receipt-ocr', () => ({
   extractTextFromImage: vi.fn().mockResolvedValue('Corner Cafe\nTotal $12.50\n2026-08-15'),
 }));
 
+vi.mock('@/lib/use-bills', () => ({
+  useBills: () => ({
+    bills: [{ id: 'bill-1', title: 'Rent', category: 'Housing', categoryId: 'cat-1', amount: 1450, dueDate: '2026-08-16', recurrence: 'monthly', paid: false }],
+    loading: false,
+    error: null,
+    refresh: vi.fn(),
+    createBill: vi.fn(),
+    updateBill: vi.fn(),
+    deleteBill: vi.fn(),
+    togglePaid: vi.fn(),
+  }),
+}));
+
 const existingReceipt: StoredReceipt = {
   id: 'receipt-1',
   fileName: 'existing.jpg',
@@ -164,10 +177,10 @@ describe('ReceiptsPage', () => {
     render(<ReceiptsPage />);
     await waitFor(() => expect(screen.getByTestId('receipt-card')).toBeInTheDocument());
 
-    fireEvent.change(screen.getByTestId('receipt-bill-link-select'), { target: { value: 'bill-0' } });
+    fireEvent.change(screen.getByTestId('receipt-bill-link-select'), { target: { value: 'bill-1' } });
 
-    await waitFor(() => expect(linkReceiptToBillMock).toHaveBeenCalledWith('receipt-1', 'bill-0'));
-    expect(screen.getByTestId('receipt-bill-link-select')).toHaveValue('bill-0');
+    await waitFor(() => expect(linkReceiptToBillMock).toHaveBeenCalledWith('receipt-1', 'bill-1'));
+    expect(screen.getByTestId('receipt-bill-link-select')).toHaveValue('bill-1');
   });
 
   it('restores the receipt and shows an error when delete fails', async () => {

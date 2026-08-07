@@ -1,64 +1,110 @@
 'use client';
 
 import { useState } from 'react';
+import { Plus } from 'lucide-react';
 import { MonthGrid } from '@/components/calendar/MonthGrid';
 import { DayDetailPanel } from '@/components/calendar/DayDetailPanel';
 import { useCalendarEvents } from '@/lib/use-calendar-events';
 import { useIsMounted } from '@/lib/use-is-mounted';
-import { mockBills } from '@/lib/bills-data';
+import { useBills } from '@/lib/use-bills';
+import { useCategories } from '@/lib/use-categories';
 import { BillsListView } from '@/components/bills/BillsListView';
+import { BillForm } from '@/components/bills/BillForm';
+import { ConfirmDeleteDialog } from '@/components/shared/ConfirmDeleteDialog';
 import { Button } from '@/components/ui/button';
+import type { Bill } from '@/lib/bills-types';
 
 export default function BillsPage() {
   const [view, setView] = useState<'list' | 'calendar'>('list');
-  const [paidOverrides, setPaidOverrides] = useState<Set<string>>(new Set());
   const [selectedDate, setSelectedDate] = useState(() => new Date());
   const { getEventsForDate } = useCalendarEvents();
   const isMounted = useIsMounted();
 
-  const bills = mockBills.map((bill) => ({
-    ...bill,
-    paid: bill.paid || paidOverrides.has(bill.id),
-  }));
+  const { bills, error, createBill, updateBill, deleteBill, togglePaid } = useBills();
+  const { activeCategories } = useCategories();
 
-  function togglePaid(id: string) {
-    setPaidOverrides((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
+  const [formOpen, setFormOpen] = useState(false);
+  const [editingBill, setEditingBill] = useState<(Bill & { categoryId: string }) | undefined>(undefined);
+  const [deleteTarget, setDeleteTarget] = useState<Bill | null>(null);
+
+  function openAddForm() {
+    setEditingBill(undefined);
+    setFormOpen(true);
+  }
+
+  function openEditForm(bill: Bill) {
+    setEditingBill(bill as Bill & { categoryId: string });
+    setFormOpen(true);
+  }
+
+  async function handleSubmit(input: { title: string; categoryId: string; amount: number; dueDate: string; recurrence: Bill['recurrence'] }) {
+    if (editingBill) {
+      await updateBill(editingBill.id, input);
+    } else {
+      await createBill(input);
+    }
   }
 
   return (
     <div data-testid="bills-page" className="flex flex-col gap-4 px-4 pb-24 pt-4">
-      <div data-testid="bills-view-toggle" className="flex gap-2">
-        <Button
-          data-testid="bills-view-list"
-          variant={view === 'list' ? 'default' : 'outline'}
-          size="sm"
-          onClick={() => setView('list')}
-        >
-          List
-        </Button>
-        <Button
-          data-testid="bills-view-calendar"
-          variant={view === 'calendar' ? 'default' : 'outline'}
-          size="sm"
-          onClick={() => setView('calendar')}
-        >
-          Calendar
+      <div className="flex items-center justify-between">
+        <div data-testid="bills-view-toggle" className="flex gap-2">
+          <Button
+            data-testid="bills-view-list"
+            variant={view === 'list' ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => setView('list')}
+          >
+            List
+          </Button>
+          <Button
+            data-testid="bills-view-calendar"
+            variant={view === 'calendar' ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => setView('calendar')}
+          >
+            Calendar
+          </Button>
+        </div>
+        <Button size="sm" onClick={openAddForm}>
+          <Plus className="h-4 w-4" />
+          Add Bill
         </Button>
       </div>
+      {error && <p className="text-sm text-status-critical">{error}</p>}
       {isMounted &&
         (view === 'list' ? (
-          <BillsListView bills={bills} onTogglePaid={togglePaid} referenceDate={new Date()} />
+          <BillsListView
+            bills={bills}
+            onTogglePaid={togglePaid}
+            referenceDate={new Date()}
+            onEdit={openEditForm}
+            onDelete={setDeleteTarget}
+          />
         ) : (
           <>
             <MonthGrid getEventsForDate={getEventsForDate} selectedDate={selectedDate} onSelectDate={setSelectedDate} />
             <DayDetailPanel date={selectedDate} events={getEventsForDate(selectedDate)} />
           </>
         ))}
+
+      <BillForm
+        key={`${editingBill?.id ?? 'new'}-${formOpen}`}
+        open={formOpen}
+        onOpenChange={setFormOpen}
+        categories={activeCategories}
+        initialBill={editingBill}
+        onSubmit={handleSubmit}
+      />
+      {deleteTarget && (
+        <ConfirmDeleteDialog
+          open={!!deleteTarget}
+          onOpenChange={(open) => !open && setDeleteTarget(null)}
+          title={`Delete ${deleteTarget.title}?`}
+          description="This can't be undone."
+          onConfirm={() => deleteBill(deleteTarget.id)}
+        />
+      )}
     </div>
   );
 }
