@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   listCreditCardDues,
   createCreditCardDue,
@@ -32,18 +32,22 @@ export function useAccounts(): UseAccountsResult {
   const [incomeSources, setIncomeSources] = useState<IncomeSource[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const requestIdRef = useRef(0);
 
   const refresh = useCallback(async () => {
+    const requestId = ++requestIdRef.current;
     setLoading(true);
     setError(null);
     try {
       const [cardRows, incomeRows] = await Promise.all([listCreditCardDues(), listIncomeSources()]);
+      if (requestId !== requestIdRef.current) return; // a newer refresh already landed
       setCards(cardRows);
       setIncomeSources(incomeRows);
     } catch (err) {
+      if (requestId !== requestIdRef.current) return;
       setError(err instanceof Error ? err.message : 'Failed to load accounts');
     } finally {
-      setLoading(false);
+      if (requestId === requestIdRef.current) setLoading(false);
     }
   }, []);
 

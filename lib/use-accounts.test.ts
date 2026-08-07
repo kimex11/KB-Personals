@@ -102,4 +102,27 @@ describe('useAccounts', () => {
     expect(createIncomeSourceMock).toHaveBeenCalled();
     expect(result.current.incomeSources).toEqual([income]);
   });
+
+  it('ignores a stale in-flight request that rejects after a newer one already succeeded', async () => {
+    let rejectFirst: (err: Error) => void = () => {};
+    const firstCall = new Promise((_resolve, reject) => {
+      rejectFirst = reject;
+    });
+    listCreditCardDuesMock.mockReturnValueOnce(firstCall).mockResolvedValueOnce([card]);
+    listIncomeSourcesMock.mockResolvedValue([income]);
+
+    const { result } = renderHook(() => useAccounts());
+    await act(async () => {
+      await result.current.refresh();
+    });
+    expect(result.current.cards).toEqual([card]);
+
+    await act(async () => {
+      rejectFirst(new Error('stale failure'));
+      await firstCall.catch(() => {});
+    });
+
+    expect(result.current.cards).toEqual([card]);
+    expect(result.current.error).toBeNull();
+  });
 });

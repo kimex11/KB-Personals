@@ -104,4 +104,26 @@ describe('useCategories', () => {
 
     expect(reorderCategoriesMock).toHaveBeenCalledWith(['cat-2', 'cat-1']);
   });
+
+  it('ignores a stale in-flight request that rejects after a newer one already succeeded', async () => {
+    let rejectFirst: (err: Error) => void = () => {};
+    const firstCall = new Promise((_resolve, reject) => {
+      rejectFirst = reject;
+    });
+    listCategoriesMock.mockReturnValueOnce(firstCall).mockResolvedValueOnce([activeCategory]);
+
+    const { result } = renderHook(() => useCategories());
+    await act(async () => {
+      await result.current.refresh();
+    });
+    expect(result.current.categories).toEqual([activeCategory]);
+
+    await act(async () => {
+      rejectFirst(new Error('stale failure'));
+      await firstCall.catch(() => {});
+    });
+
+    expect(result.current.categories).toEqual([activeCategory]);
+    expect(result.current.error).toBeNull();
+  });
 });

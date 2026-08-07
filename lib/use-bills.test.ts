@@ -79,4 +79,31 @@ describe('useBills', () => {
 
     expect(result.current.error).toBe('cannot delete');
   });
+
+  it('ignores a stale in-flight request that rejects after a newer one already succeeded', async () => {
+    let rejectFirst: (err: Error) => void = () => {};
+    const firstCall = new Promise((_resolve, reject) => {
+      rejectFirst = reject;
+    });
+    listBillsMock.mockReturnValueOnce(firstCall).mockResolvedValueOnce([bill]);
+
+    const { result } = renderHook(() => useBills());
+    // A second refresh starts (and completes) while the first mount-triggered
+    // request is still pending.
+    await act(async () => {
+      await result.current.refresh();
+    });
+    expect(result.current.bills).toEqual([bill]);
+    expect(result.current.loading).toBe(false);
+
+    // The stale first request finally rejects -- it must not clobber the
+    // already-applied, newer successful state.
+    await act(async () => {
+      rejectFirst(new Error('stale failure'));
+      await firstCall.catch(() => {});
+    });
+
+    expect(result.current.bills).toEqual([bill]);
+    expect(result.current.error).toBeNull();
+  });
 });

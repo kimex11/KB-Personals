@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { listBills, createBill, updateBill, deleteBill } from './bills-repository';
 import type { Bill, RecurrenceInterval } from './bills-types';
 
@@ -26,16 +26,21 @@ export function useBills(): UseBillsResult {
   const [bills, setBills] = useState<BillWithCategoryId[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const requestIdRef = useRef(0);
 
   const refresh = useCallback(async () => {
+    const requestId = ++requestIdRef.current;
     setLoading(true);
     setError(null);
     try {
-      setBills(await listBills());
+      const result = await listBills();
+      if (requestId !== requestIdRef.current) return; // a newer refresh already landed
+      setBills(result);
     } catch (err) {
+      if (requestId !== requestIdRef.current) return;
       setError(err instanceof Error ? err.message : 'Failed to load bills');
     } finally {
-      setLoading(false);
+      if (requestId === requestIdRef.current) setLoading(false);
     }
   }, []);
 
