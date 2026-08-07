@@ -43,4 +43,14 @@ describe('BillRow', () => {
     render(<BillRow bill={paidBill} onTogglePaid={vi.fn()} referenceDate={referenceDate} />);
     expect(screen.getByTestId('bill-paid-toggle')).toHaveAttribute('aria-pressed', 'true');
   });
+
+  it('shows a possible-duplicate warning when isDuplicate is true', () => {
+    render(<BillRow bill={bill} onTogglePaid={vi.fn()} referenceDate={referenceDate} isDuplicate />);
+    expect(screen.getByTestId('bill-duplicate-warning')).toHaveTextContent('Possible duplicate');
+  });
+
+  it('does not show a duplicate warning by default', () => {
+    render(<BillRow bill={bill} onTogglePaid={vi.fn()} referenceDate={referenceDate} />);
+    expect(screen.queryByTestId('bill-duplicate-warning')).not.toBeInTheDocument();
+  });
 });
