@@ -42,4 +42,9 @@ describe('HomePage', () => {
     const calendarCard = screen.getByTestId('dashboard-calendar-card');
     expect(alertsBanner.compareDocumentPosition(calendarCard) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
+
+  it('renders notification settings', () => {
+    render(<HomePage />);
+    expect(screen.getByTestId('notification-settings')).toBeInTheDocument();
+  });
 });
