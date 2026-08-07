@@ -47,6 +47,9 @@ export function useCategories(): UseCategoriesResult {
   }, []);
 
   useEffect(() => {
+    // Fetch-on-mount: the lint rule flags any effect that transitively sets
+    // state, but loading data when a hook mounts is exactly what effects are for.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     refresh();
   }, [refresh]);
 

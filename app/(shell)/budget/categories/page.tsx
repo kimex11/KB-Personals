@@ -95,7 +95,13 @@ export default function CategoriesPage() {
         </div>
       )}
 
-      <CategoryForm open={formOpen} onOpenChange={setFormOpen} initialCategory={editingCategory} onSubmit={handleSubmit} />
+      <CategoryForm
+        key={`${editingCategory?.id ?? 'new'}-${formOpen}`}
+        open={formOpen}
+        onOpenChange={setFormOpen}
+        initialCategory={editingCategory}
+        onSubmit={handleSubmit}
+      />
 
       {deleteTarget && (
         <DeleteCategoryDialog

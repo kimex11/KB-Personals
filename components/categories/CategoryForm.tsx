@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from '@/components/ui/sheet';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -25,12 +25,6 @@ export function CategoryForm({ open, onOpenChange, initialCategory, onSubmit }: 
   const [icon, setIcon] = useState<CategoryIconKey>(initialCategory?.icon ?? CATEGORY_ICON_KEYS[0]);
   const [colorSlot, setColorSlot] = useState<number>(initialCategory?.colorSlot ?? CATEGORY_COLOR_SLOTS[0]);
   const [submitting, setSubmitting] = useState(false);
-
-  useEffect(() => {
-    setName(initialCategory?.name ?? '');
-    setIcon(initialCategory?.icon ?? CATEGORY_ICON_KEYS[0]);
-    setColorSlot(initialCategory?.colorSlot ?? CATEGORY_COLOR_SLOTS[0]);
-  }, [initialCategory, open]);
 
   async function handleSubmit() {
     setSubmitting(true);
