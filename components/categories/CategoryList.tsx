@@ -1,0 +1,117 @@
+'use client';
+
+import { DndContext, KeyboardSensor, PointerSensor, closestCenter, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
+import { SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import { GripVertical, Pencil, Archive, ArchiveRestore, Trash2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { ICON_MAP } from '@/lib/category-icons';
+import { DOT_COLOR_CLASS } from '@/lib/category-colors';
+import { reorderIds } from '@/lib/categories-reorder';
+import type { Category } from '@/lib/categories-types';
+
+interface CategoryListProps {
+  categories: Category[];
+  onReorder: (orderedIds: string[]) => void;
+  onEdit: (category: Category) => void;
+  onArchive: (id: string) => void;
+  onUnarchive: (id: string) => void;
+  onDelete: (category: Category) => void;
+}
+
+export function CategoryList({ categories, onReorder, onEdit, onArchive, onUnarchive, onDelete }: CategoryListProps) {
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
+
+  function handleDragEnd(event: DragEndEvent) {
+    const overId = event.over?.id;
+    if (!overId) return;
+    const activeId = String(event.active.id);
+    const ids = categories.map((c) => c.id);
+    const next = reorderIds(ids, activeId, String(overId));
+    if (next.join() !== ids.join()) onReorder(next);
+  }
+
+  return (
+    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+      <SortableContext items={categories.map((c) => c.id)} strategy={verticalListSortingStrategy}>
+        <ul className="flex flex-col gap-2">
+          {categories.map((category) => (
+            <CategoryRow
+              key={category.id}
+              category={category}
+              onEdit={onEdit}
+              onArchive={onArchive}
+              onUnarchive={onUnarchive}
+              onDelete={onDelete}
+            />
+          ))}
+        </ul>
+      </SortableContext>
+    </DndContext>
+  );
+}
+
+function CategoryRow({
+  category,
+  onEdit,
+  onArchive,
+  onUnarchive,
+  onDelete,
+}: {
+  category: Category;
+  onEdit: (category: Category) => void;
+  onArchive: (id: string) => void;
+  onUnarchive: (id: string) => void;
+  onDelete: (category: Category) => void;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: category.id, disabled: category.archived });
+  const Icon = ICON_MAP[category.icon];
+  const style = { transform: CSS.Transform.toString(transform), transition };
+
+  return (
+    <li
+      ref={setNodeRef}
+      style={style}
+      data-testid="category-row"
+      className="flex items-center gap-3 rounded-2xl border border-neutral-200 bg-white p-3"
+    >
+      {!category.archived && (
+        <button
+          type="button"
+          data-testid="category-drag-handle"
+          aria-label={`Reorder ${category.name}`}
+          className="cursor-grab touch-none text-neutral-400"
+          {...attributes}
+          {...listeners}
+        >
+          <GripVertical className="h-4 w-4" />
+        </button>
+      )}
+      <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${DOT_COLOR_CLASS[category.colorSlot]}`}>
+        <Icon className="h-4 w-4 text-white" />
+      </span>
+      <span className="flex-1 text-sm font-medium text-neutral-900">{category.name}</span>
+      {category.archived && (
+        <span className="rounded-full bg-neutral-100 px-2 py-0.5 text-xs text-neutral-500">Archived</span>
+      )}
+      <Button variant="ghost" size="icon-sm" aria-label={`Edit ${category.name}`} onClick={() => onEdit(category)}>
+        <Pencil className="h-4 w-4" />
+      </Button>
+      {category.archived ? (
+        <Button variant="ghost" size="icon-sm" aria-label={`Unarchive ${category.name}`} onClick={() => onUnarchive(category.id)}>
+          <ArchiveRestore className="h-4 w-4" />
+        </Button>
+      ) : (
+        <Button variant="ghost" size="icon-sm" aria-label={`Archive ${category.name}`} onClick={() => onArchive(category.id)}>
+          <Archive className="h-4 w-4" />
+        </Button>
+      )}
+      <Button variant="ghost" size="icon-sm" aria-label={`Delete ${category.name}`} onClick={() => onDelete(category)}>
+        <Trash2 className="h-4 w-4" />
+      </Button>
+    </li>
+  );
+}
