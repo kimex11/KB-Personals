@@ -32,6 +32,7 @@ export function BillsFilterBar({
       <input
         type="text"
         data-testid="bills-search-input"
+        aria-label="Search bills"
         value={query}
         onChange={(e) => onQueryChange(e.target.value)}
         placeholder="Search bills"
@@ -56,6 +57,7 @@ export function BillsFilterBar({
         </div>
         <select
           data-testid="bills-sort-select"
+          aria-label="Sort bills"
           value={sortBy}
           onChange={(e) => onSortByChange(e.target.value as 'dueDate' | 'amount')}
           className="rounded-full border border-neutral-200 px-2 py-1 text-xs text-neutral-600"

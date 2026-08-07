@@ -31,6 +31,7 @@ export function RemindersFilterBar({
       <input
         type="text"
         data-testid="reminders-search-input"
+        aria-label="Search reminders"
         value={query}
         onChange={(e) => onQueryChange(e.target.value)}
         placeholder="Search reminders"
@@ -55,6 +56,7 @@ export function RemindersFilterBar({
         </div>
         <select
           data-testid="reminders-sort-select"
+          aria-label="Sort reminders"
           value={sortBy}
           onChange={(e) => onSortByChange(e.target.value as 'dueDate' | 'priority')}
           className="rounded-full border border-neutral-200 px-2 py-1 text-xs text-neutral-600"

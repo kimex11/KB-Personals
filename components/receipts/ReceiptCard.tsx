@@ -58,6 +58,7 @@ export function ReceiptCard({ receipt, onRemove, ocrStatus, extractedFields, bil
         {bills && bills.length > 0 && onLinkBill && (
           <select
             data-testid="receipt-bill-link-select"
+            aria-label={`Link ${receipt.fileName} to a bill`}
             value={receipt.linkedBillId ?? ''}
             onChange={(e) => onLinkBill(receipt.id, e.target.value === '' ? null : e.target.value)}
             className="mt-1 rounded-full border border-neutral-200 px-2 py-1 text-[10px] text-neutral-600"
