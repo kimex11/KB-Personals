@@ -1,5 +1,7 @@
+import { Pencil, Trash2 } from 'lucide-react';
 import type { Reminder } from '@/lib/reminders-types';
 import { PriorityBadge } from './PriorityBadge';
+import { Button } from '@/components/ui/button';
 import { formatRelativeDate } from '@/lib/date-utils';
 
 interface ReminderRowProps {
@@ -7,9 +9,11 @@ interface ReminderRowProps {
   onToggleComplete: (id: string) => void;
   onSnooze: (id: string) => void;
   referenceDate?: Date;
+  onEdit?: (reminder: Reminder) => void;
+  onDelete?: (reminder: Reminder) => void;
 }
 
-export function ReminderRow({ reminder, onToggleComplete, onSnooze, referenceDate = new Date() }: ReminderRowProps) {
+export function ReminderRow({ reminder, onToggleComplete, onSnooze, referenceDate = new Date(), onEdit, onDelete }: ReminderRowProps) {
   return (
     <div
       data-testid="reminder-row"
@@ -53,6 +57,20 @@ export function ReminderRow({ reminder, onToggleComplete, onSnooze, referenceDat
           </button>
         )}
       </div>
+      {(onEdit || onDelete) && (
+        <div className="flex flex-col gap-1">
+          {onEdit && (
+            <Button variant="ghost" size="icon-sm" aria-label={`Edit ${reminder.title}`} onClick={() => onEdit(reminder)}>
+              <Pencil className="h-4 w-4" />
+            </Button>
+          )}
+          {onDelete && (
+            <Button variant="ghost" size="icon-sm" aria-label={`Delete ${reminder.title}`} onClick={() => onDelete(reminder)}>
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          )}
+        </div>
+      )}
     </div>
   );
 }

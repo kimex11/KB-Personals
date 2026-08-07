@@ -13,6 +13,8 @@ interface RemindersListViewProps {
   onToggleComplete: (id: string) => void;
   onSnooze: (id: string) => void;
   referenceDate?: Date;
+  onEdit?: (reminder: Reminder) => void;
+  onDelete?: (reminder: Reminder) => void;
 }
 
 export function RemindersListView({
@@ -20,6 +22,8 @@ export function RemindersListView({
   onToggleComplete,
   onSnooze,
   referenceDate = new Date(),
+  onEdit,
+  onDelete,
 }: RemindersListViewProps) {
   const [query, setQuery] = useState('');
   const [priorityFilter, setPriorityFilter] = useState<Priority | 'all'>('all');
@@ -54,6 +58,8 @@ export function RemindersListView({
               onToggleComplete={onToggleComplete}
               onSnooze={onSnooze}
               referenceDate={referenceDate}
+              onEdit={onEdit}
+              onDelete={onDelete}
             />
           ))}
         </div>

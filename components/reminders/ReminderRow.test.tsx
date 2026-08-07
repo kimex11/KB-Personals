@@ -48,4 +48,18 @@ describe('ReminderRow', () => {
     render(<ReminderRow reminder={completed} onToggleComplete={vi.fn()} onSnooze={vi.fn()} referenceDate={referenceDate} />);
     expect(screen.queryByTestId('reminder-snooze-button')).not.toBeInTheDocument();
   });
+
+  it('calls onEdit/onDelete when the action buttons are clicked', () => {
+    const onEdit = vi.fn();
+    const onDelete = vi.fn();
+    render(
+      <ReminderRow reminder={reminder} onToggleComplete={vi.fn()} onSnooze={vi.fn()} referenceDate={referenceDate} onEdit={onEdit} onDelete={onDelete} />
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /edit call insurance provider/i }));
+    expect(onEdit).toHaveBeenCalledWith(reminder);
+
+    fireEvent.click(screen.getByRole('button', { name: /delete call insurance provider/i }));
+    expect(onDelete).toHaveBeenCalledWith(reminder);
+  });
 });
