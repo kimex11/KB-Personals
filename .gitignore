@@ -43,3 +43,6 @@ next-env.d.ts
 # design reference assets (not used by app code)
 /logo.png
 /Ui:UX Design reference.png
+
+# local secrets, never commit
+Secrets.md
