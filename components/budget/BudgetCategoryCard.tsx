@@ -1,13 +1,5 @@
 import type { BudgetCategory } from '@/lib/budget-types';
-
-const BAR_COLOR_CLASS: Record<number, string> = {
-  1: 'bg-budget-1',
-  2: 'bg-budget-2',
-  3: 'bg-budget-3',
-  4: 'bg-budget-4',
-  5: 'bg-budget-5',
-  6: 'bg-budget-6',
-};
+import { BAR_COLOR_CLASS } from '@/lib/category-colors';
 
 export function BudgetCategoryCard({ category }: { category: BudgetCategory }) {
   const { icon: Icon, name, limit, spent, colorSlot } = category;

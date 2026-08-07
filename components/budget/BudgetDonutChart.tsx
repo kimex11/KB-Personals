@@ -1,22 +1,5 @@
 import type { BudgetCategory } from '@/lib/budget-types';
-
-const STROKE_COLOR_CLASS: Record<number, string> = {
-  1: 'stroke-budget-1',
-  2: 'stroke-budget-2',
-  3: 'stroke-budget-3',
-  4: 'stroke-budget-4',
-  5: 'stroke-budget-5',
-  6: 'stroke-budget-6',
-};
-
-const DOT_COLOR_CLASS: Record<number, string> = {
-  1: 'bg-budget-1',
-  2: 'bg-budget-2',
-  3: 'bg-budget-3',
-  4: 'bg-budget-4',
-  5: 'bg-budget-5',
-  6: 'bg-budget-6',
-};
+import { STROKE_COLOR_CLASS, DOT_COLOR_CLASS } from '@/lib/category-colors';
 
 interface BudgetDonutChartProps {
   categories: BudgetCategory[];
