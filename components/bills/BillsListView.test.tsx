@@ -35,4 +35,13 @@ describe('BillsListView', () => {
     fireEvent.change(screen.getByTestId('bills-search-input'), { target: { value: 'nonexistent' } });
     expect(screen.getByTestId('empty-state')).toHaveTextContent('No bills match your filters.');
   });
+
+  it('shows a duplicate warning on bills that look like duplicates', () => {
+    const withDuplicate: Bill[] = [
+      ...bills,
+      { id: '4', title: 'Electricity', category: 'Utilities', amount: 85, dueDate: '2026-08-17', recurrence: null, paid: false },
+    ];
+    render(<BillsListView bills={withDuplicate} onTogglePaid={vi.fn()} referenceDate={referenceDate} />);
+    expect(screen.getAllByTestId('bill-duplicate-warning')).toHaveLength(2);
+  });
 });

@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import type { Bill, BillStatus } from '@/lib/bills-types';
-import { filterBills, sortBills, groupBillsByStatus, monthlyBillTotal } from '@/lib/bills-selectors';
+import { filterBills, sortBills, groupBillsByStatus, monthlyBillTotal, findDuplicateBillIds } from '@/lib/bills-selectors';
 import { BillsSummary } from './BillsSummary';
 import { BillsFilterBar } from './BillsFilterBar';
 import { BillRow } from './BillRow';
@@ -34,6 +34,7 @@ export function BillsListView({ bills, onTogglePaid, referenceDate = new Date() 
   const grouped = useMemo(() => groupBillsByStatus(visibleBills, referenceDate), [visibleBills, referenceDate]);
   const allGrouped = useMemo(() => groupBillsByStatus(bills, referenceDate), [bills, referenceDate]);
   const monthlyTotal = useMemo(() => monthlyBillTotal(bills, referenceDate), [bills, referenceDate]);
+  const duplicateIds = useMemo(() => findDuplicateBillIds(bills), [bills]);
 
   return (
     <div data-testid="bills-list-view" className="flex flex-col gap-4">
@@ -61,7 +62,13 @@ export function BillsListView({ bills, onTogglePaid, referenceDate = new Date() 
                   <h2 className="font-serif text-sm text-neutral-500">{label}</h2>
                   <div className="flex flex-col gap-2">
                     {grouped[status].map((bill) => (
-                      <BillRow key={bill.id} bill={bill} onTogglePaid={onTogglePaid} referenceDate={referenceDate} />
+                      <BillRow
+                        key={bill.id}
+                        bill={bill}
+                        onTogglePaid={onTogglePaid}
+                        referenceDate={referenceDate}
+                        isDuplicate={duplicateIds.has(bill.id)}
+                      />
                     ))}
                   </div>
                 </div>
