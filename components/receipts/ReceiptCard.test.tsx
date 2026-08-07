@@ -13,6 +13,7 @@ const imageReceipt: StoredReceipt = {
   merchant: null,
   receiptDate: null,
   amount: null,
+  linkedBillId: null,
   uploadedAt: '2026-08-15T10:00:00.000Z',
 };
 
@@ -26,8 +27,14 @@ const pdfReceipt: StoredReceipt = {
   merchant: null,
   receiptDate: null,
   amount: null,
+  linkedBillId: null,
   uploadedAt: '2026-08-15T10:00:00.000Z',
 };
+
+const bills = [
+  { id: 'bill-0', title: 'Rent' },
+  { id: 'bill-1', title: 'Internet Bill' },
+];
 
 describe('ReceiptCard', () => {
   it('shows the file name and formatted size', () => {
@@ -82,5 +89,36 @@ describe('ReceiptCard', () => {
   it('shows nothing extra when OCR was never run', () => {
     render(<ReceiptCard receipt={pdfReceipt} onRemove={vi.fn()} />);
     expect(screen.queryByTestId('receipt-ocr-status')).not.toBeInTheDocument();
+  });
+
+  it('does not show a bill-link picker when no bills are provided', () => {
+    render(<ReceiptCard receipt={imageReceipt} onRemove={vi.fn()} />);
+    expect(screen.queryByTestId('receipt-bill-link-select')).not.toBeInTheDocument();
+  });
+
+  it('shows a bill-link picker with "Not linked" selected by default', () => {
+    render(<ReceiptCard receipt={imageReceipt} onRemove={vi.fn()} bills={bills} onLinkBill={vi.fn()} />);
+    expect(screen.getByTestId('receipt-bill-link-select')).toHaveValue('');
+  });
+
+  it('shows the linked bill as selected when the receipt has a linkedBillId', () => {
+    const linkedReceipt: StoredReceipt = { ...imageReceipt, linkedBillId: 'bill-1' };
+    render(<ReceiptCard receipt={linkedReceipt} onRemove={vi.fn()} bills={bills} onLinkBill={vi.fn()} />);
+    expect(screen.getByTestId('receipt-bill-link-select')).toHaveValue('bill-1');
+  });
+
+  it('calls onLinkBill with the selected bill id when a bill is chosen', () => {
+    const onLinkBill = vi.fn();
+    render(<ReceiptCard receipt={imageReceipt} onRemove={vi.fn()} bills={bills} onLinkBill={onLinkBill} />);
+    fireEvent.change(screen.getByTestId('receipt-bill-link-select'), { target: { value: 'bill-0' } });
+    expect(onLinkBill).toHaveBeenCalledWith('1', 'bill-0');
+  });
+
+  it('calls onLinkBill with null when "Not linked" is chosen again', () => {
+    const onLinkBill = vi.fn();
+    const linkedReceipt: StoredReceipt = { ...imageReceipt, linkedBillId: 'bill-1' };
+    render(<ReceiptCard receipt={linkedReceipt} onRemove={vi.fn()} bills={bills} onLinkBill={onLinkBill} />);
+    fireEvent.change(screen.getByTestId('receipt-bill-link-select'), { target: { value: '' } });
+    expect(onLinkBill).toHaveBeenCalledWith('1', null);
   });
 });

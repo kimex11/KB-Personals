@@ -3,14 +3,21 @@ import type { StoredReceipt } from '@/lib/receipts-types';
 import { formatFileSize } from '@/lib/receipts-utils';
 import type { ExtractedReceiptFields, OcrStatus } from '@/lib/receipt-ocr-types';
 
+export interface LinkableBill {
+  id: string;
+  title: string;
+}
+
 interface ReceiptCardProps {
   receipt: StoredReceipt;
   onRemove: (id: string) => void;
   ocrStatus?: OcrStatus;
   extractedFields?: ExtractedReceiptFields;
+  bills?: LinkableBill[];
+  onLinkBill?: (receiptId: string, billId: string | null) => void;
 }
 
-export function ReceiptCard({ receipt, onRemove, ocrStatus, extractedFields }: ReceiptCardProps) {
+export function ReceiptCard({ receipt, onRemove, ocrStatus, extractedFields, bills, onLinkBill }: ReceiptCardProps) {
   const isImage = receipt.fileType.startsWith('image/');
 
   return (
@@ -47,6 +54,21 @@ export function ReceiptCard({ receipt, onRemove, ocrStatus, extractedFields }: R
               <p className="text-[10px] font-medium text-gold">₱{extractedFields.amount.toFixed(2)}</p>
             )}
           </div>
+        )}
+        {bills && bills.length > 0 && onLinkBill && (
+          <select
+            data-testid="receipt-bill-link-select"
+            value={receipt.linkedBillId ?? ''}
+            onChange={(e) => onLinkBill(receipt.id, e.target.value === '' ? null : e.target.value)}
+            className="mt-1 rounded-full border border-neutral-200 px-2 py-1 text-[10px] text-neutral-600"
+          >
+            <option value="">Not linked</option>
+            {bills.map((bill) => (
+              <option key={bill.id} value={bill.id}>
+                {bill.title}
+              </option>
+            ))}
+          </select>
         )}
       </div>
       <button
