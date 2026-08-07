@@ -4,6 +4,10 @@ import { NextResponse, type NextRequest } from 'next/server';
 export const PROTECTED_PATHS = ['/', '/budget', '/bills', '/accounts', '/reminders', '/receipts'];
 const AUTH_PATHS = ['/login', '/signup'];
 
+function isProtectedPath(pathname: string): boolean {
+  return PROTECTED_PATHS.some((path) => (path === '/' ? pathname === '/' : pathname === path || pathname.startsWith(`${path}/`)));
+}
+
 export async function proxy(request: NextRequest) {
   let response = NextResponse.next({ request });
 
@@ -32,7 +36,7 @@ export async function proxy(request: NextRequest) {
 
   const { pathname } = request.nextUrl;
 
-  if (!user && PROTECTED_PATHS.includes(pathname)) {
+  if (!user && isProtectedPath(pathname)) {
     return NextResponse.redirect(new URL('/login', request.url));
   }
 
