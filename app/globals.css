@@ -18,6 +18,8 @@
   --color-budget-5: #e87ba4;
   --color-budget-6: #008300;
   --color-status-critical: #d03b3b;
+  --color-status-warning: #d9932b;
+  --color-status-success: #1e8e5a;
   --font-mono: var(--font-geist-mono);
   --font-heading: var(--font-sans);
   --color-sidebar-ring: var(--sidebar-ring);

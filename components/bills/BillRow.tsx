@@ -1,0 +1,58 @@
+import type { Bill } from '@/lib/bills-types';
+import { getBillStatus } from '@/lib/bills-selectors';
+import { BillStatusBadge } from './BillStatusBadge';
+import { formatRelativeDate } from '@/lib/date-utils';
+
+const RECURRENCE_LABEL: Record<NonNullable<Bill['recurrence']>, string> = {
+  weekly: 'Weekly',
+  monthly: 'Monthly',
+  quarterly: 'Quarterly',
+  yearly: 'Yearly',
+};
+
+interface BillRowProps {
+  bill: Bill;
+  onTogglePaid: (id: string) => void;
+  referenceDate?: Date;
+}
+
+export function BillRow({ bill, onTogglePaid, referenceDate = new Date() }: BillRowProps) {
+  const status = getBillStatus(bill, referenceDate);
+
+  return (
+    <div
+      data-testid="bill-row"
+      className="flex items-center justify-between gap-3 rounded-2xl border border-neutral-200 bg-white px-4 py-3"
+    >
+      <button
+        type="button"
+        data-testid="bill-paid-toggle"
+        aria-label={bill.paid ? 'Mark as unpaid' : 'Mark as paid'}
+        aria-pressed={bill.paid}
+        onClick={() => onTogglePaid(bill.id)}
+        className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border text-xs ${
+          bill.paid ? 'border-status-success bg-status-success text-white' : 'border-neutral-300 text-transparent'
+        }`}
+      >
+        ✓
+      </button>
+      <div className="flex-1">
+        <div className="flex items-center gap-2">
+          <p className="text-sm font-medium text-neutral-900">{bill.title}</p>
+          {bill.recurrence && (
+            <span className="rounded-full bg-neutral-100 px-2 py-0.5 text-[10px] text-neutral-500">
+              {RECURRENCE_LABEL[bill.recurrence]}
+            </span>
+          )}
+        </div>
+        <p className="text-xs text-neutral-500">
+          {bill.category} · {formatRelativeDate(bill.dueDate, referenceDate)}
+        </p>
+      </div>
+      <div className="flex flex-col items-end gap-1">
+        <span className="font-serif text-sm text-neutral-900">₱{bill.amount.toFixed(2)}</span>
+        <BillStatusBadge status={status} />
+      </div>
+    </div>
+  );
+}
