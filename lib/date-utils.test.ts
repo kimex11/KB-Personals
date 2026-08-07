@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { getMonthGrid, formatMonthLabel, toISODateString } from './date-utils';
+import { getMonthGrid, formatMonthLabel, toISODateString, formatRelativeDate } from './date-utils';
 
 describe('date-utils', () => {
   it('formats a month label as "Month YYYY"', () => {
@@ -22,5 +22,33 @@ describe('date-utils', () => {
     expect(grid.length).toBe(42);
     expect(grid[0].date.getDay()).toBe(0);
     expect(grid.filter((day) => day.isCurrentMonth).length).toBe(28);
+  });
+});
+
+describe('formatRelativeDate', () => {
+  const referenceDate = new Date(2026, 7, 15); // 2026-08-15, a Saturday
+
+  it('returns "Today" for the reference date', () => {
+    expect(formatRelativeDate('2026-08-15', referenceDate)).toBe('Today');
+  });
+
+  it('returns "Tomorrow" for one day ahead', () => {
+    expect(formatRelativeDate('2026-08-16', referenceDate)).toBe('Tomorrow');
+  });
+
+  it('returns "Yesterday" for one day behind', () => {
+    expect(formatRelativeDate('2026-08-14', referenceDate)).toBe('Yesterday');
+  });
+
+  it('returns a weekday name for 2-6 days ahead', () => {
+    expect(formatRelativeDate('2026-08-18', referenceDate)).toBe('Tue');
+  });
+
+  it('returns "N days ago" for 2-6 days behind', () => {
+    expect(formatRelativeDate('2026-08-12', referenceDate)).toBe('3 days ago');
+  });
+
+  it('returns a month/day for anything further out', () => {
+    expect(formatRelativeDate('2026-08-25', referenceDate)).toBe('Aug 25');
   });
 });

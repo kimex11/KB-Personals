@@ -5,6 +5,8 @@ import {
   eachDayOfInterval,
   isSameMonth,
   format,
+  parseISO,
+  differenceInCalendarDays,
 } from 'date-fns';
 
 export interface CalendarDay {
@@ -31,4 +33,16 @@ export function formatMonthLabel(date: Date): string {
 
 export function toISODateString(date: Date): string {
   return format(date, 'yyyy-MM-dd');
+}
+
+export function formatRelativeDate(dateStr: string, referenceDate: Date = new Date()): string {
+  const target = parseISO(dateStr);
+  const diffDays = differenceInCalendarDays(target, referenceDate);
+
+  if (diffDays === 0) return 'Today';
+  if (diffDays === 1) return 'Tomorrow';
+  if (diffDays === -1) return 'Yesterday';
+  if (diffDays > 1 && diffDays <= 6) return format(target, 'EEE');
+  if (diffDays < -1 && diffDays >= -6) return `${Math.abs(diffDays)} days ago`;
+  return format(target, 'MMM d');
 }
