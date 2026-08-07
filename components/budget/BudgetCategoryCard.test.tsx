@@ -45,4 +45,10 @@ describe('BudgetCategoryCard', () => {
     render(<BudgetCategoryCard category={underBudget} />);
     expect(screen.getByText('₱400 of ₱500')).toBeInTheDocument();
   });
+
+  it('does not produce an invalid (NaN) width when both limit and spent are zero', () => {
+    const untouched: BudgetCategory = { id: 'd', name: 'Unbudgeted', icon: Home, colorSlot: 1, limit: 0, spent: 0 };
+    render(<BudgetCategoryCard category={untouched} />);
+    expect(screen.getByTestId('progress-bar-fill')).toHaveStyle({ width: '0%' });
+  });
 });

@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, cleanup } from '@testing-library/react';
 import ReceiptsPage from './page';
 
 function makeFile(name: string, type: string) {
@@ -34,5 +34,13 @@ describe('ReceiptsPage', () => {
     fireEvent.click(screen.getByTestId('receipt-remove-button'));
     expect(screen.queryByTestId('receipt-card')).not.toBeInTheDocument();
     expect(screen.getByTestId('empty-state')).toBeInTheDocument();
+  });
+
+  it('revokes any remaining object URLs when the page unmounts', () => {
+    render(<ReceiptsPage />);
+    const file = makeFile('receipt.jpg', 'image/jpeg');
+    fireEvent.change(screen.getByTestId('receipt-file-input'), { target: { files: [file] } });
+    cleanup();
+    expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:mock-url');
   });
 });

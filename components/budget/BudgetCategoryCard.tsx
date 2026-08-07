@@ -12,7 +12,7 @@ const BAR_COLOR_CLASS: Record<number, string> = {
 export function BudgetCategoryCard({ category }: { category: BudgetCategory }) {
   const { icon: Icon, name, limit, spent, colorSlot } = category;
   const isOverBudget = spent > limit;
-  const progress = Math.min(spent / limit, 1) * 100;
+  const progress = limit > 0 ? Math.min(spent / limit, 1) * 100 : 0;
 
   return (
     <div

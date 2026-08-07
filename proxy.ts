@@ -1,7 +1,7 @@
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 
-const PROTECTED_PATHS = ['/', '/budget', '/bills', '/reminders', '/receipts'];
+export const PROTECTED_PATHS = ['/', '/budget', '/bills', '/accounts', '/reminders', '/receipts'];
 const AUTH_PATHS = ['/login', '/signup'];
 
 export async function proxy(request: NextRequest) {

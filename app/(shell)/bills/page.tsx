@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { MonthGrid } from '@/components/calendar/MonthGrid';
 import { DayDetailPanel } from '@/components/calendar/DayDetailPanel';
 import { useCalendarEvents } from '@/lib/use-calendar-events';
+import { useIsMounted } from '@/lib/use-is-mounted';
 import { mockBills } from '@/lib/bills-data';
 import { BillsListView } from '@/components/bills/BillsListView';
 import { Button } from '@/components/ui/button';
@@ -13,6 +14,7 @@ export default function BillsPage() {
   const [paidOverrides, setPaidOverrides] = useState<Set<string>>(new Set());
   const [selectedDate, setSelectedDate] = useState(() => new Date());
   const { getEventsForDate } = useCalendarEvents();
+  const isMounted = useIsMounted();
 
   const bills = mockBills.map((bill) => ({
     ...bill,
@@ -51,10 +53,12 @@ export default function BillsPage() {
       {view === 'list' ? (
         <BillsListView bills={bills} onTogglePaid={togglePaid} />
       ) : (
-        <>
-          <MonthGrid getEventsForDate={getEventsForDate} selectedDate={selectedDate} onSelectDate={setSelectedDate} />
-          <DayDetailPanel date={selectedDate} events={getEventsForDate(selectedDate)} />
-        </>
+        isMounted && (
+          <>
+            <MonthGrid getEventsForDate={getEventsForDate} selectedDate={selectedDate} onSelectDate={setSelectedDate} />
+            <DayDetailPanel date={selectedDate} events={getEventsForDate(selectedDate)} />
+          </>
+        )
       )}
     </div>
   );

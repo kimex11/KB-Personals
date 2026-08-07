@@ -1,12 +1,25 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ReceiptUploadZone } from '@/components/receipts/ReceiptUploadZone';
 import { ReceiptGrid } from '@/components/receipts/ReceiptGrid';
 import type { StoredReceipt } from '@/lib/receipts-types';
 
 export default function ReceiptsPage() {
   const [receipts, setReceipts] = useState<StoredReceipt[]>([]);
+  const receiptsRef = useRef(receipts);
+
+  useEffect(() => {
+    receiptsRef.current = receipts;
+  }, [receipts]);
+
+  useEffect(() => {
+    return () => {
+      for (const receipt of receiptsRef.current) {
+        URL.revokeObjectURL(receipt.previewUrl);
+      }
+    };
+  }, []);
 
   function handleFilesSelected(files: File[]) {
     const newReceipts: StoredReceipt[] = files.map((file, index) => ({
