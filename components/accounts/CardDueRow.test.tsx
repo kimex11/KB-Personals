@@ -1,5 +1,6 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { CardDueRow } from './CardDueRow';
 import type { CreditCardDue } from '@/lib/accounts-types';
 
@@ -27,5 +28,24 @@ describe('CardDueRow', () => {
   it('shows the due status badge', () => {
     render(<CardDueRow card={card} referenceDate={referenceDate} />);
     expect(screen.getByTestId('card-due-status-badge')).toBeInTheDocument();
+  });
+
+  it('does not render edit/delete actions when no handlers are given', () => {
+    render(<CardDueRow card={card} referenceDate={referenceDate} />);
+    expect(screen.queryByRole('button', { name: /edit visa platinum/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /delete visa platinum/i })).not.toBeInTheDocument();
+  });
+
+  it('calls onEdit/onDelete when the action buttons are clicked', async () => {
+    const onEdit = vi.fn();
+    const onDelete = vi.fn();
+    const user = userEvent.setup();
+    render(<CardDueRow card={card} referenceDate={referenceDate} onEdit={onEdit} onDelete={onDelete} />);
+
+    await user.click(screen.getByRole('button', { name: /edit visa platinum/i }));
+    expect(onEdit).toHaveBeenCalledWith(card);
+
+    await user.click(screen.getByRole('button', { name: /delete visa platinum/i }));
+    expect(onDelete).toHaveBeenCalledWith(card);
   });
 });
