@@ -1,22 +1,16 @@
 import { describe, expect, it } from 'vitest';
-import { budgetCategories } from './budget-data';
+import { budgetAmountsByCategoryName } from './budget-data';
 
-describe('budgetCategories', () => {
-  it('has exactly 6 categories with unique ids and unique color slots', () => {
-    expect(budgetCategories).toHaveLength(6);
-    const ids = budgetCategories.map((c) => c.id);
-    expect(new Set(ids).size).toBe(6);
-    const slots = budgetCategories.map((c) => c.colorSlot);
-    expect(new Set(slots)).toEqual(new Set([1, 2, 3, 4, 5, 6]));
+describe('budgetAmountsByCategoryName', () => {
+  it('has an entry for each of the 6 default categories', () => {
+    ['Housing', 'Groceries', 'Transport', 'Entertainment', 'Utilities', 'Shopping'].forEach((name) => {
+      expect(budgetAmountsByCategoryName[name]).toBeDefined();
+      expect(budgetAmountsByCategoryName[name].limit).toBeGreaterThan(0);
+    });
   });
 
-  it('gives every category a positive limit', () => {
-    for (const category of budgetCategories) {
-      expect(category.limit).toBeGreaterThan(0);
-    }
-  });
-
-  it('includes at least one category that is over its limit', () => {
-    expect(budgetCategories.some((c) => c.spent > c.limit)).toBe(true);
+  it('keeps the same limit/spent values as before the re-key', () => {
+    expect(budgetAmountsByCategoryName['Housing']).toEqual({ limit: 1450, spent: 1450 });
+    expect(budgetAmountsByCategoryName['Shopping']).toEqual({ limit: 300, spent: 95 });
   });
 });

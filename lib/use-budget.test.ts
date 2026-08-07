@@ -1,24 +1,66 @@
 import { describe, expect, it, vi } from 'vitest';
 import { renderHook } from '@testing-library/react';
-import { Home } from 'lucide-react';
 
-vi.mock('./budget-data', () => ({
-  budgetCategories: [
-    { id: 'a', name: 'A', icon: Home, colorSlot: 1, limit: 100, spent: 80 },
-    { id: 'b', name: 'B', icon: Home, colorSlot: 2, limit: 50, spent: 60 },
-  ],
+const activeCategory = (
+  overrides: Partial<{ id: string; name: string; icon: string; colorSlot: number; sortOrder: number }> = {}
+) => ({
+  id: 'cat-1',
+  name: 'Housing',
+  icon: 'building-2',
+  colorSlot: 1,
+  sortOrder: 0,
+  archived: false,
+  createdAt: '2026-08-15T10:00:00.000Z',
+  ...overrides,
+});
+
+const useCategoriesMock = vi.fn();
+vi.mock('./use-categories', () => ({
+  useCategories: () => useCategoriesMock(),
 }));
 
 import { useBudget } from './use-budget';
 
 describe('useBudget', () => {
-  it('computes budgeted/spent/remaining totals from the category list', () => {
+  it('joins live categories with mock limit/spent by name', () => {
+    useCategoriesMock.mockReturnValue({
+      activeCategories: [activeCategory({ id: 'cat-1', name: 'Housing', colorSlot: 1 })],
+      loading: false,
+      error: null,
+    });
     const { result } = renderHook(() => useBudget());
-    expect(result.current.totals).toEqual({ budgeted: 150, spent: 140, remaining: 10 });
+    expect(result.current.categories).toEqual([
+      expect.objectContaining({ id: 'cat-1', name: 'Housing', colorSlot: 1, limit: 1450, spent: 1450 }),
+    ]);
   });
 
-  it('returns the category list', () => {
+  it('defaults limit/spent to 0 for a category not in the mock seed', () => {
+    useCategoriesMock.mockReturnValue({
+      activeCategories: [activeCategory({ id: 'cat-9', name: 'Pet Care', colorSlot: 9 })],
+      loading: false,
+      error: null,
+    });
     const { result } = renderHook(() => useBudget());
-    expect(result.current.categories).toHaveLength(2);
+    expect(result.current.categories[0]).toEqual(expect.objectContaining({ limit: 0, spent: 0 }));
+  });
+
+  it('computes budgeted/spent/remaining totals', () => {
+    useCategoriesMock.mockReturnValue({
+      activeCategories: [
+        activeCategory({ id: 'cat-1', name: 'Housing' }),
+        activeCategory({ id: 'cat-2', name: 'Groceries', colorSlot: 2 }),
+      ],
+      loading: false,
+      error: null,
+    });
+    const { result } = renderHook(() => useBudget());
+    expect(result.current.totals).toEqual({ budgeted: 1950, spent: 1918, remaining: 32 });
+  });
+
+  it('passes through loading and error from useCategories', () => {
+    useCategoriesMock.mockReturnValue({ activeCategories: [], loading: true, error: 'boom' });
+    const { result } = renderHook(() => useBudget());
+    expect(result.current.loading).toBe(true);
+    expect(result.current.error).toBe('boom');
   });
 });

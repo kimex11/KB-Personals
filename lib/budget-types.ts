@@ -4,7 +4,7 @@ export interface BudgetCategory {
   id: string;
   name: string;
   icon: LucideIcon;
-  colorSlot: 1 | 2 | 3 | 4 | 5 | 6;
+  colorSlot: number;
   limit: number;
   spent: number;
 }
