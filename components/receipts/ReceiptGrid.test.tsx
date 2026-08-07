@@ -17,4 +17,12 @@ describe('ReceiptGrid', () => {
     render(<ReceiptGrid receipts={receipts} onRemove={vi.fn()} />);
     expect(screen.getAllByTestId('receipt-card')).toHaveLength(2);
   });
+
+  it('passes the matching OCR status through to each card by receipt id', () => {
+    const receipts: StoredReceipt[] = [
+      { id: '1', fileName: 'a.jpg', fileType: 'image/jpeg', fileSize: 1000, previewUrl: 'blob:a', uploadedAt: '2026-08-15T10:00:00.000Z' },
+    ];
+    render(<ReceiptGrid receipts={receipts} onRemove={vi.fn()} ocrStatusById={{ '1': 'processing' }} />);
+    expect(screen.getByTestId('receipt-ocr-status')).toHaveTextContent('Scanning');
+  });
 });

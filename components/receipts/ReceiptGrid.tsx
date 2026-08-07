@@ -1,13 +1,16 @@
 import type { StoredReceipt } from '@/lib/receipts-types';
+import type { ExtractedReceiptFields, OcrStatus } from '@/lib/receipt-ocr-types';
 import { ReceiptCard } from './ReceiptCard';
 import { EmptyState } from '@/components/shared/EmptyState';
 
 interface ReceiptGridProps {
   receipts: StoredReceipt[];
   onRemove: (id: string) => void;
+  ocrStatusById?: Record<string, OcrStatus>;
+  ocrResultById?: Record<string, ExtractedReceiptFields>;
 }
 
-export function ReceiptGrid({ receipts, onRemove }: ReceiptGridProps) {
+export function ReceiptGrid({ receipts, onRemove, ocrStatusById, ocrResultById }: ReceiptGridProps) {
   if (receipts.length === 0) {
     return <EmptyState message="No receipts uploaded yet." />;
   }
@@ -15,7 +18,13 @@ export function ReceiptGrid({ receipts, onRemove }: ReceiptGridProps) {
   return (
     <div data-testid="receipt-grid" className="grid grid-cols-2 gap-3">
       {receipts.map((receipt) => (
-        <ReceiptCard key={receipt.id} receipt={receipt} onRemove={onRemove} />
+        <ReceiptCard
+          key={receipt.id}
+          receipt={receipt}
+          onRemove={onRemove}
+          ocrStatus={ocrStatusById?.[receipt.id]}
+          extractedFields={ocrResultById?.[receipt.id]}
+        />
       ))}
     </div>
   );

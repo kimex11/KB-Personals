@@ -45,4 +45,34 @@ describe('ReceiptCard', () => {
     fireEvent.click(screen.getByTestId('receipt-remove-button'));
     expect(onRemove).toHaveBeenCalledWith('1');
   });
+
+  it('shows a scanning indicator while OCR is processing', () => {
+    render(<ReceiptCard receipt={imageReceipt} onRemove={vi.fn()} ocrStatus="processing" />);
+    expect(screen.getByTestId('receipt-ocr-status')).toHaveTextContent('Scanning');
+  });
+
+  it('shows extracted merchant, date, and amount once OCR is done', () => {
+    render(
+      <ReceiptCard
+        receipt={imageReceipt}
+        onRemove={vi.fn()}
+        ocrStatus="done"
+        extractedFields={{ merchant: 'Whole Foods Market', date: '2026-08-15', amount: 42.18, rawText: '...' }}
+      />
+    );
+    const card = screen.getByTestId('receipt-card');
+    expect(card).toHaveTextContent('Whole Foods Market');
+    expect(card).toHaveTextContent('2026-08-15');
+    expect(card).toHaveTextContent('₱42.18');
+  });
+
+  it('shows an error message when OCR fails', () => {
+    render(<ReceiptCard receipt={imageReceipt} onRemove={vi.fn()} ocrStatus="error" />);
+    expect(screen.getByTestId('receipt-ocr-status')).toHaveTextContent("Couldn't read this receipt");
+  });
+
+  it('shows nothing extra when OCR was never run', () => {
+    render(<ReceiptCard receipt={pdfReceipt} onRemove={vi.fn()} />);
+    expect(screen.queryByTestId('receipt-ocr-status')).not.toBeInTheDocument();
+  });
 });
