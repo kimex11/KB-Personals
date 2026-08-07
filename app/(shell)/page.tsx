@@ -36,9 +36,10 @@ export default function HomePage() {
   // computed here regardless since it's a cheap pure calculation, but never
   // rendered until mount, so it can never disagree with server-rendered HTML.
   const now = new Date();
-  const overdueBills = getOverdueBills(events, now);
   const paidBillIds = new Set(bills.filter((bill) => bill.paid).map((bill) => bill.id));
-  const weeklyBills = getBillsDueWithinDays(events, 7, now).filter((event) => !paidBillIds.has(event.id));
+  const actionableEvents = events.filter((event) => event.type !== 'bill' || !paidBillIds.has(event.id));
+  const overdueBills = getOverdueBills(actionableEvents, now);
+  const weeklyBills = getBillsDueWithinDays(actionableEvents, 7, now);
   const upcomingReminders = getUpcomingReminders(events, 3, now);
 
   const alertItems: AlertItem[] = overdueBills.map((bill) => ({

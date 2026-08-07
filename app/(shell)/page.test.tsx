@@ -20,19 +20,21 @@ vi.mock('@/lib/use-budget', () => ({
   }),
 }));
 
+const { useBillsMock } = vi.hoisted(() => ({ useBillsMock: vi.fn() }));
+vi.mock('@/lib/use-bills', () => ({ useBills: useBillsMock }));
+
 const togglePaidMock = vi.fn().mockResolvedValue(undefined);
-vi.mock('@/lib/use-bills', () => ({
-  useBills: () => ({
-    bills: [],
-    loading: false,
-    error: null,
-    refresh: vi.fn(),
-    createBill: vi.fn(),
-    updateBill: vi.fn(),
-    deleteBill: vi.fn(),
-    togglePaid: togglePaidMock,
-  }),
-}));
+const defaultUseBillsResult = {
+  bills: [] as unknown[],
+  loading: false,
+  error: null,
+  refresh: vi.fn(),
+  createBill: vi.fn(),
+  updateBill: vi.fn(),
+  deleteBill: vi.fn(),
+  togglePaid: togglePaidMock,
+};
+useBillsMock.mockReturnValue(defaultUseBillsResult);
 
 describe('HomePage', () => {
   it('renders the alerts banner when there are overdue bills', () => {
@@ -64,5 +66,16 @@ describe('HomePage', () => {
   it('renders notification settings', () => {
     render(<HomePage />);
     expect(screen.getByTestId('notification-settings')).toBeInTheDocument();
+  });
+
+  it('excludes an already-paid bill from the overdue alerts banner', () => {
+    useBillsMock.mockReturnValueOnce({
+      ...defaultUseBillsResult,
+      bills: [
+        { id: 'overdue-1', title: 'Overdue Rent', category: 'Housing', categoryId: 'cat-1', amount: 1450, dueDate: '2026-08-01', recurrence: null, paid: true },
+      ],
+    });
+    render(<HomePage />);
+    expect(screen.queryByText('Overdue Rent')).not.toBeInTheDocument();
   });
 });
