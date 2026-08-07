@@ -226,19 +226,21 @@ git commit -m "feat: add profiles table migration with RLS and auto-create trigg
 
 ---
 
-### Task 3: Auth Middleware
+### Task 3: Auth Proxy (formerly "Middleware")
 
 **Files:**
-- Create: `middleware.ts` (project root)
+- Create: `proxy.ts` (project root)
 
 **Interfaces:**
 - Produces: request-level session refresh; redirects unauthenticated visitors away from `/`, `/budget`, `/bills`, `/reminders`, `/receipts` to `/login`; redirects authenticated visitors away from `/login`, `/signup` to `/`.
 
+Note: Next.js 16 deprecated the `middleware.ts` file convention in favor of `proxy.ts` (same behavior, renamed export). Building with a `middleware.ts` file still works but prints a deprecation warning recommending `npx @next/codemod@canary middleware-to-proxy .` — use `proxy.ts` and `export async function proxy(...)` directly rather than writing the deprecated form.
+
 No automated test (Edge runtime) — verified manually in Task 7.
 
-- [ ] **Step 1: Write the middleware**
+- [ ] **Step 1: Write the proxy**
 
-Create `middleware.ts`:
+Create `proxy.ts`:
 
 ```ts
 import { createServerClient } from '@supabase/ssr';
@@ -247,7 +249,7 @@ import { NextResponse, type NextRequest } from 'next/server';
 const PROTECTED_PATHS = ['/', '/budget', '/bills', '/reminders', '/receipts'];
 const AUTH_PATHS = ['/login', '/signup'];
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   let response = NextResponse.next({ request });
 
   const supabase = createServerClient(
@@ -303,8 +305,8 @@ Expected: both succeed.
 - [ ] **Step 3: Commit**
 
 ```bash
-git add middleware.ts
-git commit -m "feat: add auth middleware for session refresh and route protection"
+git add proxy.ts
+git commit -m "feat: add auth proxy for session refresh and route protection"
 ```
 
 ---
