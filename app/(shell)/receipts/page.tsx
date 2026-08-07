@@ -3,11 +3,13 @@
 import { useEffect, useRef, useState } from 'react';
 import { ReceiptUploadZone } from '@/components/receipts/ReceiptUploadZone';
 import { ReceiptGrid } from '@/components/receipts/ReceiptGrid';
+import { useReceiptOcr } from '@/lib/use-receipt-ocr';
 import type { StoredReceipt } from '@/lib/receipts-types';
 
 export default function ReceiptsPage() {
   const [receipts, setReceipts] = useState<StoredReceipt[]>([]);
   const receiptsRef = useRef(receipts);
+  const { statusById, resultById, processReceipt } = useReceiptOcr();
 
   useEffect(() => {
     receiptsRef.current = receipts;
@@ -31,6 +33,8 @@ export default function ReceiptsPage() {
       uploadedAt: new Date().toISOString(),
     }));
     setReceipts((prev) => [...newReceipts, ...prev]);
+
+    newReceipts.forEach((receipt, index) => processReceipt(receipt.id, files[index]));
   }
 
   function handleRemove(id: string) {
@@ -44,7 +48,7 @@ export default function ReceiptsPage() {
   return (
     <div data-testid="receipts-page" className="flex flex-col gap-4 px-4 pb-24 pt-4">
       <ReceiptUploadZone onFilesSelected={handleFilesSelected} />
-      <ReceiptGrid receipts={receipts} onRemove={handleRemove} />
+      <ReceiptGrid receipts={receipts} onRemove={handleRemove} ocrStatusById={statusById} ocrResultById={resultById} />
     </div>
   );
 }
