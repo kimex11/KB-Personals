@@ -9,6 +9,7 @@ const imageReceipt: StoredReceipt = {
   fileType: 'image/jpeg',
   fileSize: 204800,
   previewUrl: 'blob:mock-url',
+  storagePath: 'user-1/electricity-receipt.jpg',
   uploadedAt: '2026-08-15T10:00:00.000Z',
 };
 
@@ -18,6 +19,7 @@ const pdfReceipt: StoredReceipt = {
   fileType: 'application/pdf',
   fileSize: 1048576,
   previewUrl: 'blob:mock-url-2',
+  storagePath: 'user-1/rent-invoice.pdf',
   uploadedAt: '2026-08-15T10:00:00.000Z',
 };
 

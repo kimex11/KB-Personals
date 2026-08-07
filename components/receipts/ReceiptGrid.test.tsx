@@ -11,8 +11,8 @@ describe('ReceiptGrid', () => {
 
   it('renders one card per receipt', () => {
     const receipts: StoredReceipt[] = [
-      { id: '1', fileName: 'a.jpg', fileType: 'image/jpeg', fileSize: 1000, previewUrl: 'blob:a', uploadedAt: '2026-08-15T10:00:00.000Z' },
-      { id: '2', fileName: 'b.pdf', fileType: 'application/pdf', fileSize: 2000, previewUrl: 'blob:b', uploadedAt: '2026-08-15T10:00:00.000Z' },
+      { id: '1', fileName: 'a.jpg', fileType: 'image/jpeg', fileSize: 1000, previewUrl: 'blob:a', storagePath: 'user-1/a.jpg', uploadedAt: '2026-08-15T10:00:00.000Z' },
+      { id: '2', fileName: 'b.pdf', fileType: 'application/pdf', fileSize: 2000, previewUrl: 'blob:b', storagePath: 'user-1/b.pdf', uploadedAt: '2026-08-15T10:00:00.000Z' },
     ];
     render(<ReceiptGrid receipts={receipts} onRemove={vi.fn()} />);
     expect(screen.getAllByTestId('receipt-card')).toHaveLength(2);
@@ -20,7 +20,7 @@ describe('ReceiptGrid', () => {
 
   it('passes the matching OCR status through to each card by receipt id', () => {
     const receipts: StoredReceipt[] = [
-      { id: '1', fileName: 'a.jpg', fileType: 'image/jpeg', fileSize: 1000, previewUrl: 'blob:a', uploadedAt: '2026-08-15T10:00:00.000Z' },
+      { id: '1', fileName: 'a.jpg', fileType: 'image/jpeg', fileSize: 1000, previewUrl: 'blob:a', storagePath: 'user-1/a.jpg', uploadedAt: '2026-08-15T10:00:00.000Z' },
     ];
     render(<ReceiptGrid receipts={receipts} onRemove={vi.fn()} ocrStatusById={{ '1': 'processing' }} />);
     expect(screen.getByTestId('receipt-ocr-status')).toHaveTextContent('Scanning');
