@@ -44,4 +44,14 @@ describe('BillsListView', () => {
     render(<BillsListView bills={withDuplicate} onTogglePaid={vi.fn()} referenceDate={referenceDate} />);
     expect(screen.getAllByTestId('bill-duplicate-warning')).toHaveLength(2);
   });
+
+  it('passes onEdit/onDelete through to each row', () => {
+    const onEdit = vi.fn();
+    const onDelete = vi.fn();
+    render(<BillsListView bills={bills} onTogglePaid={vi.fn()} referenceDate={referenceDate} onEdit={onEdit} onDelete={onDelete} />);
+    fireEvent.click(screen.getAllByRole('button', { name: /^edit /i })[0]);
+    expect(onEdit).toHaveBeenCalled();
+    fireEvent.click(screen.getAllByRole('button', { name: /^delete /i })[0]);
+    expect(onDelete).toHaveBeenCalled();
+  });
 });

@@ -1,6 +1,8 @@
+import { Pencil, Trash2 } from 'lucide-react';
 import type { Bill } from '@/lib/bills-types';
 import { getBillStatus } from '@/lib/bills-selectors';
 import { BillStatusBadge } from './BillStatusBadge';
+import { Button } from '@/components/ui/button';
 import { formatRelativeDate } from '@/lib/date-utils';
 
 const RECURRENCE_LABEL: Record<NonNullable<Bill['recurrence']>, string> = {
@@ -15,9 +17,11 @@ interface BillRowProps {
   onTogglePaid: (id: string) => void;
   referenceDate?: Date;
   isDuplicate?: boolean;
+  onEdit?: (bill: Bill) => void;
+  onDelete?: (bill: Bill) => void;
 }
 
-export function BillRow({ bill, onTogglePaid, referenceDate = new Date(), isDuplicate = false }: BillRowProps) {
+export function BillRow({ bill, onTogglePaid, referenceDate = new Date(), isDuplicate = false, onEdit, onDelete }: BillRowProps) {
   const status = getBillStatus(bill, referenceDate);
 
   return (
@@ -62,6 +66,20 @@ export function BillRow({ bill, onTogglePaid, referenceDate = new Date(), isDupl
           <span className="font-serif text-sm text-neutral-900">₱{bill.amount.toFixed(2)}</span>
           <BillStatusBadge status={status} />
         </div>
+        {(onEdit || onDelete) && (
+          <div className="flex flex-col gap-1">
+            {onEdit && (
+              <Button variant="ghost" size="icon-sm" aria-label={`Edit ${bill.title}`} onClick={() => onEdit(bill)}>
+                <Pencil className="h-4 w-4" />
+              </Button>
+            )}
+            {onDelete && (
+              <Button variant="ghost" size="icon-sm" aria-label={`Delete ${bill.title}`} onClick={() => onDelete(bill)}>
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

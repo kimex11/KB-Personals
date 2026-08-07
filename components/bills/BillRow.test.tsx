@@ -53,4 +53,22 @@ describe('BillRow', () => {
     render(<BillRow bill={bill} onTogglePaid={vi.fn()} referenceDate={referenceDate} />);
     expect(screen.queryByTestId('bill-duplicate-warning')).not.toBeInTheDocument();
   });
+
+  it('does not render edit/delete actions when no handlers are given', () => {
+    render(<BillRow bill={bill} onTogglePaid={vi.fn()} referenceDate={referenceDate} />);
+    expect(screen.queryByRole('button', { name: /edit internet bill/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /delete internet bill/i })).not.toBeInTheDocument();
+  });
+
+  it('calls onEdit/onDelete when the action buttons are clicked', () => {
+    const onEdit = vi.fn();
+    const onDelete = vi.fn();
+    render(<BillRow bill={bill} onTogglePaid={vi.fn()} referenceDate={referenceDate} onEdit={onEdit} onDelete={onDelete} />);
+
+    fireEvent.click(screen.getByRole('button', { name: /edit internet bill/i }));
+    expect(onEdit).toHaveBeenCalledWith(bill);
+
+    fireEvent.click(screen.getByRole('button', { name: /delete internet bill/i }));
+    expect(onDelete).toHaveBeenCalledWith(bill);
+  });
 });

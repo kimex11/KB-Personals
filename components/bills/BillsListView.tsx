@@ -19,9 +19,11 @@ interface BillsListViewProps {
   bills: Bill[];
   onTogglePaid: (id: string) => void;
   referenceDate?: Date;
+  onEdit?: (bill: Bill) => void;
+  onDelete?: (bill: Bill) => void;
 }
 
-export function BillsListView({ bills, onTogglePaid, referenceDate = new Date() }: BillsListViewProps) {
+export function BillsListView({ bills, onTogglePaid, referenceDate = new Date(), onEdit, onDelete }: BillsListViewProps) {
   const [query, setQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<BillStatus | 'all'>('all');
   const [sortBy, setSortBy] = useState<'dueDate' | 'amount'>('dueDate');
@@ -68,6 +70,8 @@ export function BillsListView({ bills, onTogglePaid, referenceDate = new Date() 
                         onTogglePaid={onTogglePaid}
                         referenceDate={referenceDate}
                         isDuplicate={duplicateIds.has(bill.id)}
+                        onEdit={onEdit}
+                        onDelete={onDelete}
                       />
                     ))}
                   </div>
