@@ -1,8 +1,9 @@
 import type { Bill, BillStatus } from './bills-types';
 import { toISODateString } from './date-utils';
-import { addDays, startOfMonth, endOfMonth } from 'date-fns';
+import { addDays, startOfMonth, endOfMonth, differenceInCalendarDays, parseISO } from 'date-fns';
 
 const DUE_SOON_WINDOW_DAYS = 3;
+const DUPLICATE_DUE_DATE_WINDOW_DAYS = 3;
 
 export function getBillStatus(bill: Bill, referenceDate: Date = new Date()): BillStatus {
   if (bill.paid) return 'paid';
@@ -51,4 +52,29 @@ export function monthlyBillTotal(bills: Bill[], referenceDate: Date = new Date()
   return bills
     .filter((bill) => bill.dueDate >= start && bill.dueDate <= end)
     .reduce((sum, bill) => sum + bill.amount, 0);
+}
+
+// Flags likely-duplicate bills: same title (case/whitespace-insensitive) and
+// amount, due within a few days of each other. Only compares unpaid bills —
+// a paid bill isn't an actionable duplicate warning.
+export function findDuplicateBillIds(bills: Bill[]): Set<string> {
+  const unpaid = bills.filter((bill) => !bill.paid);
+  const duplicateIds = new Set<string>();
+
+  for (let i = 0; i < unpaid.length; i++) {
+    for (let j = i + 1; j < unpaid.length; j++) {
+      const a = unpaid[i];
+      const b = unpaid[j];
+      const sameTitle = a.title.trim().toLowerCase() === b.title.trim().toLowerCase();
+      const sameAmount = a.amount === b.amount;
+      const daysApart = Math.abs(differenceInCalendarDays(parseISO(a.dueDate), parseISO(b.dueDate)));
+
+      if (sameTitle && sameAmount && daysApart <= DUPLICATE_DUE_DATE_WINDOW_DAYS) {
+        duplicateIds.add(a.id);
+        duplicateIds.add(b.id);
+      }
+    }
+  }
+
+  return duplicateIds;
 }

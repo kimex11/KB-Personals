@@ -5,6 +5,7 @@ import {
   filterBills,
   sortBills,
   monthlyBillTotal,
+  findDuplicateBillIds,
 } from './bills-selectors';
 import type { Bill } from './bills-types';
 
@@ -86,5 +87,63 @@ describe('monthlyBillTotal', () => {
       { id: '6', title: 'Next Month Bill', category: 'Other', amount: 999, dueDate: '2026-09-01', recurrence: null, paid: false },
     ];
     expect(monthlyBillTotal(withNextMonth, referenceDate)).toBe(1450 + 320 + 85 + 60 + 145);
+  });
+});
+
+describe('findDuplicateBillIds', () => {
+  it('flags two unpaid bills with the same title, amount, and nearby due dates', () => {
+    const withDuplicate: Bill[] = [
+      ...bills,
+      { id: '7', title: 'Electricity', category: 'Utilities', amount: 85, dueDate: '2026-08-16', recurrence: null, paid: false },
+    ];
+    const duplicates = findDuplicateBillIds(withDuplicate);
+    expect(duplicates.has('3')).toBe(true);
+    expect(duplicates.has('7')).toBe(true);
+  });
+
+  it('does not flag bills with different amounts', () => {
+    const notDuplicate: Bill[] = [
+      ...bills,
+      { id: '8', title: 'Electricity', category: 'Utilities', amount: 95, dueDate: '2026-08-16', recurrence: null, paid: false },
+    ];
+    const duplicates = findDuplicateBillIds(notDuplicate);
+    expect(duplicates.has('3')).toBe(false);
+    expect(duplicates.has('8')).toBe(false);
+  });
+
+  it('does not flag bills whose due dates are far apart', () => {
+    const notDuplicate: Bill[] = [
+      ...bills,
+      { id: '9', title: 'Electricity', category: 'Utilities', amount: 85, dueDate: '2026-09-01', recurrence: null, paid: false },
+    ];
+    const duplicates = findDuplicateBillIds(notDuplicate);
+    expect(duplicates.has('3')).toBe(false);
+    expect(duplicates.has('9')).toBe(false);
+  });
+
+  it('ignores paid bills when checking for duplicates', () => {
+    const withPaidMatch: Bill[] = [
+      ...bills,
+      { id: '10', title: 'Rent', category: 'Housing', amount: 1450, dueDate: '2026-08-02', recurrence: null, paid: false },
+    ];
+    // bill '1' (Rent) is paid, so this shouldn't count '1' as a duplicate partner, but the
+    // new unpaid one has no other unpaid match either, so nothing should be flagged.
+    const duplicates = findDuplicateBillIds(withPaidMatch);
+    expect(duplicates.has('1')).toBe(false);
+    expect(duplicates.has('10')).toBe(false);
+  });
+
+  it('is case-insensitive and trims whitespace when comparing titles', () => {
+    const withDuplicate: Bill[] = [
+      ...bills,
+      { id: '11', title: '  electricity  ', category: 'Utilities', amount: 85, dueDate: '2026-08-16', recurrence: null, paid: false },
+    ];
+    const duplicates = findDuplicateBillIds(withDuplicate);
+    expect(duplicates.has('3')).toBe(true);
+    expect(duplicates.has('11')).toBe(true);
+  });
+
+  it('returns an empty set when there are no duplicates', () => {
+    expect(findDuplicateBillIds(bills).size).toBe(0);
   });
 });
