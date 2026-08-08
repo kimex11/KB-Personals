@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { Plus } from 'lucide-react';
 import { MonthGrid } from '@/components/calendar/MonthGrid';
 import { DayDetailPanel } from '@/components/calendar/DayDetailPanel';
@@ -15,10 +16,11 @@ import { ConfirmDeleteDialog } from '@/components/shared/ConfirmDeleteDialog';
 import { Button } from '@/components/ui/button';
 import type { Bill } from '@/lib/bills-types';
 
-export default function BillsPage() {
+function BillsPageContent() {
   const [view, setView] = useState<'list' | 'calendar'>('list');
   const [selectedDate, setSelectedDate] = useState(() => new Date());
   const isMounted = useIsMounted();
+  const searchParams = useSearchParams();
 
   const { bills, loading, error, createBill, updateBill, deleteBill, togglePaid } = useBills();
   const { reminders } = useReminders();
@@ -28,6 +30,19 @@ export default function BillsPage() {
   const [formOpen, setFormOpen] = useState(false);
   const [editingBill, setEditingBill] = useState<(Bill & { categoryId: string }) | undefined>(undefined);
   const [deleteTarget, setDeleteTarget] = useState<Bill | null>(null);
+  const [deepLinkHandled, setDeepLinkHandled] = useState(false);
+
+  useEffect(() => {
+    if (deepLinkHandled || loading) return;
+    const openId = searchParams.get('open');
+    if (!openId) return;
+    const target = bills.find((bill) => bill.id === openId);
+    if (target) {
+      setEditingBill(target as Bill & { categoryId: string });
+      setFormOpen(true);
+    }
+    setDeepLinkHandled(true);
+  }, [deepLinkHandled, loading, searchParams, bills]);
 
   function openAddForm() {
     setEditingBill(undefined);
@@ -114,5 +129,13 @@ export default function BillsPage() {
         />
       )}
     </div>
+  );
+}
+
+export default function BillsPage() {
+  return (
+    <Suspense fallback={null}>
+      <BillsPageContent />
+    </Suspense>
   );
 }

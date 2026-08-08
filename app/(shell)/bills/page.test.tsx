@@ -1,6 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+
+vi.mock('next/navigation', () => ({
+  useSearchParams: vi.fn(() => new URLSearchParams()),
+}));
 
 vi.mock('@/lib/use-calendar-events', () => ({
   useCalendarEvents: () => ({ events: [], getEventsForDate: () => [] }),
@@ -59,6 +63,7 @@ vi.mock('@/lib/use-categories', () => ({
   }),
 }));
 
+import { useSearchParams } from 'next/navigation';
 import BillsPage from './page';
 
 beforeEach(() => {
@@ -72,6 +77,7 @@ beforeEach(() => {
     deleteBill: deleteBillMock,
     togglePaid: togglePaidMock,
   });
+  vi.mocked(useSearchParams).mockReturnValue(new URLSearchParams() as ReturnType<typeof useSearchParams>);
 });
 
 describe('BillsPage', () => {
@@ -149,5 +155,12 @@ describe('BillsPage', () => {
     await user.click(await screen.findByRole('menuitem', { name: /delete/i }));
     await user.click(screen.getByRole('button', { name: /^delete$/i }));
     expect(deleteBillMock).toHaveBeenCalledWith('bill-1');
+  });
+
+  it('opens the edit form for the bill named in the ?open= query param', async () => {
+    vi.mocked(useSearchParams).mockReturnValue(new URLSearchParams('open=bill-2') as ReturnType<typeof useSearchParams>);
+    render(<BillsPage />);
+    await waitFor(() => expect(screen.getByRole('heading', { name: /edit bill/i })).toBeInTheDocument());
+    expect(screen.getByLabelText(/title/i)).toHaveValue('Electricity');
   });
 });
