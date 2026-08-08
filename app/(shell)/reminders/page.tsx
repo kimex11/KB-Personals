@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { Plus } from 'lucide-react';
 import { useReminders } from '@/lib/use-reminders';
 import { RemindersListView } from '@/components/reminders/RemindersListView';
@@ -10,13 +11,27 @@ import { Button } from '@/components/ui/button';
 import { useIsMounted } from '@/lib/use-is-mounted';
 import type { Reminder } from '@/lib/reminders-types';
 
-export default function RemindersPage() {
+function RemindersPageContent() {
   const isMounted = useIsMounted();
+  const searchParams = useSearchParams();
   const { reminders, loading, error, createReminder, updateReminder, deleteReminder, toggleComplete, snooze } = useReminders();
 
   const [formOpen, setFormOpen] = useState(false);
   const [editingReminder, setEditingReminder] = useState<Reminder | undefined>(undefined);
   const [deleteTarget, setDeleteTarget] = useState<Reminder | null>(null);
+  const [deepLinkHandled, setDeepLinkHandled] = useState(false);
+
+  useEffect(() => {
+    if (deepLinkHandled || loading) return;
+    const openId = searchParams.get('open');
+    if (!openId) return;
+    const target = reminders.find((reminder) => reminder.id === openId);
+    if (target) {
+      setEditingReminder(target);
+      setFormOpen(true);
+    }
+    setDeepLinkHandled(true);
+  }, [deepLinkHandled, loading, searchParams, reminders]);
 
   function openAddForm() {
     setEditingReminder(undefined);
@@ -78,5 +93,13 @@ export default function RemindersPage() {
         />
       )}
     </div>
+  );
+}
+
+export default function RemindersPage() {
+  return (
+    <Suspense fallback={null}>
+      <RemindersPageContent />
+    </Suspense>
   );
 }

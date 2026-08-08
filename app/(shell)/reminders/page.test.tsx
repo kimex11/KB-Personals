@@ -1,6 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+
+vi.mock('next/navigation', () => ({
+  useSearchParams: vi.fn(() => new URLSearchParams()),
+}));
 
 const reminders = [
   { id: 'reminder-1', title: 'Call insurance provider', category: 'Finance', dueDate: '2026-08-06', priority: 'high' as const, completed: false },
@@ -19,6 +23,7 @@ vi.mock('@/lib/use-reminders', () => ({
   useReminders: useRemindersMock,
 }));
 
+import { useSearchParams } from 'next/navigation';
 import RemindersPage from './page';
 
 beforeEach(() => {
@@ -33,6 +38,7 @@ beforeEach(() => {
     toggleComplete: toggleCompleteMock,
     snooze: snoozeMock,
   });
+  vi.mocked(useSearchParams).mockReturnValue(new URLSearchParams() as ReturnType<typeof useSearchParams>);
 });
 
 describe('RemindersPage', () => {
@@ -106,5 +112,12 @@ describe('RemindersPage', () => {
     await user.click(await screen.findByRole('menuitem', { name: /delete/i }));
     await user.click(screen.getByRole('button', { name: /^delete$/i }));
     expect(deleteReminderMock).toHaveBeenCalledWith('reminder-1');
+  });
+
+  it('opens the edit form for the reminder named in the ?open= query param', async () => {
+    vi.mocked(useSearchParams).mockReturnValue(new URLSearchParams('open=reminder-2') as ReturnType<typeof useSearchParams>);
+    render(<RemindersPage />);
+    await waitFor(() => expect(screen.getByRole('heading', { name: /edit reminder/i })).toBeInTheDocument());
+    expect(screen.getByLabelText(/title/i)).toHaveValue('Renew car insurance');
   });
 });
