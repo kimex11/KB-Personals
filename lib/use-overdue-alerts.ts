@@ -3,11 +3,17 @@
 import { useEffect, useRef } from 'react';
 import { showNotification, clearAppBadge } from './notifications';
 import { playNotificationSound } from './notification-sound';
+import { listSentStateKeys } from './notification-log-repository';
+import type { NotificationPriority } from './notification-priority';
 
 export interface AlertItem {
   id: string;
   title: string;
   body: string;
+  priority: NotificationPriority;
+  entityType: 'bill' | 'reminder';
+  entityId: string;
+  stateKey: string;
 }
 
 interface UseOverdueAlertsOptions {
@@ -43,38 +49,48 @@ export function useOverdueAlerts(items: AlertItem[], options: UseOverdueAlertsOp
   }
 
   useEffect(() => {
-    const notifiedIds = notifiedIdsRef.current!;
-    const newItems = items.filter((item) => !notifiedIds.has(item.id));
+    let cancelled = false;
 
-    // Nothing new to surface — the user has already viewed/acknowledged
-    // everything currently active (or there's nothing overdue at all).
-    // Clear the home-screen badge rather than leaving a stale count.
-    if (newItems.length === 0) {
-      clearAppBadge();
-      return;
+    async function run() {
+      const notifiedIds = notifiedIdsRef.current!;
+      const sentByServer = await listSentStateKeys();
+      if (cancelled) return;
+
+      const newItems = items.filter((item) => {
+        const serverKey = `${item.entityType}:${item.entityId}:${item.stateKey}`;
+        return !notifiedIds.has(item.id) && !sentByServer.has(serverKey);
+      });
+
+      if (newItems.length === 0) {
+        clearAppBadge();
+        return;
+      }
+
+      for (const item of newItems) {
+        showNotification(item.title, { body: item.body });
+        notifiedIds.add(item.id);
+      }
+      saveNotifiedIds(notifiedIds);
+
+      if (soundEnabled) {
+        playNotificationSound();
+      }
+
+      if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+        navigator.vibrate(200);
+      }
+
+      if (typeof navigator !== 'undefined' && 'setAppBadge' in navigator) {
+        (navigator as Navigator & { setAppBadge: (count: number) => Promise<void> })
+          .setAppBadge(newItems.length)
+          .catch(() => {});
+      }
     }
 
-    for (const item of newItems) {
-      showNotification(item.title, { body: item.body });
-      notifiedIds.add(item.id);
-    }
-    saveNotifiedIds(notifiedIds);
-
-    if (soundEnabled) {
-      playNotificationSound();
-    }
-
-    if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
-      navigator.vibrate(200);
-    }
-
-    if (typeof navigator !== 'undefined' && 'setAppBadge' in navigator) {
-      // Badge reflects only newly-surfaced/unread items, not the running
-      // total — previously-viewed overdue items shouldn't keep padding it.
-      (navigator as Navigator & { setAppBadge: (count: number) => Promise<void> })
-        .setAppBadge(newItems.length)
-        .catch(() => {});
-    }
+    run();
+    return () => {
+      cancelled = true;
+    };
   }, [items, soundEnabled]);
 
   return { activeAlertCount: items.length };
