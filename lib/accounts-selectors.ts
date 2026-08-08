@@ -1,6 +1,5 @@
 import type { CreditCardDue, IncomeSource, DueStatus } from './accounts-types';
-import { toISODateString } from './date-utils';
-import { addDays } from 'date-fns';
+import { getDueDateStatus } from './date-utils';
 
 const DUE_SOON_WINDOW_DAYS = 3;
 
@@ -11,11 +10,7 @@ const MONTHLY_MULTIPLIER: Record<IncomeSource['frequency'], number> = {
 };
 
 export function getDueStatus(card: CreditCardDue, referenceDate: Date = new Date()): DueStatus {
-  const todayStr = toISODateString(referenceDate);
-  if (card.dueDate < todayStr) return 'overdue';
-  const dueSoonEndStr = toISODateString(addDays(referenceDate, DUE_SOON_WINDOW_DAYS));
-  if (card.dueDate <= dueSoonEndStr) return 'due-soon';
-  return 'upcoming';
+  return getDueDateStatus(card.dueDate, referenceDate, DUE_SOON_WINDOW_DAYS);
 }
 
 export function totalStatementBalance(cards: CreditCardDue[]): number {

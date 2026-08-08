@@ -64,11 +64,13 @@ export default function ReceiptsPage() {
   const mergedStatusById = { ...persistedStatusById, ...statusById };
 
   async function handleLinkBill(receiptId: string, billId: string | null) {
+    const previous = receipts.find((r) => r.id === receiptId)?.linkedBillId ?? null;
     setReceipts((prev) => prev.map((r) => (r.id === receiptId ? { ...r, linkedBillId: billId } : r)));
     try {
       await linkReceiptToBill(receiptId, billId);
     } catch {
       setError('Could not link receipt to bill.');
+      setReceipts((prev) => prev.map((r) => (r.id === receiptId ? { ...r, linkedBillId: previous } : r)));
     }
   }
 

@@ -17,7 +17,8 @@ import type { CreditCardDue, IncomeSource } from '@/lib/accounts-types';
 
 export default function AccountsPage() {
   const isMounted = useIsMounted();
-  const { cards, incomeSources, error, createCard, updateCard, deleteCard, createIncome, updateIncome, deleteIncome } = useAccounts();
+  const { cards, incomeSources, loading, error, createCard, updateCard, deleteCard, createIncome, updateIncome, deleteIncome } =
+    useAccounts();
 
   const [cardFormOpen, setCardFormOpen] = useState(false);
   const [editingCard, setEditingCard] = useState<CreditCardDue | undefined>(undefined);
@@ -68,7 +69,12 @@ export default function AccountsPage() {
 
   return (
     <div data-testid="accounts-page" className="flex flex-col gap-6 px-4 pb-24 pt-4">
-      {isMounted && (
+      {isMounted && loading && (
+        <p data-testid="accounts-loading" className="text-center text-sm text-neutral-400">
+          Loading accounts…
+        </p>
+      )}
+      {isMounted && !loading && (
         <>
           {error && <p className="text-sm text-status-critical">{error}</p>}
           <AccountsSummary totalDue={totalDue} totalMonthlyIncome={monthlyIncome} />

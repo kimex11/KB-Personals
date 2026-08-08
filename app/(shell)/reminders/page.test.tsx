@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
@@ -13,8 +13,16 @@ const deleteReminderMock = vi.fn().mockResolvedValue(undefined);
 const toggleCompleteMock = vi.fn().mockResolvedValue(undefined);
 const snoozeMock = vi.fn().mockResolvedValue(undefined);
 
+const { useRemindersMock } = vi.hoisted(() => ({ useRemindersMock: vi.fn() }));
+
 vi.mock('@/lib/use-reminders', () => ({
-  useReminders: () => ({
+  useReminders: useRemindersMock,
+}));
+
+import RemindersPage from './page';
+
+beforeEach(() => {
+  useRemindersMock.mockReturnValue({
     reminders,
     loading: false,
     error: null,
@@ -24,12 +32,27 @@ vi.mock('@/lib/use-reminders', () => ({
     deleteReminder: deleteReminderMock,
     toggleComplete: toggleCompleteMock,
     snooze: snoozeMock,
-  }),
-}));
-
-import RemindersPage from './page';
+  });
+});
 
 describe('RemindersPage', () => {
+  it('shows a loading state instead of the list while fetching', () => {
+    useRemindersMock.mockReturnValue({
+      reminders: [],
+      loading: true,
+      error: null,
+      refresh: vi.fn(),
+      createReminder: createReminderMock,
+      updateReminder: updateReminderMock,
+      deleteReminder: deleteReminderMock,
+      toggleComplete: toggleCompleteMock,
+      snooze: snoozeMock,
+    });
+    render(<RemindersPage />);
+    expect(screen.getByTestId('reminders-loading')).toBeInTheDocument();
+    expect(screen.queryByTestId('reminders-list-view')).not.toBeInTheDocument();
+  });
+
   it('renders the reminders list view', () => {
     render(<RemindersPage />);
     expect(screen.getByTestId('reminders-list-view')).toBeInTheDocument();

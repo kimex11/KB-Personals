@@ -17,7 +17,7 @@ export function RowActionsMenu({ label, onEdit, onDelete }: RowActionsMenuProps)
     <DropdownMenu>
       <DropdownMenuTrigger
         render={
-          <Button variant="ghost" size="icon-sm" aria-label={`Actions for ${label}`}>
+          <Button variant="ghost" size="icon-sm" className="min-h-11 min-w-11" aria-label={`Actions for ${label}`}>
             <MoreVertical className="h-4 w-4" />
           </Button>
         }

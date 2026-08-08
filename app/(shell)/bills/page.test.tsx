@@ -1,9 +1,23 @@
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 vi.mock('@/lib/use-calendar-events', () => ({
   useCalendarEvents: () => ({ events: [], getEventsForDate: () => [] }),
+}));
+
+vi.mock('@/lib/use-reminders', () => ({
+  useReminders: () => ({
+    reminders: [],
+    loading: false,
+    error: null,
+    refresh: vi.fn(),
+    createReminder: vi.fn(),
+    updateReminder: vi.fn(),
+    deleteReminder: vi.fn(),
+    toggleComplete: vi.fn(),
+    snooze: vi.fn(),
+  }),
 }));
 
 const bills = [
@@ -21,17 +35,10 @@ const updateBillMock = vi.fn().mockResolvedValue(undefined);
 const deleteBillMock = vi.fn().mockResolvedValue(undefined);
 const togglePaidMock = vi.fn().mockResolvedValue(undefined);
 
+const { useBillsMock } = vi.hoisted(() => ({ useBillsMock: vi.fn() }));
+
 vi.mock('@/lib/use-bills', () => ({
-  useBills: () => ({
-    bills,
-    loading: false,
-    error: null,
-    refresh: vi.fn(),
-    createBill: createBillMock,
-    updateBill: updateBillMock,
-    deleteBill: deleteBillMock,
-    togglePaid: togglePaidMock,
-  }),
+  useBills: useBillsMock,
 }));
 
 vi.mock('@/lib/use-categories', () => ({
@@ -54,7 +61,36 @@ vi.mock('@/lib/use-categories', () => ({
 
 import BillsPage from './page';
 
+beforeEach(() => {
+  useBillsMock.mockReturnValue({
+    bills,
+    loading: false,
+    error: null,
+    refresh: vi.fn(),
+    createBill: createBillMock,
+    updateBill: updateBillMock,
+    deleteBill: deleteBillMock,
+    togglePaid: togglePaidMock,
+  });
+});
+
 describe('BillsPage', () => {
+  it('shows a loading state instead of the list while fetching', () => {
+    useBillsMock.mockReturnValue({
+      bills: [],
+      loading: true,
+      error: null,
+      refresh: vi.fn(),
+      createBill: createBillMock,
+      updateBill: updateBillMock,
+      deleteBill: deleteBillMock,
+      togglePaid: togglePaidMock,
+    });
+    render(<BillsPage />);
+    expect(screen.getByTestId('bills-loading')).toBeInTheDocument();
+    expect(screen.queryByTestId('bills-list-view')).not.toBeInTheDocument();
+  });
+
   it('shows the list view by default', () => {
     render(<BillsPage />);
     expect(screen.getByTestId('bills-list-view')).toBeInTheDocument();

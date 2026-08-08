@@ -1,15 +1,12 @@
 'use client';
 
 import { useMemo } from 'react';
-import { useBills } from './use-bills';
-import { useReminders } from './use-reminders';
+import type { Bill } from './bills-types';
+import type { Reminder } from './reminders-types';
 import type { CalendarEvent } from './types';
 import { toISODateString } from './date-utils';
 
-export function useCalendarEvents() {
-  const { bills } = useBills();
-  const { reminders } = useReminders();
-
+export function useCalendarEvents(bills: Bill[], reminders: Reminder[]) {
   const events = useMemo<CalendarEvent[]>(() => {
     const billEvents: CalendarEvent[] = bills.map((bill) => ({
       id: bill.id,

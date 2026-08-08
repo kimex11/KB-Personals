@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
@@ -12,8 +12,16 @@ const createIncomeMock = vi.fn().mockResolvedValue(undefined);
 const updateIncomeMock = vi.fn().mockResolvedValue(undefined);
 const deleteIncomeMock = vi.fn().mockResolvedValue(undefined);
 
+const { useAccountsMock } = vi.hoisted(() => ({ useAccountsMock: vi.fn() }));
+
 vi.mock('@/lib/use-accounts', () => ({
-  useAccounts: () => ({
+  useAccounts: useAccountsMock,
+}));
+
+import AccountsPage from './page';
+
+beforeEach(() => {
+  useAccountsMock.mockReturnValue({
     cards: [card],
     incomeSources: [income],
     loading: false,
@@ -25,12 +33,29 @@ vi.mock('@/lib/use-accounts', () => ({
     createIncome: createIncomeMock,
     updateIncome: updateIncomeMock,
     deleteIncome: deleteIncomeMock,
-  }),
-}));
-
-import AccountsPage from './page';
+  });
+});
 
 describe('AccountsPage', () => {
+  it('shows a loading state instead of the summary while fetching', () => {
+    useAccountsMock.mockReturnValue({
+      cards: [],
+      incomeSources: [],
+      loading: true,
+      error: null,
+      refresh: vi.fn(),
+      createCard: createCardMock,
+      updateCard: updateCardMock,
+      deleteCard: deleteCardMock,
+      createIncome: createIncomeMock,
+      updateIncome: updateIncomeMock,
+      deleteIncome: deleteIncomeMock,
+    });
+    render(<AccountsPage />);
+    expect(screen.getByTestId('accounts-loading')).toBeInTheDocument();
+    expect(screen.queryByTestId('accounts-summary')).not.toBeInTheDocument();
+  });
+
   it('renders the accounts summary', () => {
     render(<AccountsPage />);
     expect(screen.getByTestId('accounts-summary')).toBeInTheDocument();

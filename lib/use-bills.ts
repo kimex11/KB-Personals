@@ -2,11 +2,8 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { listBills, createBill, updateBill, deleteBill } from './bills-repository';
-import type { Bill, RecurrenceInterval } from './bills-types';
-
-interface BillWithCategoryId extends Bill {
-  categoryId: string;
-}
+import type { BillWithCategoryId } from './bills-repository';
+import type { RecurrenceInterval } from './bills-types';
 
 export interface UseBillsResult {
   bills: BillWithCategoryId[];

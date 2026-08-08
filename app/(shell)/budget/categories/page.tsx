@@ -21,6 +21,7 @@ export default function CategoriesPage() {
   const [deleteTarget, setDeleteTarget] = useState<Category | null>(null);
   const [deleteBillCount, setDeleteBillCount] = useState(0);
   const [mergeOpen, setMergeOpen] = useState(false);
+  const [deleteCountError, setDeleteCountError] = useState<string | null>(null);
 
   function openAddForm() {
     setEditingCategory(undefined);
@@ -41,23 +42,29 @@ export default function CategoriesPage() {
   }
 
   async function openDeleteDialog(category: Category) {
-    const count = await countBillsUsingCategory(category.id);
-    setDeleteBillCount(count);
-    setDeleteTarget(category);
+    setDeleteCountError(null);
+    try {
+      const count = await countBillsUsingCategory(category.id);
+      setDeleteBillCount(count);
+      setDeleteTarget(category);
+    } catch {
+      setDeleteCountError('Could not check bills using this category.');
+    }
   }
 
   return (
     <div data-testid="categories-page" className="flex flex-col gap-4 px-4 pb-24 pt-4">
       <div className="flex items-center gap-2">
         <Link href="/budget" aria-label="Back to Budget">
-          <Button variant="ghost" size="icon-sm">
+          <Button variant="ghost" size="icon-sm" className="min-h-11 min-w-11">
             <ArrowLeft className="h-4 w-4" />
           </Button>
         </Link>
         <h1 className="text-lg font-medium text-neutral-900">Manage Categories</h1>
       </div>
 
-      {error && <p className="text-sm text-status-critical">{error}</p>}
+      {(error || deleteCountError) && <p className="text-sm text-status-critical">{error ?? deleteCountError}</p>}
+      {loading && <p className="text-center text-sm text-neutral-400">Loading categories…</p>}
 
       <div className="flex gap-2">
         <Button onClick={openAddForm}>

@@ -7,6 +7,7 @@ import { DayDetailPanel } from '@/components/calendar/DayDetailPanel';
 import { useCalendarEvents } from '@/lib/use-calendar-events';
 import { useIsMounted } from '@/lib/use-is-mounted';
 import { useBills } from '@/lib/use-bills';
+import { useReminders } from '@/lib/use-reminders';
 import { useCategories } from '@/lib/use-categories';
 import { BillsListView } from '@/components/bills/BillsListView';
 import { BillForm } from '@/components/bills/BillForm';
@@ -17,10 +18,11 @@ import type { Bill } from '@/lib/bills-types';
 export default function BillsPage() {
   const [view, setView] = useState<'list' | 'calendar'>('list');
   const [selectedDate, setSelectedDate] = useState(() => new Date());
-  const { getEventsForDate } = useCalendarEvents();
   const isMounted = useIsMounted();
 
-  const { bills, error, createBill, updateBill, deleteBill, togglePaid } = useBills();
+  const { bills, loading, error, createBill, updateBill, deleteBill, togglePaid } = useBills();
+  const { reminders } = useReminders();
+  const { getEventsForDate } = useCalendarEvents(bills, reminders);
   const { activeCategories } = useCategories();
 
   const [formOpen, setFormOpen] = useState(false);
@@ -72,7 +74,13 @@ export default function BillsPage() {
         </Button>
       </div>
       {error && <p className="text-sm text-status-critical">{error}</p>}
+      {isMounted && loading && (
+        <p data-testid="bills-loading" className="text-center text-sm text-neutral-400">
+          Loading bills…
+        </p>
+      )}
       {isMounted &&
+        !loading &&
         (view === 'list' ? (
           <BillsListView
             bills={bills}

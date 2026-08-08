@@ -35,6 +35,16 @@ export function toISODateString(date: Date): string {
   return format(date, 'yyyy-MM-dd');
 }
 
+export type DueDateStatus = 'overdue' | 'due-soon' | 'upcoming';
+
+export function getDueDateStatus(dueDateStr: string, referenceDate: Date, windowDays: number): DueDateStatus {
+  const todayStr = toISODateString(referenceDate);
+  if (dueDateStr < todayStr) return 'overdue';
+  const dueSoonEndStr = toISODateString(addDays(referenceDate, windowDays));
+  if (dueDateStr <= dueSoonEndStr) return 'due-soon';
+  return 'upcoming';
+}
+
 export function formatRelativeDate(dateStr: string, referenceDate: Date = new Date()): string {
   const target = parseISO(dateStr);
   const diffDays = differenceInCalendarDays(target, referenceDate);

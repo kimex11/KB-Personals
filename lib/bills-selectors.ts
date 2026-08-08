@@ -1,17 +1,13 @@
 import type { Bill, BillStatus } from './bills-types';
-import { toISODateString } from './date-utils';
-import { addDays, startOfMonth, endOfMonth, differenceInCalendarDays, parseISO } from 'date-fns';
+import { getDueDateStatus, toISODateString } from './date-utils';
+import { startOfMonth, endOfMonth, differenceInCalendarDays, parseISO } from 'date-fns';
 
 const DUE_SOON_WINDOW_DAYS = 3;
 const DUPLICATE_DUE_DATE_WINDOW_DAYS = 3;
 
 export function getBillStatus(bill: Bill, referenceDate: Date = new Date()): BillStatus {
   if (bill.paid) return 'paid';
-  const todayStr = toISODateString(referenceDate);
-  if (bill.dueDate < todayStr) return 'overdue';
-  const dueSoonEndStr = toISODateString(addDays(referenceDate, DUE_SOON_WINDOW_DAYS));
-  if (bill.dueDate <= dueSoonEndStr) return 'due-soon';
-  return 'upcoming';
+  return getDueDateStatus(bill.dueDate, referenceDate, DUE_SOON_WINDOW_DAYS);
 }
 
 export function groupBillsByStatus(bills: Bill[], referenceDate: Date = new Date()): Record<BillStatus, Bill[]> {

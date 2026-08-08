@@ -12,7 +12,7 @@ import type { Reminder } from '@/lib/reminders-types';
 
 export default function RemindersPage() {
   const isMounted = useIsMounted();
-  const { reminders, error, createReminder, updateReminder, deleteReminder, toggleComplete, snooze } = useReminders();
+  const { reminders, loading, error, createReminder, updateReminder, deleteReminder, toggleComplete, snooze } = useReminders();
 
   const [formOpen, setFormOpen] = useState(false);
   const [editingReminder, setEditingReminder] = useState<Reminder | undefined>(undefined);
@@ -45,7 +45,12 @@ export default function RemindersPage() {
         </Button>
       </div>
       {error && <p className="text-sm text-status-critical">{error}</p>}
-      {isMounted && (
+      {isMounted && loading && (
+        <p data-testid="reminders-loading" className="text-center text-sm text-neutral-400">
+          Loading reminders…
+        </p>
+      )}
+      {isMounted && !loading && (
         <RemindersListView
           reminders={reminders}
           onToggleComplete={toggleComplete}

@@ -13,7 +13,7 @@ interface BillRow {
   categories: { name: string } | null;
 }
 
-interface BillWithCategoryId extends Bill {
+export interface BillWithCategoryId extends Bill {
   categoryId: string;
 }
 

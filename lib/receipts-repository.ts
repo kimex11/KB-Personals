@@ -72,7 +72,12 @@ export async function uploadReceipt(file: File): Promise<StoredReceipt> {
 
 export async function listReceipts(): Promise<StoredReceipt[]> {
   const supabase = createClient();
-  const { data: rows, error } = await supabase.from('receipts').select('*').order('created_at', { ascending: false });
+  const userId = await requireUserId(supabase);
+  const { data: rows, error } = await supabase
+    .from('receipts')
+    .select('*')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false });
   if (error) throw error;
 
   return Promise.all(
@@ -91,14 +96,16 @@ async function requireUserId(supabase: ReturnType<typeof createClient>): Promise
 export async function deleteReceipt(id: string, storagePath: string): Promise<void> {
   const supabase = createClient();
   const userId = await requireUserId(supabase);
-  await supabase.storage.from(BUCKET).remove([storagePath]);
-  await supabase.from('receipts').delete().eq('id', id).eq('user_id', userId);
+  const { error: storageError } = await supabase.storage.from(BUCKET).remove([storagePath]);
+  if (storageError) throw storageError;
+  const { error } = await supabase.from('receipts').delete().eq('id', id).eq('user_id', userId);
+  if (error) throw error;
 }
 
 export async function updateReceiptFields(id: string, fields: ExtractedReceiptFields): Promise<void> {
   const supabase = createClient();
   const userId = await requireUserId(supabase);
-  await supabase
+  const { error } = await supabase
     .from('receipts')
     .update({
       merchant: fields.merchant,
@@ -107,10 +114,12 @@ export async function updateReceiptFields(id: string, fields: ExtractedReceiptFi
     })
     .eq('id', id)
     .eq('user_id', userId);
+  if (error) throw error;
 }
 
 export async function linkReceiptToBill(id: string, billId: string | null): Promise<void> {
   const supabase = createClient();
   const userId = await requireUserId(supabase);
-  await supabase.from('receipts').update({ linked_bill_id: billId }).eq('id', id).eq('user_id', userId);
+  const { error } = await supabase.from('receipts').update({ linked_bill_id: billId }).eq('id', id).eq('user_id', userId);
+  if (error) throw error;
 }

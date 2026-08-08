@@ -12,6 +12,7 @@ const removeMock = vi.fn();
 const createSignedUrlMock = vi.fn();
 const insertSelectSingleMock = vi.fn();
 const selectOrderMock = vi.fn();
+const selectEqMock = vi.fn(() => ({ order: selectOrderMock }));
 const getUserMock = vi.fn();
 const deleteUserEqMock = vi.fn();
 const deleteEqMock = vi.fn(() => ({ eq: deleteUserEqMock }));
@@ -38,7 +39,7 @@ vi.mock('./supabase/client', () => ({
           }),
         }),
         select: () => ({
-          order: selectOrderMock,
+          eq: selectEqMock,
         }),
         delete: () => ({
           eq: deleteEqMock,
@@ -142,8 +143,16 @@ describe('listReceipts', () => {
   });
 
   it('returns an empty array when there are no receipts', async () => {
+    getUserMock.mockResolvedValue({ data: { user: mockUser } });
     selectOrderMock.mockResolvedValue({ data: [], error: null });
     expect(await listReceipts()).toEqual([]);
+  });
+
+  it('scopes the query to the authenticated user', async () => {
+    getUserMock.mockResolvedValue({ data: { user: mockUser } });
+    selectOrderMock.mockResolvedValue({ data: [], error: null });
+    await listReceipts();
+    expect(selectEqMock).toHaveBeenCalledWith('user_id', 'user-1');
   });
 });
 
@@ -163,6 +172,13 @@ describe('deleteReceipt', () => {
   it('throws when there is no authenticated user', async () => {
     getUserMock.mockResolvedValue({ data: { user: null } });
     await expect(deleteReceipt('receipt-1', 'user-1/a.jpg')).rejects.toThrow('Not authenticated');
+  });
+
+  it('throws when the row delete fails', async () => {
+    getUserMock.mockResolvedValue({ data: { user: mockUser } });
+    removeMock.mockResolvedValue({ error: null });
+    deleteUserEqMock.mockResolvedValue({ error: new Error('db down') });
+    await expect(deleteReceipt('receipt-1', 'user-1/a.jpg')).rejects.toThrow('db down');
   });
 });
 
@@ -193,6 +209,14 @@ describe('updateReceiptFields', () => {
       updateReceiptFields('receipt-1', { merchant: 'X', date: '2026-08-15', amount: 1, rawText: '' })
     ).rejects.toThrow('Not authenticated');
   });
+
+  it('throws when the update fails', async () => {
+    getUserMock.mockResolvedValue({ data: { user: mockUser } });
+    updateUserEqMock.mockResolvedValue({ error: new Error('db down') });
+    await expect(
+      updateReceiptFields('receipt-1', { merchant: 'X', date: '2026-08-15', amount: 1, rawText: '' })
+    ).rejects.toThrow('db down');
+  });
 });
 
 describe('linkReceiptToBill', () => {
@@ -215,5 +239,11 @@ describe('linkReceiptToBill', () => {
   it('throws when there is no authenticated user', async () => {
     getUserMock.mockResolvedValue({ data: { user: null } });
     await expect(linkReceiptToBill('receipt-1', 'bill-0')).rejects.toThrow('Not authenticated');
+  });
+
+  it('throws when the update fails', async () => {
+    getUserMock.mockResolvedValue({ data: { user: mockUser } });
+    updateUserEqMock.mockResolvedValue({ error: new Error('db down') });
+    await expect(linkReceiptToBill('receipt-1', 'bill-0')).rejects.toThrow('db down');
   });
 });

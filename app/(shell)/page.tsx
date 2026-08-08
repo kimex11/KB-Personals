@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useCalendarEvents } from '@/lib/use-calendar-events';
 import { useBudget } from '@/lib/use-budget';
 import { useBills } from '@/lib/use-bills';
+import { useReminders } from '@/lib/use-reminders';
 import { useIsMounted } from '@/lib/use-is-mounted';
 import { getOverdueBills, getBillsDueWithinDays, getUpcomingReminders } from '@/lib/dashboard-selectors';
 import { isNotificationSupported, requestNotificationPermission } from '@/lib/notifications';
@@ -17,9 +18,10 @@ import { RemindersPanel } from '@/components/dashboard/RemindersPanel';
 import { QuickActionsRow } from '@/components/dashboard/QuickActionsRow';
 
 export default function HomePage() {
-  const { events, getEventsForDate } = useCalendarEvents();
-  const { totals } = useBudget();
-  const { bills, togglePaid } = useBills();
+  const { totals, error: budgetError } = useBudget();
+  const { bills, error: billsError, togglePaid } = useBills();
+  const { reminders, error: remindersError } = useReminders();
+  const { events, getEventsForDate } = useCalendarEvents(bills, reminders);
   const [selectedDate, setSelectedDate] = useState(() => new Date());
   const [requestedPermission, setRequestedPermission] = useState<NotificationPermission | null>(null);
   const [soundEnabled, setSoundEnabled] = useState(true);
@@ -53,10 +55,13 @@ export default function HomePage() {
     setRequestedPermission(await requestNotificationPermission());
   }
 
+  const error = budgetError ?? billsError ?? remindersError;
+
   return (
     <div data-testid="home-page" className="flex flex-col gap-6 px-4 pb-24 pt-4">
       {isMounted && (
         <>
+          {error && <p className="text-sm text-status-critical">{error}</p>}
           <AlertsBanner overdueBills={overdueBills} referenceDate={now} />
           <NotificationSettings
             permission={permission}

@@ -22,6 +22,11 @@ const archivedCategory: Category = {
 const noop = () => {};
 
 describe('CategoryList', () => {
+  it('shows an empty state when there are no categories', () => {
+    render(<CategoryList categories={[]} onReorder={noop} onEdit={noop} onArchive={noop} onUnarchive={noop} onDelete={noop} />);
+    expect(screen.getByTestId('empty-state')).toHaveTextContent('No categories yet.');
+  });
+
   it('renders each category with its name and a drag handle', () => {
     render(<CategoryList categories={categories} onReorder={noop} onEdit={noop} onArchive={noop} onUnarchive={noop} onDelete={noop} />);
     expect(screen.getByText('Housing')).toBeInTheDocument();

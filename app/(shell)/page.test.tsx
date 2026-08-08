@@ -17,6 +17,22 @@ vi.mock('@/lib/use-budget', () => ({
   useBudget: () => ({
     categories: [],
     totals: { budgeted: 3000, spent: 1800, remaining: 1200 },
+    loading: false,
+    error: null,
+  }),
+}));
+
+vi.mock('@/lib/use-reminders', () => ({
+  useReminders: () => ({
+    reminders: [],
+    loading: false,
+    error: null,
+    refresh: vi.fn(),
+    createReminder: vi.fn(),
+    updateReminder: vi.fn(),
+    deleteReminder: vi.fn(),
+    toggleComplete: vi.fn(),
+    snooze: vi.fn(),
   }),
 }));
 
@@ -66,6 +82,12 @@ describe('HomePage', () => {
   it('renders notification settings', () => {
     render(<HomePage />);
     expect(screen.getByTestId('notification-settings')).toBeInTheDocument();
+  });
+
+  it('shows an error message when bills fail to load', () => {
+    useBillsMock.mockReturnValueOnce({ ...defaultUseBillsResult, error: 'Could not load bills.' });
+    render(<HomePage />);
+    expect(screen.getByText('Could not load bills.')).toBeInTheDocument();
   });
 
   it('excludes an already-paid bill from the overdue alerts banner', () => {

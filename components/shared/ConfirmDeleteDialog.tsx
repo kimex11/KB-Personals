@@ -20,6 +20,8 @@ export function ConfirmDeleteDialog({ open, onOpenChange, title, description, on
     try {
       await onConfirm();
       onOpenChange(false);
+    } catch {
+      // Caller's hook already surfaces the error via its own state; keep the sheet open.
     } finally {
       setSubmitting(false);
     }

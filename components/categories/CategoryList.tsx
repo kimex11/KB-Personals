@@ -10,6 +10,7 @@ import { ICON_MAP } from '@/lib/category-icons';
 import { DOT_COLOR_CLASS } from '@/lib/category-colors';
 import { reorderIds } from '@/lib/categories-reorder';
 import type { Category } from '@/lib/categories-types';
+import { EmptyState } from '@/components/shared/EmptyState';
 
 interface CategoryListProps {
   categories: Category[];
@@ -33,6 +34,10 @@ export function CategoryList({ categories, onReorder, onEdit, onArchive, onUnarc
     const ids = categories.map((c) => c.id);
     const next = reorderIds(ids, activeId, String(overId));
     if (next.join() !== ids.join()) onReorder(next);
+  }
+
+  if (categories.length === 0) {
+    return <EmptyState message="No categories yet." />;
   }
 
   return (
@@ -101,7 +106,7 @@ function CategoryRow({
       <DropdownMenu>
         <DropdownMenuTrigger
           render={
-            <Button variant="ghost" size="icon-sm" aria-label={`Actions for ${category.name}`}>
+            <Button variant="ghost" size="icon-sm" className="min-h-11 min-w-11" aria-label={`Actions for ${category.name}`}>
               <MoreVertical className="h-4 w-4" />
             </Button>
           }
