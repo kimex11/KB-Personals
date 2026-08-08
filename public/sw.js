@@ -42,3 +42,56 @@ self.addEventListener('fetch', (event) => {
     })
   );
 });
+
+// Mirrors lib/notification-priority.ts's VIBRATION_PATTERNS -- a service
+// worker script is loaded directly by the browser (not bundled by Next),
+// so it cannot import from lib/. Keep these two in sync by hand; both are
+// covered by tests that pin the exact array values.
+const VIBRATE_PATTERNS = {
+  critical: [400, 100, 400, 100, 400],
+  urgent: [250, 100, 250],
+  reminder: [150],
+};
+
+self.addEventListener('push', (event) => {
+  if (!event.data) return;
+
+  let payload;
+  try {
+    payload = event.data.json();
+  } catch {
+    return;
+  }
+
+  const priority = payload.priority || 'reminder';
+
+  event.waitUntil(
+    self.registration.showNotification(payload.title, {
+      body: payload.body,
+      tag: payload.tag,
+      icon: '/icons/icon-192.png',
+      badge: '/icons/icon-192.png',
+      vibrate: VIBRATE_PATTERNS[priority] || VIBRATE_PATTERNS.reminder,
+      requireInteraction: priority === 'critical',
+      data: { url: payload.url || '/' },
+    })
+  );
+});
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const targetUrl = event.notification.data && event.notification.data.url ? event.notification.data.url : '/';
+
+  event.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
+      for (const client of clientList) {
+        const clientUrl = new URL(client.url);
+        if (clientUrl.origin === self.location.origin && 'focus' in client) {
+          client.postMessage({ type: 'notification-click', url: targetUrl });
+          return client.focus();
+        }
+      }
+      return self.clients.openWindow(targetUrl);
+    })
+  );
+});
