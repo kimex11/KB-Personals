@@ -49,6 +49,19 @@ describe('ReceiptCard', () => {
     expect(screen.getByAltText('electricity-receipt.jpg')).toHaveAttribute('src', 'blob:mock-url');
   });
 
+  it('calls onView with the receipt when the thumbnail is clicked', () => {
+    const onView = vi.fn();
+    render(<ReceiptCard receipt={imageReceipt} onRemove={vi.fn()} onView={onView} />);
+    fireEvent.click(screen.getByTestId('receipt-thumbnail-button'));
+    expect(onView).toHaveBeenCalledWith(imageReceipt);
+  });
+
+  it('renders a plain, non-clickable image when onView is not provided', () => {
+    render(<ReceiptCard receipt={imageReceipt} onRemove={vi.fn()} />);
+    expect(screen.queryByTestId('receipt-thumbnail-button')).not.toBeInTheDocument();
+    expect(screen.getByAltText('electricity-receipt.jpg')).toBeInTheDocument();
+  });
+
   it('renders a document icon (no image) for non-image file types', () => {
     render(<ReceiptCard receipt={pdfReceipt} onRemove={vi.fn()} />);
     expect(screen.queryByAltText('rent-invoice.pdf')).not.toBeInTheDocument();

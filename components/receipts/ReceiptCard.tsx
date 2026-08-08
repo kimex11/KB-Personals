@@ -11,13 +11,14 @@ export interface LinkableBill {
 interface ReceiptCardProps {
   receipt: StoredReceipt;
   onRemove: (id: string) => void;
+  onView?: (receipt: StoredReceipt) => void;
   ocrStatus?: OcrStatus;
   extractedFields?: ExtractedReceiptFields;
   bills?: LinkableBill[];
   onLinkBill?: (receiptId: string, billId: string | null) => void;
 }
 
-export function ReceiptCard({ receipt, onRemove, ocrStatus, extractedFields, bills, onLinkBill }: ReceiptCardProps) {
+export function ReceiptCard({ receipt, onRemove, onView, ocrStatus, extractedFields, bills, onLinkBill }: ReceiptCardProps) {
   const isImage = receipt.fileType.startsWith('image/');
 
   return (
@@ -26,7 +27,18 @@ export function ReceiptCard({ receipt, onRemove, ocrStatus, extractedFields, bil
       className="flex flex-col overflow-hidden rounded-2xl border border-neutral-200 bg-white"
     >
       <div className="flex h-28 items-center justify-center bg-neutral-50">
-        {isImage ? (
+        {isImage && onView ? (
+          <button
+            type="button"
+            data-testid="receipt-thumbnail-button"
+            aria-label={`View ${receipt.fileName} full size`}
+            onClick={() => onView(receipt)}
+            className="h-full w-full"
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element -- previewUrl is a local blob: URL, not an optimizable remote image */}
+            <img src={receipt.previewUrl} alt={receipt.fileName} className="h-full w-full object-cover" />
+          </button>
+        ) : isImage ? (
           // eslint-disable-next-line @next/next/no-img-element -- previewUrl is a local blob: URL, not an optimizable remote image
           <img src={receipt.previewUrl} alt={receipt.fileName} className="h-full w-full object-cover" />
         ) : (

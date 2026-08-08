@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { ReceiptGrid } from './ReceiptGrid';
 import type { StoredReceipt } from '@/lib/receipts-types';
 
@@ -24,6 +24,16 @@ describe('ReceiptGrid', () => {
     ];
     render(<ReceiptGrid receipts={receipts} onRemove={vi.fn()} ocrStatusById={{ '1': 'processing' }} />);
     expect(screen.getByTestId('receipt-ocr-status')).toHaveTextContent('Scanning');
+  });
+
+  it('passes onView through to each card', () => {
+    const onView = vi.fn();
+    const receipts: StoredReceipt[] = [
+      { id: '1', fileName: 'a.jpg', fileType: 'image/jpeg', fileSize: 1000, previewUrl: 'blob:a', storagePath: 'user-1/a.jpg', merchant: null, receiptDate: null, amount: null, linkedBillId: null, uploadedAt: '2026-08-15T10:00:00.000Z' },
+    ];
+    render(<ReceiptGrid receipts={receipts} onRemove={vi.fn()} onView={onView} />);
+    fireEvent.click(screen.getByTestId('receipt-thumbnail-button'));
+    expect(onView).toHaveBeenCalledWith(receipts[0]);
   });
 
   it('passes bills and onLinkBill through to each card', () => {

@@ -6,6 +6,7 @@ import { EmptyState } from '@/components/shared/EmptyState';
 interface ReceiptGridProps {
   receipts: StoredReceipt[];
   onRemove: (id: string) => void;
+  onView?: (receipt: StoredReceipt) => void;
   ocrStatusById?: Record<string, OcrStatus>;
   ocrResultById?: Record<string, ExtractedReceiptFields>;
   bills?: LinkableBill[];
@@ -15,6 +16,7 @@ interface ReceiptGridProps {
 export function ReceiptGrid({
   receipts,
   onRemove,
+  onView,
   ocrStatusById,
   ocrResultById,
   bills,
@@ -31,6 +33,7 @@ export function ReceiptGrid({
           key={receipt.id}
           receipt={receipt}
           onRemove={onRemove}
+          onView={onView}
           ocrStatus={ocrStatusById?.[receipt.id]}
           extractedFields={ocrResultById?.[receipt.id]}
           bills={bills}
