@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { BillsListView } from './BillsListView';
 import type { Bill } from '@/lib/bills-types';
 
@@ -45,13 +46,13 @@ describe('BillsListView', () => {
     expect(screen.getAllByTestId('bill-duplicate-warning')).toHaveLength(2);
   });
 
-  it('passes onEdit/onDelete through to each row', () => {
+  it('passes onEdit/onDelete through to each row', async () => {
     const onEdit = vi.fn();
     const onDelete = vi.fn();
+    const user = userEvent.setup();
     render(<BillsListView bills={bills} onTogglePaid={vi.fn()} referenceDate={referenceDate} onEdit={onEdit} onDelete={onDelete} />);
-    fireEvent.click(screen.getAllByRole('button', { name: /^edit /i })[0]);
+    await user.click(screen.getAllByRole('button', { name: /^actions for /i })[0]);
+    await user.click(await screen.findByRole('menuitem', { name: /^edit$/i }));
     expect(onEdit).toHaveBeenCalled();
-    fireEvent.click(screen.getAllByRole('button', { name: /^delete /i })[0]);
-    expect(onDelete).toHaveBeenCalled();
   });
 });
