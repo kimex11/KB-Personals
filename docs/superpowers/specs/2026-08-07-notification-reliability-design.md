@@ -15,37 +15,54 @@ There is also no notification priority model, no deep-linking from a notificatio
 the underlying record, and no dedupe beyond a client-side localStorage set of already-seen
 alert IDs (which does not survive across devices or a cleared cache).
 
-Goal: reliable delivery of bill/reminder/budget alerts via real Web Push, with priority
+Goal: reliable delivery of bill/reminder alerts via real Web Push, with priority
 tiers, dedupe, grouping, deep links, and a graceful in-app fallback — without mock data or
 placeholder wiring.
 
 ## Architecture
 
+**Budget-threshold trigger dropped from this project.** `lib/budget-data.ts` is
+hardcoded mock spend/limit data, not a real DB table wired to actual bills/receipts —
+there is no `budgets` table. A notification computed from those numbers would be a real
+push firing on fake data, which fails the "no mock/placeholder" bar. This becomes a
+follow-up project once the budget subsystem itself has a real backing table; it is a
+pre-existing gap unrelated to notification delivery. This plan ships `critical` (bill
+overdue), `urgent` (bill due soon), and `reminder` (user reminders) — all backed by real
+tables already.
+
+Both `bills.due_date` and `reminders.due_date` are DATE columns (no time-of-day
+component in the schema), so there is no benefit to a tight polling interval — a single
+schedule is enough.
+
 ```
-pg_cron (Postgres, two schedules)
-  reminders sweep   : every 1 minute
-  bills+budget sweep: every 15 minutes
+pg_cron (Postgres, one schedule: every 15 minutes)
         │
         ▼
 Supabase Edge Function `notify-sweep`
   1. Query due-worthy state:
-     - bills: overdue (due_date < today, unpaid) → priority "critical"
-     - bills: due today or within reminder window → priority "urgent"
-     - reminders: remind_at <= now, not yet fired → priority "reminder"
-     - budget: category spend crosses 80%/100% threshold → priority "normal"
-  2. Dedupe against `notification_log` on (user_id, entity_type, entity_id, state_key).
-     Only inserts + sends when the state_key is new for that entity (e.g. a bill moving
-     from "due_today" to "overdue" is a new state_key, so it re-notifies once; it never
-     re-notifies for the same state_key twice).
-  3. Apply quiet hours from `notification_preferences`: critical/urgent bypass quiet
-     hours; reminder/normal are skipped (not queued/retried — the next sweep after the
-     window naturally picks up anything still in a due-worthy state).
-  4. Group same-priority items produced by the same user in the same sweep run into one
-     Web Push message per priority tier, using the payload's `tag` field so the OS
-     collapses them into a single notification. Single-item groups keep full detail
-     (title, amount, due date). Multi-item groups summarize ("3 bills overdue: $420
-     total") and deep-link to the relevant list view instead of one record.
-  5. Send via `web-push` (VAPID keys) to every row in `push_subscriptions` for that user.
+     - bills: overdue (due_date < current_date, paid = false) → priority "critical"
+     - bills: due_date = current_date OR due_date within N days out
+       (paid = false) → priority "urgent"
+     - reminders: due_date <= current_date, completed = false → priority "reminder"
+     Bills/reminders/categories are global shared data in this app (RLS gates on
+     `authenticated`, not per-row ownership — see migrations 0004/0006/0007), so a
+     due-worthy item is not "owned" by one user. The sweep fans each due-worthy item
+     out to every row in `push_subscriptions` (i.e. every authenticated device that
+     has opted in), not just one.
+  2. Dedupe per (subscription's user_id, entity_type, entity_id, state_key) against
+     `notification_log`. Only inserts + sends when the state_key is new for that
+     user+entity pair (e.g. a bill moving from "due_today" to "overdue" is a new
+     state_key, so it re-notifies once; it never re-notifies for the same state_key
+     twice for the same user).
+  3. Apply quiet hours from `notification_preferences` (per user_id): critical/urgent
+     bypass quiet hours; reminder is skipped (not queued/retried — the next sweep after
+     the window naturally picks up anything still in a due-worthy state).
+  4. Group same-priority items produced in the same sweep run into one Web Push message
+     per priority tier per user, using the payload's `tag` field so the OS collapses
+     them into a single notification. Single-item groups keep full detail (title,
+     amount, due date). Multi-item groups summarize ("3 bills overdue: $420 total") and
+     deep-link to the relevant list view instead of one record.
+  5. Send via `web-push` (VAPID keys) to every `push_subscriptions` row for that user.
      On a 404/410 response from the push service, delete that subscription row (device
      unsubscribed or push service revoked it) — the row is deleted before deciding
      whether to log the send as sent, so retries don't loop.
@@ -77,7 +94,7 @@ New migration `supabase/migrations/0009_notifications.sql`:
 
 - `notification_preferences`
   `user_id uuid pk fk profiles, quiet_hours_start time, quiet_hours_end time,
-  sound_enabled boolean default true, enabled_priorities text[] default all four` — one
+  sound_enabled boolean default true, enabled_priorities text[] default all three` — one
   row per user, upserted from the settings UI.
 
 ## Priority Model
@@ -90,8 +107,7 @@ import from `lib/` directly — see Open Questions):
 |---|---|---|---|---|
 | `critical` | Bill overdue | long-short-long pattern | true | bypasses |
 | `urgent` | Bill due today / within window | double-pulse | false | bypasses |
-| `reminder` | User reminder fires | single pulse | false | respects |
-| `normal` | Budget threshold crossed | none | false | respects |
+| `reminder` | User reminder due | single pulse | false | respects |
 
 Sound: the Web Push / Notification API gives no cross-browser way to set a custom sound
 file for an OS-delivered background/locked notification — Chrome, Safari, and Firefox all
@@ -119,10 +135,9 @@ priority-specific vibration pattern above as the differentiator.
   polling + `showNotification` + chime + vibrate still fire. Fallback reads the same
   `notification_log` state keys (fetched client-side) so it never double-fires against
   an item the sweep already pushed.
-- `app/(shell)/bills/page.tsx`, `app/(shell)/reminders/page.tsx`,
-  `app/(shell)/budget/page.tsx` — read a `?open=<id>` search param on mount and
-  auto-open the matching item's edit modal. This is the deep-link landing behavior for a
-  notification tap.
+- `app/(shell)/bills/page.tsx`, `app/(shell)/reminders/page.tsx` — read a
+  `?open=<id>` search param on mount and auto-open the matching item's edit modal. This
+  is the deep-link landing behavior for a notification tap.
 
 ## Server Changes
 
@@ -139,11 +154,11 @@ priority-specific vibration pattern above as the differentiator.
 Automated (vitest, following existing repo patterns):
 - `notification-priority` mapping (pure function: entity state → priority + state_key)
 - dedupe logic (given existing `notification_log` rows, which entities are eligible)
-- quiet-hours gating (critical/urgent bypass; reminder/normal respected)
+- quiet-hours gating (critical/urgent bypass; reminder respected)
 - grouping/tag logic (single item vs multi-item summary payload)
 - `sw.js` `push` / `notificationclick` handlers (jsdom + mocked
   `ServiceWorkerGlobalScope`/`registration.showNotification`/`clients`)
-- `?open=` param handling on Bills/Reminders/Budget pages
+- `?open=` param handling on Bills/Reminders pages
 - `NotificationSettings` new states (`unsupported`, `denied` messaging, quiet-hours form)
 
 Manual device matrix (executed before this is considered done, not a "nice to have"):
