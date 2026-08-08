@@ -12,3 +12,10 @@ export function showNotification(title: string, options?: NotificationOptions): 
   if (!isNotificationSupported() || Notification.permission !== 'granted') return;
   new Notification(title, options);
 }
+
+export function clearAppBadge(): void {
+  if (typeof navigator === 'undefined') return;
+  const clear = (navigator as Navigator & { clearAppBadge?: () => Promise<void> }).clearAppBadge;
+  if (typeof clear !== 'function') return;
+  clear.call(navigator).catch(() => {});
+}

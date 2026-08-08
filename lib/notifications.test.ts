@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { isNotificationSupported, requestNotificationPermission, showNotification } from './notifications';
+import { isNotificationSupported, requestNotificationPermission, showNotification, clearAppBadge } from './notifications';
 
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -56,5 +56,19 @@ describe('showNotification', () => {
     vi.stubGlobal('Notification', Object.assign(NotificationMock, { permission: 'granted' }));
     showNotification('Overdue bill', { body: 'Rent is overdue' });
     expect(NotificationMock).toHaveBeenCalledWith('Overdue bill', { body: 'Rent is overdue' });
+  });
+});
+
+describe('clearAppBadge', () => {
+  it('calls navigator.clearAppBadge when supported', () => {
+    const clearAppBadgeMock = vi.fn().mockResolvedValue(undefined);
+    vi.stubGlobal('navigator', { ...navigator, clearAppBadge: clearAppBadgeMock });
+    clearAppBadge();
+    expect(clearAppBadgeMock).toHaveBeenCalled();
+  });
+
+  it('does not throw when unsupported', () => {
+    vi.stubGlobal('navigator', { ...navigator, clearAppBadge: undefined });
+    expect(() => clearAppBadge()).not.toThrow();
   });
 });

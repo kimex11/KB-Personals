@@ -5,12 +5,13 @@ import type { AlertItem } from './use-overdue-alerts';
 
 vi.mock('./notifications', () => ({
   showNotification: vi.fn(),
+  clearAppBadge: vi.fn(),
 }));
 vi.mock('./notification-sound', () => ({
   playNotificationSound: vi.fn(),
 }));
 
-import { showNotification } from './notifications';
+import { showNotification, clearAppBadge } from './notifications';
 import { playNotificationSound } from './notification-sound';
 
 const items: AlertItem[] = [
@@ -57,7 +58,7 @@ describe('useOverdueAlerts', () => {
     expect(navigator.vibrate).toHaveBeenCalled();
   });
 
-  it('sets the app badge to the total active alert count', () => {
+  it('sets the app badge to the new/unread alert count on first view', () => {
     renderHook(() => useOverdueAlerts(items));
     expect(navigator.setAppBadge).toHaveBeenCalledWith(2);
   });
@@ -74,5 +75,28 @@ describe('useOverdueAlerts', () => {
 
     renderHook(() => useOverdueAlerts(items));
     expect(showNotification).toHaveBeenCalledTimes(2);
+  });
+
+  it('clears the app badge once all current items have already been viewed/acknowledged', () => {
+    const { rerender } = renderHook(({ items }) => useOverdueAlerts(items), { initialProps: { items } });
+    (clearAppBadge as ReturnType<typeof vi.fn>).mockClear();
+    // A fresh array with the same ids -- realistic, since callers recompute
+    // this list on every render rather than memoizing it.
+    rerender({ items: [...items] });
+    expect(clearAppBadge).toHaveBeenCalled();
+  });
+
+  it('sets the badge to only the new item count when some items were already acknowledged', () => {
+    const { rerender } = renderHook(({ items }) => useOverdueAlerts(items), { initialProps: { items } });
+    (navigator.setAppBadge as ReturnType<typeof vi.fn>).mockClear();
+    const withNewItem = [...items, { id: 'bill-3', title: 'Overdue: Netflix', body: '₱15.99 was due 1 day ago' }];
+    rerender({ items: withNewItem });
+    expect(navigator.setAppBadge).toHaveBeenCalledWith(1);
+  });
+
+  it('clears the badge when there are no overdue items at all', () => {
+    renderHook(() => useOverdueAlerts([]));
+    expect(clearAppBadge).toHaveBeenCalled();
+    expect(navigator.setAppBadge).not.toHaveBeenCalled();
   });
 });
