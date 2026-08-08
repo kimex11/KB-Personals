@@ -3,6 +3,23 @@ import { render, screen } from '@testing-library/react';
 import HomePage from './page';
 import type { CalendarEvent } from '@/lib/types';
 
+vi.mock('@/lib/push-subscription', () => ({
+  subscribeToPush: vi.fn().mockResolvedValue(true),
+  isPushSupported: vi.fn().mockReturnValue(true),
+}));
+vi.mock('@/lib/notification-preferences-repository', () => ({
+  getPreferences: vi.fn().mockResolvedValue({
+    quietHoursStart: null,
+    quietHoursEnd: null,
+    soundEnabled: true,
+    enabledPriorities: ['critical', 'urgent', 'reminder'],
+  }),
+  upsertPreferences: vi.fn().mockResolvedValue(undefined),
+}));
+vi.mock('@/lib/notification-log-repository', () => ({
+  listSentStateKeys: vi.fn().mockResolvedValue(new Set()),
+}));
+
 const mockEvents: CalendarEvent[] = [
   { id: 'overdue-1', type: 'bill', title: 'Overdue Rent', date: '2026-08-01', amount: 1450 },
   { id: 'due-1', type: 'bill', title: 'Internet Bill', date: '2026-08-15', amount: 59.99 },
