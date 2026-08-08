@@ -42,11 +42,18 @@ describe('CategoryList', () => {
     expect(screen.queryByTestId('category-drag-handle')).not.toBeInTheDocument();
   });
 
-  it('calls onEdit when the edit action is clicked', async () => {
+  it('hides Edit/Archive/Delete until the actions menu is opened', () => {
+    render(<CategoryList categories={categories} onReorder={noop} onEdit={noop} onArchive={noop} onUnarchive={noop} onDelete={noop} />);
+    expect(screen.getAllByRole('button', { name: /actions for/i })).toHaveLength(2);
+    expect(screen.queryByRole('menuitem', { name: /edit/i })).not.toBeInTheDocument();
+  });
+
+  it('calls onEdit when the edit action is chosen', async () => {
     const onEdit = vi.fn();
     const user = userEvent.setup();
     render(<CategoryList categories={categories} onReorder={noop} onEdit={onEdit} onArchive={noop} onUnarchive={noop} onDelete={noop} />);
-    await user.click(screen.getAllByRole('button', { name: /edit housing/i })[0]);
+    await user.click(screen.getAllByRole('button', { name: /actions for housing/i })[0]);
+    await user.click(await screen.findByRole('menuitem', { name: /^edit$/i }));
     expect(onEdit).toHaveBeenCalledWith(categories[0]);
   });
 
@@ -64,17 +71,21 @@ describe('CategoryList', () => {
         onDelete={noop}
       />
     );
-    await user.click(screen.getByRole('button', { name: /archive housing/i }));
+    await user.click(screen.getByRole('button', { name: /actions for housing/i }));
+    await user.click(await screen.findByRole('menuitem', { name: /^archive$/i }));
     expect(onArchive).toHaveBeenCalledWith('cat-1');
-    await user.click(screen.getByRole('button', { name: /unarchive old subscriptions/i }));
+
+    await user.click(screen.getByRole('button', { name: /actions for old subscriptions/i }));
+    await user.click(await screen.findByRole('menuitem', { name: /^unarchive$/i }));
     expect(onUnarchive).toHaveBeenCalledWith('cat-3');
   });
 
-  it('calls onDelete with the full category when the delete action is clicked', async () => {
+  it('calls onDelete with the full category when the delete action is chosen', async () => {
     const onDelete = vi.fn();
     const user = userEvent.setup();
     render(<CategoryList categories={categories} onReorder={noop} onEdit={noop} onArchive={noop} onUnarchive={noop} onDelete={onDelete} />);
-    await user.click(screen.getAllByRole('button', { name: /delete housing/i })[0]);
+    await user.click(screen.getAllByRole('button', { name: /actions for housing/i })[0]);
+    await user.click(await screen.findByRole('menuitem', { name: /^delete$/i }));
     expect(onDelete).toHaveBeenCalledWith(categories[0]);
   });
 });

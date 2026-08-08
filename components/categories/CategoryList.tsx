@@ -3,8 +3,9 @@
 import { DndContext, KeyboardSensor, PointerSensor, closestCenter, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { GripVertical, Pencil, Archive, ArchiveRestore, Trash2 } from 'lucide-react';
+import { GripVertical, MoreVertical, Pencil, Archive, ArchiveRestore, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
 import { ICON_MAP } from '@/lib/category-icons';
 import { DOT_COLOR_CLASS } from '@/lib/category-colors';
 import { reorderIds } from '@/lib/categories-reorder';
@@ -97,21 +98,36 @@ function CategoryRow({
       {category.archived && (
         <span className="rounded-full bg-neutral-100 px-2 py-0.5 text-xs text-neutral-500">Archived</span>
       )}
-      <Button variant="ghost" size="icon-sm" aria-label={`Edit ${category.name}`} onClick={() => onEdit(category)}>
-        <Pencil className="h-4 w-4" />
-      </Button>
-      {category.archived ? (
-        <Button variant="ghost" size="icon-sm" aria-label={`Unarchive ${category.name}`} onClick={() => onUnarchive(category.id)}>
-          <ArchiveRestore className="h-4 w-4" />
-        </Button>
-      ) : (
-        <Button variant="ghost" size="icon-sm" aria-label={`Archive ${category.name}`} onClick={() => onArchive(category.id)}>
-          <Archive className="h-4 w-4" />
-        </Button>
-      )}
-      <Button variant="ghost" size="icon-sm" aria-label={`Delete ${category.name}`} onClick={() => onDelete(category)}>
-        <Trash2 className="h-4 w-4" />
-      </Button>
+      <DropdownMenu>
+        <DropdownMenuTrigger
+          render={
+            <Button variant="ghost" size="icon-sm" aria-label={`Actions for ${category.name}`}>
+              <MoreVertical className="h-4 w-4" />
+            </Button>
+          }
+        />
+        <DropdownMenuContent>
+          <DropdownMenuItem onClick={() => onEdit(category)}>
+            <Pencil className="h-4 w-4" />
+            Edit
+          </DropdownMenuItem>
+          {category.archived ? (
+            <DropdownMenuItem onClick={() => onUnarchive(category.id)}>
+              <ArchiveRestore className="h-4 w-4" />
+              Unarchive
+            </DropdownMenuItem>
+          ) : (
+            <DropdownMenuItem onClick={() => onArchive(category.id)}>
+              <Archive className="h-4 w-4" />
+              Archive
+            </DropdownMenuItem>
+          )}
+          <DropdownMenuItem variant="destructive" onClick={() => onDelete(category)}>
+            <Trash2 className="h-4 w-4" />
+            Delete
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
     </li>
   );
 }
