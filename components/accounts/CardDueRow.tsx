@@ -1,8 +1,7 @@
-import { Pencil, Trash2 } from 'lucide-react';
 import type { CreditCardDue, DueStatus } from '@/lib/accounts-types';
 import { getDueStatus } from '@/lib/accounts-selectors';
 import { CardDueStatusBadge } from './CardDueStatusBadge';
-import { Button } from '@/components/ui/button';
+import { RowActionsMenu } from '@/components/shared/RowActionsMenu';
 import { formatRelativeDate } from '@/lib/date-utils';
 
 const STATUS_ACCENT_BORDER: Record<DueStatus, string> = {
@@ -45,20 +44,11 @@ export function CardDueRow({ card, referenceDate = new Date(), onEdit, onDelete 
         <span className="text-[10px] text-neutral-400">Min ₱{card.minimumPayment.toFixed(2)}</span>
         <CardDueStatusBadge status={status} />
       </div>
-      {(onEdit || onDelete) && (
-        <div className="flex flex-col gap-1">
-          {onEdit && (
-            <Button variant="ghost" size="icon-sm" aria-label={`Edit ${card.cardName}`} onClick={() => onEdit(card)}>
-              <Pencil className="h-4 w-4" />
-            </Button>
-          )}
-          {onDelete && (
-            <Button variant="ghost" size="icon-sm" aria-label={`Delete ${card.cardName}`} onClick={() => onDelete(card)}>
-              <Trash2 className="h-4 w-4" />
-            </Button>
-          )}
-        </div>
-      )}
+      <RowActionsMenu
+        label={card.cardName}
+        onEdit={onEdit ? () => onEdit(card) : undefined}
+        onDelete={onDelete ? () => onDelete(card) : undefined}
+      />
     </div>
   );
 }

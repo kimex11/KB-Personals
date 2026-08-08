@@ -76,10 +76,11 @@ describe('AccountsPage', () => {
     });
   });
 
-  it('opens the edit form pre-filled when a card row Edit is clicked', async () => {
+  it('opens the edit form pre-filled when a card row Edit is chosen from its actions menu', async () => {
     const user = userEvent.setup();
     render(<AccountsPage />);
-    await user.click(screen.getByRole('button', { name: /edit visa platinum/i }));
+    await user.click(screen.getByRole('button', { name: /actions for visa platinum/i }));
+    await user.click(await screen.findByRole('menuitem', { name: /edit/i }));
     expect(screen.getByRole('heading', { name: /edit credit card/i })).toBeInTheDocument();
     expect(screen.getByLabelText(/card name/i)).toHaveValue('Visa Platinum');
   });
@@ -87,7 +88,8 @@ describe('AccountsPage', () => {
   it('deletes a card after confirming', async () => {
     const user = userEvent.setup();
     render(<AccountsPage />);
-    await user.click(screen.getByRole('button', { name: /delete visa platinum/i }));
+    await user.click(screen.getByRole('button', { name: /actions for visa platinum/i }));
+    await user.click(await screen.findByRole('menuitem', { name: /delete/i }));
     expect(screen.getByRole('heading', { name: /delete visa platinum/i })).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: /^delete$/i }));
     expect(deleteCardMock).toHaveBeenCalledWith('card-1');
@@ -110,7 +112,8 @@ describe('AccountsPage', () => {
   it('deletes an income source after confirming', async () => {
     const user = userEvent.setup();
     render(<AccountsPage />);
-    await user.click(screen.getByRole('button', { name: /delete salary/i }));
+    await user.click(screen.getByRole('button', { name: /actions for salary/i }));
+    await user.click(await screen.findByRole('menuitem', { name: /delete/i }));
     await user.click(screen.getByRole('button', { name: /^delete$/i }));
     expect(deleteIncomeMock).toHaveBeenCalledWith('income-1');
   });

@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { BillRow } from './BillRow';
 import type { Bill } from '@/lib/bills-types';
 
@@ -68,21 +69,30 @@ describe('BillRow', () => {
     expect(screen.getByTestId('bill-row')).toHaveClass('border-l-status-success');
   });
 
-  it('does not render edit/delete actions when no handlers are given', () => {
+  it('does not render an actions menu when no handlers are given', () => {
     render(<BillRow bill={bill} onTogglePaid={vi.fn()} referenceDate={referenceDate} />);
-    expect(screen.queryByRole('button', { name: /edit internet bill/i })).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /delete internet bill/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /actions for internet bill/i })).not.toBeInTheDocument();
   });
 
-  it('calls onEdit/onDelete when the action buttons are clicked', () => {
+  it('hides Edit/Delete until the actions menu is opened', () => {
+    render(<BillRow bill={bill} onTogglePaid={vi.fn()} referenceDate={referenceDate} onEdit={vi.fn()} onDelete={vi.fn()} />);
+    expect(screen.getByRole('button', { name: /actions for internet bill/i })).toBeInTheDocument();
+    expect(screen.queryByRole('menuitem', { name: /edit/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('menuitem', { name: /delete/i })).not.toBeInTheDocument();
+  });
+
+  it('calls onEdit/onDelete via the actions menu', async () => {
     const onEdit = vi.fn();
     const onDelete = vi.fn();
+    const user = userEvent.setup();
     render(<BillRow bill={bill} onTogglePaid={vi.fn()} referenceDate={referenceDate} onEdit={onEdit} onDelete={onDelete} />);
 
-    fireEvent.click(screen.getByRole('button', { name: /edit internet bill/i }));
+    await user.click(screen.getByRole('button', { name: /actions for internet bill/i }));
+    await user.click(await screen.findByRole('menuitem', { name: /edit/i }));
     expect(onEdit).toHaveBeenCalledWith(bill);
 
-    fireEvent.click(screen.getByRole('button', { name: /delete internet bill/i }));
+    await user.click(screen.getByRole('button', { name: /actions for internet bill/i }));
+    await user.click(await screen.findByRole('menuitem', { name: /delete/i }));
     expect(onDelete).toHaveBeenCalledWith(bill);
   });
 });

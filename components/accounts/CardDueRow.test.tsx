@@ -44,22 +44,23 @@ describe('CardDueRow', () => {
     expect(screen.getByTestId('card-due-row')).toHaveClass('border-l-status-warning');
   });
 
-  it('does not render edit/delete actions when no handlers are given', () => {
+  it('does not render an actions menu when no handlers are given', () => {
     render(<CardDueRow card={card} referenceDate={referenceDate} />);
-    expect(screen.queryByRole('button', { name: /edit visa platinum/i })).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /delete visa platinum/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /actions for visa platinum/i })).not.toBeInTheDocument();
   });
 
-  it('calls onEdit/onDelete when the action buttons are clicked', async () => {
+  it('calls onEdit/onDelete via the actions menu', async () => {
     const onEdit = vi.fn();
     const onDelete = vi.fn();
     const user = userEvent.setup();
     render(<CardDueRow card={card} referenceDate={referenceDate} onEdit={onEdit} onDelete={onDelete} />);
 
-    await user.click(screen.getByRole('button', { name: /edit visa platinum/i }));
+    await user.click(screen.getByRole('button', { name: /actions for visa platinum/i }));
+    await user.click(await screen.findByRole('menuitem', { name: /edit/i }));
     expect(onEdit).toHaveBeenCalledWith(card);
 
-    await user.click(screen.getByRole('button', { name: /delete visa platinum/i }));
+    await user.click(screen.getByRole('button', { name: /actions for visa platinum/i }));
+    await user.click(await screen.findByRole('menuitem', { name: /delete/i }));
     expect(onDelete).toHaveBeenCalledWith(card);
   });
 });

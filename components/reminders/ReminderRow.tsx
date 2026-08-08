@@ -1,7 +1,6 @@
-import { Pencil, Trash2 } from 'lucide-react';
 import type { Priority, Reminder } from '@/lib/reminders-types';
 import { PriorityBadge } from './PriorityBadge';
-import { Button } from '@/components/ui/button';
+import { RowActionsMenu } from '@/components/shared/RowActionsMenu';
 import { formatRelativeDate } from '@/lib/date-utils';
 
 const PRIORITY_ACCENT_BORDER: Record<Priority, string> = {
@@ -65,20 +64,11 @@ export function ReminderRow({ reminder, onToggleComplete, onSnooze, referenceDat
           </button>
         )}
       </div>
-      {(onEdit || onDelete) && (
-        <div className="flex flex-col gap-1">
-          {onEdit && (
-            <Button variant="ghost" size="icon-sm" aria-label={`Edit ${reminder.title}`} onClick={() => onEdit(reminder)}>
-              <Pencil className="h-4 w-4" />
-            </Button>
-          )}
-          {onDelete && (
-            <Button variant="ghost" size="icon-sm" aria-label={`Delete ${reminder.title}`} onClick={() => onDelete(reminder)}>
-              <Trash2 className="h-4 w-4" />
-            </Button>
-          )}
-        </div>
-      )}
+      <RowActionsMenu
+        label={reminder.title}
+        onEdit={onEdit ? () => onEdit(reminder) : undefined}
+        onDelete={onDelete ? () => onDelete(reminder) : undefined}
+      />
     </div>
   );
 }

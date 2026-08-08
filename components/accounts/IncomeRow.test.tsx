@@ -23,16 +23,18 @@ describe('IncomeRow', () => {
     expect(row).toHaveTextContent('Biweekly');
   });
 
-  it('calls onEdit/onDelete when the action buttons are clicked', async () => {
+  it('calls onEdit/onDelete via the actions menu', async () => {
     const onEdit = vi.fn();
     const onDelete = vi.fn();
     const user = userEvent.setup();
     render(<IncomeRow source={source} referenceDate={referenceDate} onEdit={onEdit} onDelete={onDelete} />);
 
-    await user.click(screen.getByRole('button', { name: /edit salary/i }));
+    await user.click(screen.getByRole('button', { name: /actions for salary/i }));
+    await user.click(await screen.findByRole('menuitem', { name: /edit/i }));
     expect(onEdit).toHaveBeenCalledWith(source);
 
-    await user.click(screen.getByRole('button', { name: /delete salary/i }));
+    await user.click(screen.getByRole('button', { name: /actions for salary/i }));
+    await user.click(await screen.findByRole('menuitem', { name: /delete/i }));
     expect(onDelete).toHaveBeenCalledWith(source);
   });
 });

@@ -67,10 +67,11 @@ describe('RemindersPage', () => {
     expect(createReminderMock).toHaveBeenCalledWith({ title: 'Water plants', category: 'Home', dueDate: '2026-09-01', priority: 'medium' });
   });
 
-  it('opens the edit form pre-filled when a reminder row Edit is clicked', async () => {
+  it('opens the edit form pre-filled when a reminder row Edit is chosen from its actions menu', async () => {
     const user = userEvent.setup();
     render(<RemindersPage />);
-    await user.click(screen.getByRole('button', { name: /edit call insurance provider/i }));
+    await user.click(screen.getByRole('button', { name: /actions for call insurance provider/i }));
+    await user.click(await screen.findByRole('menuitem', { name: /edit/i }));
     expect(screen.getByRole('heading', { name: /edit reminder/i })).toBeInTheDocument();
     expect(screen.getByLabelText(/title/i)).toHaveValue('Call insurance provider');
   });
@@ -78,7 +79,8 @@ describe('RemindersPage', () => {
   it('deletes a reminder after confirming', async () => {
     const user = userEvent.setup();
     render(<RemindersPage />);
-    await user.click(screen.getByRole('button', { name: /delete call insurance provider/i }));
+    await user.click(screen.getByRole('button', { name: /actions for call insurance provider/i }));
+    await user.click(await screen.findByRole('menuitem', { name: /delete/i }));
     await user.click(screen.getByRole('button', { name: /^delete$/i }));
     expect(deleteReminderMock).toHaveBeenCalledWith('reminder-1');
   });

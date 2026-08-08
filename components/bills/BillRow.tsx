@@ -1,8 +1,7 @@
-import { Pencil, Trash2 } from 'lucide-react';
 import type { Bill, BillStatus } from '@/lib/bills-types';
 import { getBillStatus } from '@/lib/bills-selectors';
 import { BillStatusBadge } from './BillStatusBadge';
-import { Button } from '@/components/ui/button';
+import { RowActionsMenu } from '@/components/shared/RowActionsMenu';
 import { formatRelativeDate } from '@/lib/date-utils';
 
 const RECURRENCE_LABEL: Record<NonNullable<Bill['recurrence']>, string> = {
@@ -82,20 +81,11 @@ export function BillRow({ bill, onTogglePaid, referenceDate = new Date(), isDupl
           </span>
           <BillStatusBadge status={status} />
         </div>
-        {(onEdit || onDelete) && (
-          <div className="flex flex-col gap-1">
-            {onEdit && (
-              <Button variant="ghost" size="icon-sm" aria-label={`Edit ${bill.title}`} onClick={() => onEdit(bill)}>
-                <Pencil className="h-4 w-4" />
-              </Button>
-            )}
-            {onDelete && (
-              <Button variant="ghost" size="icon-sm" aria-label={`Delete ${bill.title}`} onClick={() => onDelete(bill)}>
-                <Trash2 className="h-4 w-4" />
-              </Button>
-            )}
-          </div>
-        )}
+        <RowActionsMenu
+          label={bill.title}
+          onEdit={onEdit ? () => onEdit(bill) : undefined}
+          onDelete={onDelete ? () => onDelete(bill) : undefined}
+        />
       </div>
     </div>
   );

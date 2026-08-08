@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { ReminderRow } from './ReminderRow';
 import type { Reminder } from '@/lib/reminders-types';
 
@@ -60,17 +61,20 @@ describe('ReminderRow', () => {
     expect(screen.getByTestId('reminder-row')).toHaveClass('border-l-neutral-300');
   });
 
-  it('calls onEdit/onDelete when the action buttons are clicked', () => {
+  it('calls onEdit/onDelete via the actions menu', async () => {
     const onEdit = vi.fn();
     const onDelete = vi.fn();
+    const user = userEvent.setup();
     render(
       <ReminderRow reminder={reminder} onToggleComplete={vi.fn()} onSnooze={vi.fn()} referenceDate={referenceDate} onEdit={onEdit} onDelete={onDelete} />
     );
 
-    fireEvent.click(screen.getByRole('button', { name: /edit call insurance provider/i }));
+    await user.click(screen.getByRole('button', { name: /actions for call insurance provider/i }));
+    await user.click(await screen.findByRole('menuitem', { name: /edit/i }));
     expect(onEdit).toHaveBeenCalledWith(reminder);
 
-    fireEvent.click(screen.getByRole('button', { name: /delete call insurance provider/i }));
+    await user.click(screen.getByRole('button', { name: /actions for call insurance provider/i }));
+    await user.click(await screen.findByRole('menuitem', { name: /delete/i }));
     expect(onDelete).toHaveBeenCalledWith(reminder);
   });
 });

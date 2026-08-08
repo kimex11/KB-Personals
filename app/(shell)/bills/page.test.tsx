@@ -97,10 +97,11 @@ describe('BillsPage', () => {
     expect(createBillMock).toHaveBeenCalledWith({ title: 'Water Bill', categoryId: 'cat-1', amount: 30, dueDate: '2026-09-01', recurrence: null });
   });
 
-  it('opens the edit form pre-filled when a bill row Edit is clicked', async () => {
+  it('opens the edit form pre-filled when a bill row Edit is chosen from its actions menu', async () => {
     const user = userEvent.setup();
     render(<BillsPage />);
-    await user.click(screen.getByRole('button', { name: /edit rent/i }));
+    await user.click(screen.getByRole('button', { name: /actions for rent/i }));
+    await user.click(await screen.findByRole('menuitem', { name: /edit/i }));
     expect(screen.getByRole('heading', { name: /edit bill/i })).toBeInTheDocument();
     expect(screen.getByLabelText(/title/i)).toHaveValue('Rent');
   });
@@ -108,7 +109,8 @@ describe('BillsPage', () => {
   it('deletes a bill after confirming', async () => {
     const user = userEvent.setup();
     render(<BillsPage />);
-    await user.click(screen.getByRole('button', { name: /delete rent/i }));
+    await user.click(screen.getByRole('button', { name: /actions for rent/i }));
+    await user.click(await screen.findByRole('menuitem', { name: /delete/i }));
     await user.click(screen.getByRole('button', { name: /^delete$/i }));
     expect(deleteBillMock).toHaveBeenCalledWith('bill-1');
   });
