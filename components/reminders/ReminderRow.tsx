@@ -9,6 +9,12 @@ const PRIORITY_ACCENT_BORDER: Record<Priority, string> = {
   low: 'border-l-neutral-300',
 };
 
+const PRIORITY_CARD_BG: Record<Priority, string> = {
+  high: 'bg-status-critical/5',
+  medium: 'bg-status-warning/5',
+  low: 'bg-white',
+};
+
 interface ReminderRowProps {
   reminder: Reminder;
   onToggleComplete: (id: string) => void;
@@ -22,8 +28,10 @@ export function ReminderRow({ reminder, onToggleComplete, onSnooze, referenceDat
   return (
     <div
       data-testid="reminder-row"
-      className={`flex items-center justify-between gap-3 rounded-2xl border border-l-4 border-neutral-200 bg-white px-4 py-3 ${
-        reminder.completed ? 'border-l-status-success' : PRIORITY_ACCENT_BORDER[reminder.priority]
+      className={`flex items-center justify-between gap-3 rounded-2xl border border-l-4 border-neutral-200 px-4 py-3 ${
+        reminder.completed
+          ? 'border-l-status-success bg-status-success/5'
+          : `${PRIORITY_ACCENT_BORDER[reminder.priority]} ${PRIORITY_CARD_BG[reminder.priority]}`
       }`}
     >
       <button

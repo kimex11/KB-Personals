@@ -10,6 +10,12 @@ const STATUS_ACCENT_BORDER: Record<DueStatus, string> = {
   upcoming: 'border-l-neutral-200',
 };
 
+const STATUS_CARD_BG: Record<DueStatus, string> = {
+  overdue: 'bg-status-critical/5',
+  'due-soon': 'bg-status-warning/5',
+  upcoming: 'bg-white',
+};
+
 const STATUS_BALANCE_COLOR: Record<DueStatus, string> = {
   overdue: 'text-status-critical',
   'due-soon': 'text-status-warning',
@@ -29,7 +35,7 @@ export function CardDueRow({ card, referenceDate = new Date(), onEdit, onDelete 
   return (
     <div
       data-testid="card-due-row"
-      className={`flex items-center justify-between gap-3 rounded-2xl border border-l-4 border-neutral-200 bg-white px-4 py-3 ${STATUS_ACCENT_BORDER[status]}`}
+      className={`flex items-center justify-between gap-3 rounded-2xl border border-l-4 border-neutral-200 px-4 py-3 ${STATUS_CARD_BG[status]} ${STATUS_ACCENT_BORDER[status]}`}
     >
       <div className="flex-1">
         <p className="text-sm font-medium text-neutral-900">{card.cardName}</p>

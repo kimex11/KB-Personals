@@ -50,15 +50,23 @@ describe('ReminderRow', () => {
     expect(screen.queryByTestId('reminder-snooze-button')).not.toBeInTheDocument();
   });
 
-  it('colors the left border to match priority: high', () => {
+  it('colors the left border and card background to match priority: high', () => {
     render(<ReminderRow reminder={reminder} onToggleComplete={vi.fn()} onSnooze={vi.fn()} referenceDate={referenceDate} />);
     expect(screen.getByTestId('reminder-row')).toHaveClass('border-l-status-critical');
+    expect(screen.getByTestId('reminder-row')).toHaveClass('bg-status-critical/5');
   });
 
-  it('colors the left border to match priority: low', () => {
+  it('colors the left border to match priority: low, with a plain white background', () => {
     const low: Reminder = { ...reminder, priority: 'low' };
     render(<ReminderRow reminder={low} onToggleComplete={vi.fn()} onSnooze={vi.fn()} referenceDate={referenceDate} />);
     expect(screen.getByTestId('reminder-row')).toHaveClass('border-l-neutral-300');
+    expect(screen.getByTestId('reminder-row')).toHaveClass('bg-white');
+  });
+
+  it('tints the card background green once completed, regardless of priority', () => {
+    const completed: Reminder = { ...reminder, completed: true };
+    render(<ReminderRow reminder={completed} onToggleComplete={vi.fn()} onSnooze={vi.fn()} referenceDate={referenceDate} />);
+    expect(screen.getByTestId('reminder-row')).toHaveClass('bg-status-success/5');
   });
 
   it('calls onEdit/onDelete via the actions menu', async () => {

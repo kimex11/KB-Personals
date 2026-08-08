@@ -46,6 +46,14 @@ describe('BillsListView', () => {
     expect(screen.getAllByTestId('bill-duplicate-warning')).toHaveLength(2);
   });
 
+  it('colors each section header dot to match its status', () => {
+    render(<BillsListView bills={bills} onTogglePaid={vi.fn()} referenceDate={referenceDate} />);
+    const overdueDot = screen.getByTestId('bills-section-dot-overdue');
+    expect(overdueDot).toHaveClass('bg-status-critical');
+    const paidDot = screen.getByTestId('bills-section-dot-paid');
+    expect(paidDot).toHaveClass('bg-status-success');
+  });
+
   it('passes onEdit/onDelete through to each row', async () => {
     const onEdit = vi.fn();
     const onDelete = vi.fn();

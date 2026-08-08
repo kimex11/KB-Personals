@@ -15,6 +15,13 @@ const SECTION_ORDER: { status: BillStatus; label: string }[] = [
   { status: 'paid', label: 'Paid' },
 ];
 
+const SECTION_DOT_COLOR: Record<BillStatus, string> = {
+  overdue: 'bg-status-critical',
+  'due-soon': 'bg-status-warning',
+  upcoming: 'bg-neutral-300',
+  paid: 'bg-status-success',
+};
+
 interface BillsListViewProps {
   bills: Bill[];
   onTogglePaid: (id: string) => void;
@@ -61,7 +68,14 @@ export function BillsListView({ bills, onTogglePaid, referenceDate = new Date(),
             ({ status, label }) =>
               grouped[status].length > 0 && (
                 <div key={status} className="flex flex-col gap-2">
-                  <h2 className="font-serif text-sm text-neutral-500">{label}</h2>
+                  <h2 className="flex items-center gap-2 font-serif text-sm text-neutral-500">
+                    <span
+                      data-testid={`bills-section-dot-${status}`}
+                      className={`h-2 w-2 rounded-full ${SECTION_DOT_COLOR[status]}`}
+                      aria-hidden="true"
+                    />
+                    {label}
+                  </h2>
                   <div className="flex flex-col gap-2">
                     {grouped[status].map((bill) => (
                       <BillRow

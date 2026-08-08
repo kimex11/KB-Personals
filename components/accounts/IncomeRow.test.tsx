@@ -23,6 +23,11 @@ describe('IncomeRow', () => {
     expect(row).toHaveTextContent('Biweekly');
   });
 
+  it('tints the card background success-green', () => {
+    render(<IncomeRow source={source} referenceDate={referenceDate} />);
+    expect(screen.getByTestId('income-row')).toHaveClass('bg-status-success/5');
+  });
+
   it('calls onEdit/onDelete via the actions menu', async () => {
     const onEdit = vi.fn();
     const onDelete = vi.fn();

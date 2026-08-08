@@ -21,7 +21,9 @@ export function TabBar() {
             href={href}
             data-testid={`tab-${label.toLowerCase()}`}
             aria-current={isActive ? 'page' : undefined}
-            className="relative flex flex-col items-center gap-1 px-3 pb-2 text-xs"
+            className={`relative flex flex-col items-center gap-1 rounded-2xl px-3 pb-2 pt-1 text-xs transition-colors ${
+              isActive ? 'bg-gold/10' : ''
+            }`}
           >
             <Icon className={isActive ? 'h-5 w-5 text-gold' : 'h-5 w-5 text-neutral-400'} strokeWidth={isActive ? 2.5 : 2} />
             <span className={isActive ? 'text-gold' : 'text-neutral-400'}>{label}</span>

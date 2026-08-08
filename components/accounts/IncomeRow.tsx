@@ -19,7 +19,7 @@ export function IncomeRow({ source, referenceDate = new Date(), onEdit, onDelete
   return (
     <div
       data-testid="income-row"
-      className="flex items-center justify-between gap-3 rounded-2xl border border-l-4 border-neutral-200 border-l-status-success bg-white px-4 py-3"
+      className="flex items-center justify-between gap-3 rounded-2xl border border-l-4 border-neutral-200 border-l-status-success bg-status-success/5 px-4 py-3"
     >
       <div className="flex-1">
         <p className="text-sm font-medium text-neutral-900">{source.name}</p>

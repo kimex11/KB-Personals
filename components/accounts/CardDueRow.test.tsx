@@ -30,11 +30,12 @@ describe('CardDueRow', () => {
     expect(screen.getByTestId('card-due-status-badge')).toBeInTheDocument();
   });
 
-  it('colors the balance and left border to match status: overdue', () => {
+  it('colors the balance, left border, and card background to match status: overdue', () => {
     const overdue: CreditCardDue = { ...card, dueDate: '2026-08-01' };
     render(<CardDueRow card={overdue} referenceDate={referenceDate} />);
     expect(screen.getByTestId('card-due-balance')).toHaveClass('text-status-critical');
     expect(screen.getByTestId('card-due-row')).toHaveClass('border-l-status-critical');
+    expect(screen.getByTestId('card-due-row')).toHaveClass('bg-status-critical/5');
   });
 
   it('colors the balance and left border to match status: due-soon', () => {

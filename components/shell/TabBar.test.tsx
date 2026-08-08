@@ -29,4 +29,10 @@ describe('TabBar', () => {
     const homeLink = screen.getByTestId('tab-home');
     expect(within(homeLink).getByTestId('tab-indicator')).toBeInTheDocument();
   });
+
+  it('gives the active tab a tinted background pill that inactive tabs do not have', () => {
+    render(<TabBar />);
+    expect(screen.getByTestId('tab-home')).toHaveClass('bg-gold/10');
+    expect(screen.getByTestId('tab-budget')).not.toHaveClass('bg-gold/10');
+  });
 });

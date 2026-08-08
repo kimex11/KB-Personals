@@ -55,18 +55,26 @@ describe('BillRow', () => {
     expect(screen.queryByTestId('bill-duplicate-warning')).not.toBeInTheDocument();
   });
 
-  it('colors the amount and left border to match status: overdue', () => {
+  it('colors the amount, left border, and card background to match status: overdue', () => {
     const overdue: Bill = { ...bill, dueDate: '2026-08-01' };
     render(<BillRow bill={overdue} onTogglePaid={vi.fn()} referenceDate={referenceDate} />);
     expect(screen.getByTestId('bill-amount')).toHaveClass('text-status-critical');
     expect(screen.getByTestId('bill-row')).toHaveClass('border-l-status-critical');
+    expect(screen.getByTestId('bill-row')).toHaveClass('bg-status-critical/5');
   });
 
-  it('colors the amount and left border to match status: paid', () => {
+  it('colors the amount, left border, and card background to match status: paid', () => {
     const paidBill: Bill = { ...bill, paid: true };
     render(<BillRow bill={paidBill} onTogglePaid={vi.fn()} referenceDate={referenceDate} />);
     expect(screen.getByTestId('bill-amount')).toHaveClass('text-status-success');
     expect(screen.getByTestId('bill-row')).toHaveClass('border-l-status-success');
+    expect(screen.getByTestId('bill-row')).toHaveClass('bg-status-success/5');
+  });
+
+  it('keeps a plain white background for a bill that is merely upcoming', () => {
+    const upcoming: Bill = { ...bill, dueDate: '2026-09-01' };
+    render(<BillRow bill={upcoming} onTogglePaid={vi.fn()} referenceDate={referenceDate} />);
+    expect(screen.getByTestId('bill-row')).toHaveClass('bg-white');
   });
 
   it('does not render an actions menu when no handlers are given', () => {
