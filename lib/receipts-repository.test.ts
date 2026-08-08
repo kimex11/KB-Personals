@@ -1,5 +1,13 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { uploadReceipt, listReceipts, deleteReceipt, updateReceiptFields, linkReceiptToBill } from './receipts-repository';
+import {
+  uploadReceipt,
+  listReceipts,
+  deleteReceipt,
+  updateReceiptFields,
+  linkReceiptToBill,
+  renameReceipt,
+  updateReceiptDescription,
+} from './receipts-repository';
 
 const mockUser = { id: 'user-1' };
 
@@ -92,6 +100,7 @@ describe('uploadReceipt', () => {
       receiptDate: null,
       amount: null,
       linkedBillId: null,
+      description: null,
     });
   });
 
@@ -138,6 +147,7 @@ describe('listReceipts', () => {
         receiptDate: '2026-08-15',
         amount: 42.18,
         linkedBillId: 'bill-0',
+        description: null,
       },
     ]);
   });
@@ -245,5 +255,56 @@ describe('linkReceiptToBill', () => {
     getUserMock.mockResolvedValue({ data: { user: mockUser } });
     updateUserEqMock.mockResolvedValue({ error: new Error('db down') });
     await expect(linkReceiptToBill('receipt-1', 'bill-0')).rejects.toThrow('db down');
+  });
+});
+
+describe('renameReceipt', () => {
+  it('updates the file name, scoped to the owning user', async () => {
+    getUserMock.mockResolvedValue({ data: { user: mockUser } });
+    updateUserEqMock.mockResolvedValue({ error: null });
+    await renameReceipt('receipt-1', 'grocery-run.jpg');
+    expect(updateMock).toHaveBeenCalledWith({ file_name: 'grocery-run.jpg' });
+    expect(updateEqMock).toHaveBeenCalledWith('id', 'receipt-1');
+    expect(updateUserEqMock).toHaveBeenCalledWith('user_id', 'user-1');
+  });
+
+  it('throws when there is no authenticated user', async () => {
+    getUserMock.mockResolvedValue({ data: { user: null } });
+    await expect(renameReceipt('receipt-1', 'grocery-run.jpg')).rejects.toThrow('Not authenticated');
+  });
+
+  it('throws when the update fails', async () => {
+    getUserMock.mockResolvedValue({ data: { user: mockUser } });
+    updateUserEqMock.mockResolvedValue({ error: new Error('db down') });
+    await expect(renameReceipt('receipt-1', 'grocery-run.jpg')).rejects.toThrow('db down');
+  });
+});
+
+describe('updateReceiptDescription', () => {
+  it('updates the description, scoped to the owning user', async () => {
+    getUserMock.mockResolvedValue({ data: { user: mockUser } });
+    updateUserEqMock.mockResolvedValue({ error: null });
+    await updateReceiptDescription('receipt-1', 'Weekly grocery run');
+    expect(updateMock).toHaveBeenCalledWith({ description: 'Weekly grocery run' });
+    expect(updateEqMock).toHaveBeenCalledWith('id', 'receipt-1');
+    expect(updateUserEqMock).toHaveBeenCalledWith('user_id', 'user-1');
+  });
+
+  it('clears the description when given null', async () => {
+    getUserMock.mockResolvedValue({ data: { user: mockUser } });
+    updateUserEqMock.mockResolvedValue({ error: null });
+    await updateReceiptDescription('receipt-1', null);
+    expect(updateMock).toHaveBeenCalledWith({ description: null });
+  });
+
+  it('throws when there is no authenticated user', async () => {
+    getUserMock.mockResolvedValue({ data: { user: null } });
+    await expect(updateReceiptDescription('receipt-1', 'text')).rejects.toThrow('Not authenticated');
+  });
+
+  it('throws when the update fails', async () => {
+    getUserMock.mockResolvedValue({ data: { user: mockUser } });
+    updateUserEqMock.mockResolvedValue({ error: new Error('db down') });
+    await expect(updateReceiptDescription('receipt-1', 'text')).rejects.toThrow('db down');
   });
 });

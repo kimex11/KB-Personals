@@ -10,4 +10,5 @@ export interface StoredReceipt {
   receiptDate: string | null;
   amount: number | null;
   linkedBillId: string | null;
+  description: string | null;
 }

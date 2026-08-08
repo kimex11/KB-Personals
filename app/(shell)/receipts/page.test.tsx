@@ -13,6 +13,8 @@ const deleteReceiptMock = vi.fn();
 
 const updateReceiptFieldsMock = vi.fn().mockResolvedValue(undefined);
 const linkReceiptToBillMock = vi.fn().mockResolvedValue(undefined);
+const renameReceiptMock = vi.fn().mockResolvedValue(undefined);
+const updateReceiptDescriptionMock = vi.fn().mockResolvedValue(undefined);
 
 vi.mock('@/lib/receipts-repository', () => ({
   listReceipts: () => listReceiptsMock(),
@@ -20,6 +22,8 @@ vi.mock('@/lib/receipts-repository', () => ({
   deleteReceipt: (id: string, path: string) => deleteReceiptMock(id, path),
   updateReceiptFields: (id: string, fields: unknown) => updateReceiptFieldsMock(id, fields),
   linkReceiptToBill: (id: string, billId: string | null) => linkReceiptToBillMock(id, billId),
+  renameReceipt: (id: string, fileName: string) => renameReceiptMock(id, fileName),
+  updateReceiptDescription: (id: string, description: string | null) => updateReceiptDescriptionMock(id, description),
 }));
 
 vi.mock('@/lib/receipt-ocr', () => ({
@@ -61,6 +65,7 @@ const existingReceipt: StoredReceipt = {
   receiptDate: null,
   amount: null,
   linkedBillId: null,
+  description: null,
   uploadedAt: '2026-08-15T10:00:00.000Z',
 };
 
@@ -93,6 +98,7 @@ describe('ReceiptsPage', () => {
       receiptDate: null,
       amount: null,
       linkedBillId: null,
+      description: null,
       uploadedAt: '2026-08-15T11:00:00.000Z',
     };
     uploadReceiptMock.mockResolvedValue(newReceipt);
@@ -136,6 +142,7 @@ describe('ReceiptsPage', () => {
       receiptDate: null,
       amount: null,
       linkedBillId: null,
+      description: null,
       uploadedAt: '2026-08-15T11:00:00.000Z',
     };
     uploadReceiptMock.mockResolvedValue(newReceipt);
@@ -220,6 +227,7 @@ describe('ReceiptsPage', () => {
       receiptDate: null,
       amount: null,
       linkedBillId: null,
+      description: null,
       uploadedAt: '2026-08-15T11:00:00.000Z',
     };
     uploadReceiptMock.mockResolvedValue(newReceipt);
@@ -247,5 +255,46 @@ describe('ReceiptsPage', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /close/i }));
     expect(screen.queryByTestId('receipt-viewer-image')).not.toBeInTheDocument();
+  });
+
+  it('renames a receipt from the viewer via the repository', async () => {
+    listReceiptsMock.mockResolvedValue([existingReceipt]);
+    render(<ReceiptsPage />);
+    await waitFor(() => expect(screen.getByTestId('receipt-card')).toBeInTheDocument());
+
+    fireEvent.click(screen.getByTestId('receipt-thumbnail-button'));
+    fireEvent.click(screen.getByTestId('receipt-viewer-rename-button'));
+    fireEvent.change(screen.getByTestId('receipt-viewer-name-input'), { target: { value: 'renamed.jpg' } });
+    fireEvent.click(screen.getByTestId('receipt-viewer-name-save'));
+
+    await waitFor(() => expect(renameReceiptMock).toHaveBeenCalledWith('receipt-1', 'renamed.jpg'));
+    expect(screen.getByTestId('receipt-card')).toHaveTextContent('renamed.jpg');
+  });
+
+  it('reverts the name and shows an error when rename fails', async () => {
+    listReceiptsMock.mockResolvedValue([existingReceipt]);
+    renameReceiptMock.mockRejectedValueOnce(new Error('network error'));
+    render(<ReceiptsPage />);
+    await waitFor(() => expect(screen.getByTestId('receipt-card')).toBeInTheDocument());
+
+    fireEvent.click(screen.getByTestId('receipt-thumbnail-button'));
+    fireEvent.click(screen.getByTestId('receipt-viewer-rename-button'));
+    fireEvent.change(screen.getByTestId('receipt-viewer-name-input'), { target: { value: 'renamed.jpg' } });
+    fireEvent.click(screen.getByTestId('receipt-viewer-name-save'));
+
+    await waitFor(() => expect(screen.getByTestId('receipts-error')).toHaveTextContent('Could not rename receipt.'));
+    expect(screen.getByTestId('receipt-card')).toHaveTextContent('existing.jpg');
+  });
+
+  it('saves a description from the viewer via the repository', async () => {
+    listReceiptsMock.mockResolvedValue([existingReceipt]);
+    render(<ReceiptsPage />);
+    await waitFor(() => expect(screen.getByTestId('receipt-card')).toBeInTheDocument());
+
+    fireEvent.click(screen.getByTestId('receipt-thumbnail-button'));
+    fireEvent.change(screen.getByTestId('receipt-viewer-description-input'), { target: { value: 'Weekly grocery run' } });
+    fireEvent.click(screen.getByTestId('receipt-viewer-description-save'));
+
+    await waitFor(() => expect(updateReceiptDescriptionMock).toHaveBeenCalledWith('receipt-1', 'Weekly grocery run'));
   });
 });

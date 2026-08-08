@@ -5,7 +5,15 @@ import { ReceiptUploadZone } from '@/components/receipts/ReceiptUploadZone';
 import { ReceiptGrid } from '@/components/receipts/ReceiptGrid';
 import { ReceiptViewer } from '@/components/receipts/ReceiptViewer';
 import { useReceiptOcr } from '@/lib/use-receipt-ocr';
-import { listReceipts, uploadReceipt, deleteReceipt, updateReceiptFields, linkReceiptToBill } from '@/lib/receipts-repository';
+import {
+  listReceipts,
+  uploadReceipt,
+  deleteReceipt,
+  updateReceiptFields,
+  linkReceiptToBill,
+  renameReceipt,
+  updateReceiptDescription,
+} from '@/lib/receipts-repository';
 import { compressReceiptImage } from '@/lib/receipt-image-compression';
 import { useBills } from '@/lib/use-bills';
 import type { StoredReceipt } from '@/lib/receipts-types';
@@ -78,6 +86,34 @@ export default function ReceiptsPage() {
     }
   }
 
+  async function handleRename(id: string, fileName: string) {
+    const previous = receipts.find((r) => r.id === id)?.fileName;
+    setReceipts((prev) => prev.map((r) => (r.id === id ? { ...r, fileName } : r)));
+    setViewerReceipt((prev) => (prev && prev.id === id ? { ...prev, fileName } : prev));
+    try {
+      await renameReceipt(id, fileName);
+    } catch {
+      setError('Could not rename receipt.');
+      if (previous !== undefined) {
+        setReceipts((prev) => prev.map((r) => (r.id === id ? { ...r, fileName: previous } : r)));
+        setViewerReceipt((prev) => (prev && prev.id === id ? { ...prev, fileName: previous } : prev));
+      }
+    }
+  }
+
+  async function handleUpdateDescription(id: string, description: string | null) {
+    const previous = receipts.find((r) => r.id === id)?.description ?? null;
+    setReceipts((prev) => prev.map((r) => (r.id === id ? { ...r, description } : r)));
+    setViewerReceipt((prev) => (prev && prev.id === id ? { ...prev, description } : prev));
+    try {
+      await updateReceiptDescription(id, description);
+    } catch {
+      setError('Could not update description.');
+      setReceipts((prev) => prev.map((r) => (r.id === id ? { ...r, description: previous } : r)));
+      setViewerReceipt((prev) => (prev && prev.id === id ? { ...prev, description: previous } : prev));
+    }
+  }
+
   async function handleRemove(id: string) {
     const target = receipts.find((receipt) => receipt.id === id);
     if (!target) return;
@@ -118,6 +154,8 @@ export default function ReceiptsPage() {
         key={viewerReceipt?.id ?? 'none'}
         receipt={viewerReceipt}
         onClose={() => setViewerReceipt(null)}
+        onRename={handleRename}
+        onUpdateDescription={handleUpdateDescription}
       />
     </div>
   );

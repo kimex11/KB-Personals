@@ -14,6 +14,7 @@ const imageReceipt: StoredReceipt = {
   receiptDate: null,
   amount: null,
   linkedBillId: null,
+  description: null,
   uploadedAt: '2026-08-15T10:00:00.000Z',
 };
 
@@ -28,6 +29,7 @@ const pdfReceipt: StoredReceipt = {
   receiptDate: null,
   amount: null,
   linkedBillId: null,
+  description: null,
   uploadedAt: '2026-08-15T10:00:00.000Z',
 };
 

@@ -16,6 +16,7 @@ interface ReceiptRow {
   receipt_date: string | null;
   amount: number | null;
   linked_bill_id: string | null;
+  description: string | null;
 }
 
 async function getSignedPreviewUrl(storagePath: string): Promise<string> {
@@ -38,6 +39,7 @@ function rowToStoredReceipt(row: ReceiptRow, previewUrl: string): StoredReceipt 
     receiptDate: row.receipt_date ?? null,
     amount: row.amount ?? null,
     linkedBillId: row.linked_bill_id ?? null,
+    description: row.description ?? null,
   };
 }
 
@@ -121,5 +123,19 @@ export async function linkReceiptToBill(id: string, billId: string | null): Prom
   const supabase = createClient();
   const userId = await requireUserId(supabase);
   const { error } = await supabase.from('receipts').update({ linked_bill_id: billId }).eq('id', id).eq('user_id', userId);
+  if (error) throw error;
+}
+
+export async function renameReceipt(id: string, fileName: string): Promise<void> {
+  const supabase = createClient();
+  const userId = await requireUserId(supabase);
+  const { error } = await supabase.from('receipts').update({ file_name: fileName }).eq('id', id).eq('user_id', userId);
+  if (error) throw error;
+}
+
+export async function updateReceiptDescription(id: string, description: string | null): Promise<void> {
+  const supabase = createClient();
+  const userId = await requireUserId(supabase);
+  const { error } = await supabase.from('receipts').update({ description }).eq('id', id).eq('user_id', userId);
   if (error) throw error;
 }
