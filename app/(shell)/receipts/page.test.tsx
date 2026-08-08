@@ -26,6 +26,17 @@ vi.mock('@/lib/receipt-ocr', () => ({
   extractTextFromImage: vi.fn().mockResolvedValue('Corner Cafe\nTotal $12.50\n2026-08-15'),
 }));
 
+const compressReceiptImageMock = vi.fn(async (file: File) => file);
+
+vi.mock('@/lib/receipt-image-compression', () => ({
+  compressReceiptImage: (file: File) => compressReceiptImageMock(file),
+}));
+
+vi.mock('react-zoom-pan-pinch', () => ({
+  TransformWrapper: ({ children }: { children: React.ReactNode }) => <div data-testid="zoom-wrapper">{children}</div>,
+  TransformComponent: ({ children }: { children: React.ReactNode }) => <div data-testid="zoom-component">{children}</div>,
+}));
+
 vi.mock('@/lib/use-bills', () => ({
   useBills: () => ({
     bills: [{ id: 'bill-1', title: 'Rent', category: 'Housing', categoryId: 'cat-1', amount: 1450, dueDate: '2026-08-16', recurrence: 'monthly', paid: false }],
@@ -194,5 +205,47 @@ describe('ReceiptsPage', () => {
 
     await waitFor(() => expect(screen.getByTestId('receipts-error')).toHaveTextContent('Could not delete receipt.'));
     expect(screen.getByTestId('receipt-card')).toBeInTheDocument();
+  });
+
+  it('compresses the image before uploading it', async () => {
+    listReceiptsMock.mockResolvedValue([]);
+    const newReceipt: StoredReceipt = {
+      id: 'receipt-5',
+      fileName: 'new.jpg',
+      fileType: 'image/jpeg',
+      fileSize: 2000,
+      previewUrl: 'https://signed.example/new.jpg',
+      storagePath: 'user-1/new.jpg',
+      merchant: null,
+      receiptDate: null,
+      amount: null,
+      linkedBillId: null,
+      uploadedAt: '2026-08-15T11:00:00.000Z',
+    };
+    uploadReceiptMock.mockResolvedValue(newReceipt);
+
+    render(<ReceiptsPage />);
+    await waitFor(() => expect(screen.getByTestId('empty-state')).toBeInTheDocument());
+
+    const original = makeFile('new.jpg', 'image/jpeg');
+    fireEvent.change(screen.getByTestId('receipt-file-input'), { target: { files: [original] } });
+
+    await waitFor(() => expect(uploadReceiptMock).toHaveBeenCalled());
+    expect(compressReceiptImageMock).toHaveBeenCalledWith(original);
+    const compressOrder = compressReceiptImageMock.mock.invocationCallOrder[0];
+    const uploadOrder = uploadReceiptMock.mock.invocationCallOrder[0];
+    expect(compressOrder).toBeLessThan(uploadOrder);
+  });
+
+  it('opens the fullscreen viewer when a receipt thumbnail is clicked, and closes it', async () => {
+    listReceiptsMock.mockResolvedValue([existingReceipt]);
+    render(<ReceiptsPage />);
+    await waitFor(() => expect(screen.getByTestId('receipt-card')).toBeInTheDocument());
+
+    fireEvent.click(screen.getByTestId('receipt-thumbnail-button'));
+    expect(screen.getByTestId('receipt-viewer-image')).toHaveAttribute('src', existingReceipt.previewUrl);
+
+    fireEvent.click(screen.getByRole('button', { name: /close/i }));
+    expect(screen.queryByTestId('receipt-viewer-image')).not.toBeInTheDocument();
   });
 });

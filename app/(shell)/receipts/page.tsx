@@ -3,8 +3,10 @@
 import { useEffect, useRef, useState } from 'react';
 import { ReceiptUploadZone } from '@/components/receipts/ReceiptUploadZone';
 import { ReceiptGrid } from '@/components/receipts/ReceiptGrid';
+import { ReceiptViewer } from '@/components/receipts/ReceiptViewer';
 import { useReceiptOcr } from '@/lib/use-receipt-ocr';
 import { listReceipts, uploadReceipt, deleteReceipt, updateReceiptFields, linkReceiptToBill } from '@/lib/receipts-repository';
+import { compressReceiptImage } from '@/lib/receipt-image-compression';
 import { useBills } from '@/lib/use-bills';
 import type { StoredReceipt } from '@/lib/receipts-types';
 import type { ExtractedReceiptFields, OcrStatus } from '@/lib/receipt-ocr-types';
@@ -15,6 +17,7 @@ export default function ReceiptsPage() {
   const [receipts, setReceipts] = useState<StoredReceipt[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [viewerReceipt, setViewerReceipt] = useState<StoredReceipt | null>(null);
   const { statusById, resultById, processReceipt } = useReceiptOcr();
   const persistedOcrIds = useRef<Set<string>>(new Set());
 
@@ -38,9 +41,10 @@ export default function ReceiptsPage() {
     setError(null);
     for (const file of files) {
       try {
-        const receipt = await uploadReceipt(file);
+        const compressed = await compressReceiptImage(file);
+        const receipt = await uploadReceipt(compressed);
         setReceipts((prev) => [receipt, ...prev]);
-        processReceipt(receipt.id, file);
+        processReceipt(receipt.id, compressed);
       } catch {
         setError('Could not upload receipt.');
       }
@@ -103,12 +107,18 @@ export default function ReceiptsPage() {
         <ReceiptGrid
           receipts={receipts}
           onRemove={handleRemove}
+          onView={setViewerReceipt}
           ocrStatusById={mergedStatusById}
           ocrResultById={mergedResultById}
           bills={linkableBills}
           onLinkBill={handleLinkBill}
         />
       )}
+      <ReceiptViewer
+        key={viewerReceipt?.id ?? 'none'}
+        receipt={viewerReceipt}
+        onClose={() => setViewerReceipt(null)}
+      />
     </div>
   );
 }
