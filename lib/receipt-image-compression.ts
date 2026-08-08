@@ -7,7 +7,7 @@ export interface CompressReceiptImageOptions {
 // segment. Returns 1 (no rotation) for anything that isn't a JPEG, has no
 // EXIF data, or fails to parse — the compression pipeline treats 1 as "draw
 // as-is", so this is always a safe default.
-export function readJpegOrientation(buffer: ArrayBuffer): number {
+export function readJpegOrientation(buffer: ArrayBufferLike): number {
   try {
     const view = new DataView(buffer);
     if (view.byteLength < 4 || view.getUint16(0) !== 0xffd8) return 1;

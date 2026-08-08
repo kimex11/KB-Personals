@@ -112,7 +112,7 @@ describe('compressReceiptImage', () => {
 
   it('applies a 90° EXIF orientation correction and swaps the output dimensions', async () => {
     vi.stubGlobal('createImageBitmap', vi.fn(async () => ({ width: 4000, height: 3000, close: vi.fn() })));
-    const file = new File([buildJpegWithOrientation(6)], 'receipt.jpg', { type: 'image/jpeg' });
+    const file = new File([buildJpegWithOrientation(6).slice()], 'receipt.jpg', { type: 'image/jpeg' });
 
     await compressReceiptImage(file);
 
