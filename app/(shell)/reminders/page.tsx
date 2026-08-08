@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useEffect, useState } from 'react';
+import { Suspense, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Plus } from 'lucide-react';
 import { useReminders } from '@/lib/use-reminders';
@@ -19,19 +19,21 @@ function RemindersPageContent() {
   const [formOpen, setFormOpen] = useState(false);
   const [editingReminder, setEditingReminder] = useState<Reminder | undefined>(undefined);
   const [deleteTarget, setDeleteTarget] = useState<Reminder | null>(null);
-  const [deepLinkHandled, setDeepLinkHandled] = useState(false);
-
-  useEffect(() => {
-    if (deepLinkHandled || loading) return;
-    const openId = searchParams.get('open');
-    if (!openId) return;
+  // Tracks which ?open= value has already been processed, so the deep-link
+  // open only happens once even though this runs in the render body on
+  // every render — the React-endorsed pattern for adjusting state in
+  // response to an external value (the URL) without an effect. See
+  // https://react.dev/learn/you-might-not-need-an-effect#adjusting-some-state-when-a-prop-changes
+  const [handledOpenId, setHandledOpenId] = useState<string | null>(null);
+  const openId = searchParams.get('open');
+  if (!loading && openId && openId !== handledOpenId) {
+    setHandledOpenId(openId);
     const target = reminders.find((reminder) => reminder.id === openId);
     if (target) {
       setEditingReminder(target);
       setFormOpen(true);
     }
-    setDeepLinkHandled(true);
-  }, [deepLinkHandled, loading, searchParams, reminders]);
+  }
 
   function openAddForm() {
     setEditingReminder(undefined);

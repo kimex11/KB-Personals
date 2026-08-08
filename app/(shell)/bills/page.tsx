@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useEffect, useState } from 'react';
+import { Suspense, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Plus } from 'lucide-react';
 import { MonthGrid } from '@/components/calendar/MonthGrid';
@@ -30,19 +30,21 @@ function BillsPageContent() {
   const [formOpen, setFormOpen] = useState(false);
   const [editingBill, setEditingBill] = useState<(Bill & { categoryId: string }) | undefined>(undefined);
   const [deleteTarget, setDeleteTarget] = useState<Bill | null>(null);
-  const [deepLinkHandled, setDeepLinkHandled] = useState(false);
-
-  useEffect(() => {
-    if (deepLinkHandled || loading) return;
-    const openId = searchParams.get('open');
-    if (!openId) return;
+  // Tracks which ?open= value has already been processed, so the deep-link
+  // open only happens once even though this runs in the render body on
+  // every render — the React-endorsed pattern for adjusting state in
+  // response to an external value (the URL) without an effect. See
+  // https://react.dev/learn/you-might-not-need-an-effect#adjusting-some-state-when-a-prop-changes
+  const [handledOpenId, setHandledOpenId] = useState<string | null>(null);
+  const openId = searchParams.get('open');
+  if (!loading && openId && openId !== handledOpenId) {
+    setHandledOpenId(openId);
     const target = bills.find((bill) => bill.id === openId);
     if (target) {
       setEditingBill(target as Bill & { categoryId: string });
       setFormOpen(true);
     }
-    setDeepLinkHandled(true);
-  }, [deepLinkHandled, loading, searchParams, bills]);
+  }
 
   function openAddForm() {
     setEditingBill(undefined);
