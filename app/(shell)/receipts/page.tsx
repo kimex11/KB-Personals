@@ -144,6 +144,8 @@ export default function ReceiptsPage() {
           receipts={receipts}
           onRemove={handleRemove}
           onView={setViewerReceipt}
+          onRename={handleRename}
+          onUpdateDescription={handleUpdateDescription}
           ocrStatusById={mergedStatusById}
           ocrResultById={mergedResultById}
           bills={linkableBills}
@@ -154,8 +156,6 @@ export default function ReceiptsPage() {
         key={viewerReceipt?.id ?? 'none'}
         receipt={viewerReceipt}
         onClose={() => setViewerReceipt(null)}
-        onRename={handleRename}
-        onUpdateDescription={handleUpdateDescription}
       />
     </div>
   );

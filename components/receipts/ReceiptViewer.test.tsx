@@ -24,6 +24,10 @@ const receipt: StoredReceipt = {
   uploadedAt: '2026-08-15T10:00:00.000Z',
 };
 
+function touch(clientX: number, clientY: number) {
+  return { touches: [{ clientX, clientY }] };
+}
+
 describe('ReceiptViewer', () => {
   it('renders nothing when there is no receipt', () => {
     const { container } = render(<ReceiptViewer receipt={null} onClose={vi.fn()} />);
@@ -56,84 +60,43 @@ describe('ReceiptViewer', () => {
     expect(screen.getByText(expected)).toBeInTheDocument();
   });
 
-  it('does not show a rename button when onRename is not provided', () => {
-    render(<ReceiptViewer receipt={receipt} onClose={vi.fn()} />);
-    expect(screen.queryByTestId('receipt-viewer-rename-button')).not.toBeInTheDocument();
+  it('closes when swiped down past the threshold', () => {
+    const onClose = vi.fn();
+    render(<ReceiptViewer receipt={receipt} onClose={onClose} />);
+    const area = screen.getByTestId('receipt-viewer-swipe-area');
+
+    fireEvent.touchStart(area, touch(200, 200));
+    fireEvent.touchMove(area, touch(200, 340));
+    fireEvent.touchEnd(area);
+
+    expect(onClose).toHaveBeenCalled();
   });
 
-  it('renames the receipt when a new name is saved', () => {
-    const onRename = vi.fn();
-    render(<ReceiptViewer receipt={receipt} onClose={vi.fn()} onRename={onRename} />);
+  it('does not close when swiped down less than the threshold', () => {
+    const onClose = vi.fn();
+    render(<ReceiptViewer receipt={receipt} onClose={onClose} />);
+    const area = screen.getByTestId('receipt-viewer-swipe-area');
 
-    fireEvent.click(screen.getByTestId('receipt-viewer-rename-button'));
-    const input = screen.getByTestId('receipt-viewer-name-input');
-    expect(input).toHaveValue('corner-cafe.jpg');
+    fireEvent.touchStart(area, touch(200, 200));
+    fireEvent.touchMove(area, touch(200, 250));
+    fireEvent.touchEnd(area);
 
-    fireEvent.change(input, { target: { value: 'grocery-run.jpg' } });
-    fireEvent.click(screen.getByTestId('receipt-viewer-name-save'));
-
-    expect(onRename).toHaveBeenCalledWith('1', 'grocery-run.jpg');
-    expect(screen.queryByTestId('receipt-viewer-name-input')).not.toBeInTheDocument();
-    expect(screen.getByText('corner-cafe.jpg')).toBeInTheDocument();
+    expect(onClose).not.toHaveBeenCalled();
   });
 
-  it('does not call onRename when the name is unchanged or blank', () => {
-    const onRename = vi.fn();
-    render(<ReceiptViewer receipt={receipt} onClose={vi.fn()} onRename={onRename} />);
+  it('does not close on an upward or mostly-horizontal swipe', () => {
+    const onClose = vi.fn();
+    render(<ReceiptViewer receipt={receipt} onClose={onClose} />);
+    const area = screen.getByTestId('receipt-viewer-swipe-area');
 
-    fireEvent.click(screen.getByTestId('receipt-viewer-rename-button'));
-    fireEvent.click(screen.getByTestId('receipt-viewer-name-save'));
-    expect(onRename).not.toHaveBeenCalled();
+    fireEvent.touchStart(area, touch(200, 400));
+    fireEvent.touchMove(area, touch(200, 100));
+    fireEvent.touchEnd(area);
+    expect(onClose).not.toHaveBeenCalled();
 
-    fireEvent.click(screen.getByTestId('receipt-viewer-rename-button'));
-    fireEvent.change(screen.getByTestId('receipt-viewer-name-input'), { target: { value: '   ' } });
-    fireEvent.click(screen.getByTestId('receipt-viewer-name-save'));
-    expect(onRename).not.toHaveBeenCalled();
-  });
-
-  it('cancels renaming without calling onRename', () => {
-    const onRename = vi.fn();
-    render(<ReceiptViewer receipt={receipt} onClose={vi.fn()} onRename={onRename} />);
-
-    fireEvent.click(screen.getByTestId('receipt-viewer-rename-button'));
-    fireEvent.change(screen.getByTestId('receipt-viewer-name-input'), { target: { value: 'grocery-run.jpg' } });
-    fireEvent.click(screen.getByTestId('receipt-viewer-name-cancel'));
-
-    expect(onRename).not.toHaveBeenCalled();
-    expect(screen.queryByTestId('receipt-viewer-name-input')).not.toBeInTheDocument();
-    expect(screen.getByText('corner-cafe.jpg')).toBeInTheDocument();
-  });
-
-  it('does not show the description field when onUpdateDescription is not provided', () => {
-    render(<ReceiptViewer receipt={receipt} onClose={vi.fn()} />);
-    expect(screen.queryByTestId('receipt-viewer-description-input')).not.toBeInTheDocument();
-  });
-
-  it('pre-fills the description field with the receipt description', () => {
-    const withDescription: StoredReceipt = { ...receipt, description: 'Weekly grocery run' };
-    render(<ReceiptViewer receipt={withDescription} onClose={vi.fn()} onUpdateDescription={vi.fn()} />);
-    expect(screen.getByTestId('receipt-viewer-description-input')).toHaveValue('Weekly grocery run');
-  });
-
-  it('saves an edited description', () => {
-    const onUpdateDescription = vi.fn();
-    render(<ReceiptViewer receipt={receipt} onClose={vi.fn()} onUpdateDescription={onUpdateDescription} />);
-
-    expect(screen.queryByTestId('receipt-viewer-description-save')).not.toBeInTheDocument();
-    fireEvent.change(screen.getByTestId('receipt-viewer-description-input'), { target: { value: 'Weekly grocery run' } });
-    fireEvent.click(screen.getByTestId('receipt-viewer-description-save'));
-
-    expect(onUpdateDescription).toHaveBeenCalledWith('1', 'Weekly grocery run');
-  });
-
-  it('saves a cleared description as null', () => {
-    const onUpdateDescription = vi.fn();
-    const withDescription: StoredReceipt = { ...receipt, description: 'Weekly grocery run' };
-    render(<ReceiptViewer receipt={withDescription} onClose={vi.fn()} onUpdateDescription={onUpdateDescription} />);
-
-    fireEvent.change(screen.getByTestId('receipt-viewer-description-input'), { target: { value: '   ' } });
-    fireEvent.click(screen.getByTestId('receipt-viewer-description-save'));
-
-    expect(onUpdateDescription).toHaveBeenCalledWith('1', null);
+    fireEvent.touchStart(area, touch(100, 200));
+    fireEvent.touchMove(area, touch(400, 210));
+    fireEvent.touchEnd(area);
+    expect(onClose).not.toHaveBeenCalled();
   });
 });

@@ -257,15 +257,14 @@ describe('ReceiptsPage', () => {
     expect(screen.queryByTestId('receipt-viewer-image')).not.toBeInTheDocument();
   });
 
-  it('renames a receipt from the viewer via the repository', async () => {
+  it('renames a receipt from the card via the repository', async () => {
     listReceiptsMock.mockResolvedValue([existingReceipt]);
     render(<ReceiptsPage />);
     await waitFor(() => expect(screen.getByTestId('receipt-card')).toBeInTheDocument());
 
-    fireEvent.click(screen.getByTestId('receipt-thumbnail-button'));
-    fireEvent.click(screen.getByTestId('receipt-viewer-rename-button'));
-    fireEvent.change(screen.getByTestId('receipt-viewer-name-input'), { target: { value: 'renamed.jpg' } });
-    fireEvent.click(screen.getByTestId('receipt-viewer-name-save'));
+    fireEvent.click(screen.getByTestId('receipt-rename-button'));
+    fireEvent.change(screen.getByTestId('receipt-name-input'), { target: { value: 'renamed.jpg' } });
+    fireEvent.click(screen.getByTestId('receipt-name-save'));
 
     await waitFor(() => expect(renameReceiptMock).toHaveBeenCalledWith('receipt-1', 'renamed.jpg'));
     expect(screen.getByTestId('receipt-card')).toHaveTextContent('renamed.jpg');
@@ -277,23 +276,22 @@ describe('ReceiptsPage', () => {
     render(<ReceiptsPage />);
     await waitFor(() => expect(screen.getByTestId('receipt-card')).toBeInTheDocument());
 
-    fireEvent.click(screen.getByTestId('receipt-thumbnail-button'));
-    fireEvent.click(screen.getByTestId('receipt-viewer-rename-button'));
-    fireEvent.change(screen.getByTestId('receipt-viewer-name-input'), { target: { value: 'renamed.jpg' } });
-    fireEvent.click(screen.getByTestId('receipt-viewer-name-save'));
+    fireEvent.click(screen.getByTestId('receipt-rename-button'));
+    fireEvent.change(screen.getByTestId('receipt-name-input'), { target: { value: 'renamed.jpg' } });
+    fireEvent.click(screen.getByTestId('receipt-name-save'));
 
     await waitFor(() => expect(screen.getByTestId('receipts-error')).toHaveTextContent('Could not rename receipt.'));
     expect(screen.getByTestId('receipt-card')).toHaveTextContent('existing.jpg');
   });
 
-  it('saves a description from the viewer via the repository', async () => {
+  it('saves a description from the card via the repository', async () => {
     listReceiptsMock.mockResolvedValue([existingReceipt]);
     render(<ReceiptsPage />);
     await waitFor(() => expect(screen.getByTestId('receipt-card')).toBeInTheDocument());
 
-    fireEvent.click(screen.getByTestId('receipt-thumbnail-button'));
-    fireEvent.change(screen.getByTestId('receipt-viewer-description-input'), { target: { value: 'Weekly grocery run' } });
-    fireEvent.click(screen.getByTestId('receipt-viewer-description-save'));
+    const input = screen.getByTestId('receipt-description-input');
+    fireEvent.change(input, { target: { value: 'Weekly grocery run' } });
+    fireEvent.blur(input);
 
     await waitFor(() => expect(updateReceiptDescriptionMock).toHaveBeenCalledWith('receipt-1', 'Weekly grocery run'));
   });

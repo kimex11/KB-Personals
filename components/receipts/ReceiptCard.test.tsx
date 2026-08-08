@@ -136,4 +136,92 @@ describe('ReceiptCard', () => {
     fireEvent.change(screen.getByTestId('receipt-bill-link-select'), { target: { value: '' } });
     expect(onLinkBill).toHaveBeenCalledWith('1', null);
   });
+
+  it('does not show a rename button when onRename is not provided', () => {
+    render(<ReceiptCard receipt={imageReceipt} onRemove={vi.fn()} />);
+    expect(screen.queryByTestId('receipt-rename-button')).not.toBeInTheDocument();
+  });
+
+  it('renames the receipt when a new name is saved', () => {
+    const onRename = vi.fn();
+    render(<ReceiptCard receipt={imageReceipt} onRemove={vi.fn()} onRename={onRename} />);
+
+    fireEvent.click(screen.getByTestId('receipt-rename-button'));
+    const input = screen.getByTestId('receipt-name-input');
+    expect(input).toHaveValue('electricity-receipt.jpg');
+
+    fireEvent.change(input, { target: { value: 'grocery-run.jpg' } });
+    fireEvent.click(screen.getByTestId('receipt-name-save'));
+
+    expect(onRename).toHaveBeenCalledWith('1', 'grocery-run.jpg');
+    expect(screen.queryByTestId('receipt-name-input')).not.toBeInTheDocument();
+  });
+
+  it('does not call onRename when the name is unchanged or blank', () => {
+    const onRename = vi.fn();
+    render(<ReceiptCard receipt={imageReceipt} onRemove={vi.fn()} onRename={onRename} />);
+
+    fireEvent.click(screen.getByTestId('receipt-rename-button'));
+    fireEvent.click(screen.getByTestId('receipt-name-save'));
+    expect(onRename).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByTestId('receipt-rename-button'));
+    fireEvent.change(screen.getByTestId('receipt-name-input'), { target: { value: '   ' } });
+    fireEvent.click(screen.getByTestId('receipt-name-save'));
+    expect(onRename).not.toHaveBeenCalled();
+  });
+
+  it('cancels renaming without calling onRename', () => {
+    const onRename = vi.fn();
+    render(<ReceiptCard receipt={imageReceipt} onRemove={vi.fn()} onRename={onRename} />);
+
+    fireEvent.click(screen.getByTestId('receipt-rename-button'));
+    fireEvent.change(screen.getByTestId('receipt-name-input'), { target: { value: 'grocery-run.jpg' } });
+    fireEvent.click(screen.getByTestId('receipt-name-cancel'));
+
+    expect(onRename).not.toHaveBeenCalled();
+    expect(screen.queryByTestId('receipt-name-input')).not.toBeInTheDocument();
+    expect(screen.getByText('electricity-receipt.jpg')).toBeInTheDocument();
+  });
+
+  it('does not show the description field when onUpdateDescription is not provided', () => {
+    render(<ReceiptCard receipt={imageReceipt} onRemove={vi.fn()} />);
+    expect(screen.queryByTestId('receipt-description-input')).not.toBeInTheDocument();
+  });
+
+  it('pre-fills the description field with the receipt description', () => {
+    const withDescription: StoredReceipt = { ...imageReceipt, description: 'Weekly grocery run' };
+    render(<ReceiptCard receipt={withDescription} onRemove={vi.fn()} onUpdateDescription={vi.fn()} />);
+    expect(screen.getByTestId('receipt-description-input')).toHaveValue('Weekly grocery run');
+  });
+
+  it('saves the description on blur', () => {
+    const onUpdateDescription = vi.fn();
+    render(<ReceiptCard receipt={imageReceipt} onRemove={vi.fn()} onUpdateDescription={onUpdateDescription} />);
+
+    const input = screen.getByTestId('receipt-description-input');
+    fireEvent.change(input, { target: { value: 'Weekly grocery run' } });
+    fireEvent.blur(input);
+
+    expect(onUpdateDescription).toHaveBeenCalledWith('1', 'Weekly grocery run');
+  });
+
+  it('saves the description on Enter and clears a blanked description to null', () => {
+    const onUpdateDescription = vi.fn();
+    const withDescription: StoredReceipt = { ...imageReceipt, description: 'Weekly grocery run' };
+    render(<ReceiptCard receipt={withDescription} onRemove={vi.fn()} onUpdateDescription={onUpdateDescription} />);
+
+    const input = screen.getByTestId('receipt-description-input');
+    fireEvent.change(input, { target: { value: '   ' } });
+    fireEvent.keyDown(input, { key: 'Enter' });
+
+    expect(onUpdateDescription).toHaveBeenCalledWith('1', null);
+  });
+
+  it('does not call onUpdateDescription when the description is unchanged', () => {
+    const onUpdateDescription = vi.fn();
+    render(<ReceiptCard receipt={imageReceipt} onRemove={vi.fn()} onUpdateDescription={onUpdateDescription} />);
+    fireEvent.blur(screen.getByTestId('receipt-description-input'));
+    expect(onUpdateDescription).not.toHaveBeenCalled();
+  });
 });

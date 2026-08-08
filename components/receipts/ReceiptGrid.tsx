@@ -7,6 +7,8 @@ interface ReceiptGridProps {
   receipts: StoredReceipt[];
   onRemove: (id: string) => void;
   onView?: (receipt: StoredReceipt) => void;
+  onRename?: (id: string, fileName: string) => void;
+  onUpdateDescription?: (id: string, description: string | null) => void;
   ocrStatusById?: Record<string, OcrStatus>;
   ocrResultById?: Record<string, ExtractedReceiptFields>;
   bills?: LinkableBill[];
@@ -17,6 +19,8 @@ export function ReceiptGrid({
   receipts,
   onRemove,
   onView,
+  onRename,
+  onUpdateDescription,
   ocrStatusById,
   ocrResultById,
   bills,
@@ -34,6 +38,8 @@ export function ReceiptGrid({
           receipt={receipt}
           onRemove={onRemove}
           onView={onView}
+          onRename={onRename}
+          onUpdateDescription={onUpdateDescription}
           ocrStatus={ocrStatusById?.[receipt.id]}
           extractedFields={ocrResultById?.[receipt.id]}
           bills={bills}
