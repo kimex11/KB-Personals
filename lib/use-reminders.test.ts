@@ -1,11 +1,13 @@
 import { describe, expect, it, vi, afterEach } from 'vitest';
 import { renderHook, waitFor, act } from '@testing-library/react';
 
-const { listRemindersMock, createReminderMock, updateReminderMock, deleteReminderMock } = vi.hoisted(() => ({
+const { listRemindersMock, createReminderMock, updateReminderMock, deleteReminderMock, createRecurringReminderMock, closeReminderCycleMock } = vi.hoisted(() => ({
   listRemindersMock: vi.fn(),
   createReminderMock: vi.fn(),
   updateReminderMock: vi.fn(),
   deleteReminderMock: vi.fn(),
+  createRecurringReminderMock: vi.fn(),
+  closeReminderCycleMock: vi.fn(),
 }));
 
 vi.mock('./reminders-repository', () => ({
@@ -13,11 +15,23 @@ vi.mock('./reminders-repository', () => ({
   createReminder: createReminderMock,
   updateReminder: updateReminderMock,
   deleteReminder: deleteReminderMock,
+  createRecurringReminder: createRecurringReminderMock,
+  closeReminderCycle: closeReminderCycleMock,
 }));
 
 import { useReminders } from './use-reminders';
 
-const reminder = { id: 'reminder-1', title: 'Renew passport', category: 'Personal', dueDate: '2026-08-16', priority: 'high' as const, completed: false };
+const reminder = {
+  id: 'reminder-1',
+  title: 'Renew passport',
+  category: 'Personal',
+  dueDate: '2026-08-16',
+  priority: 'high' as const,
+  completed: false,
+  seriesId: null,
+  cycleNumber: null,
+  skipped: false,
+};
 
 afterEach(() => {
   vi.clearAllMocks();
@@ -113,5 +127,70 @@ describe('useReminders', () => {
 
     expect(result.current.reminders).toEqual([reminder]);
     expect(result.current.error).toBeNull();
+  });
+});
+
+describe('useReminders recurring behavior', () => {
+  const recurringReminder = { ...reminder, id: 'reminder-2', seriesId: 'series-1', cycleNumber: 1, completed: false };
+
+  it('toggleComplete() on a recurring reminder closes the cycle via closeReminderCycle, not a plain update', async () => {
+    listRemindersMock.mockResolvedValue([recurringReminder]);
+    closeReminderCycleMock.mockResolvedValue(undefined);
+    const { result } = renderHook(() => useReminders());
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    await act(async () => {
+      await result.current.toggleComplete('reminder-2');
+    });
+
+    expect(closeReminderCycleMock).toHaveBeenCalledWith('reminder-2', 'completed');
+    expect(updateReminderMock).not.toHaveBeenCalled();
+  });
+
+  it('toggleComplete() un-completing a closed recurring reminder uses a plain update, not closeReminderCycle', async () => {
+    listRemindersMock.mockResolvedValue([{ ...recurringReminder, completed: true }]);
+    updateReminderMock.mockResolvedValue(undefined);
+    const { result } = renderHook(() => useReminders());
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    await act(async () => {
+      await result.current.toggleComplete('reminder-2');
+    });
+
+    expect(updateReminderMock).toHaveBeenCalledWith('reminder-2', { completed: false });
+    expect(closeReminderCycleMock).not.toHaveBeenCalled();
+  });
+
+  it('skipCycle() closes the cycle as skipped', async () => {
+    listRemindersMock.mockResolvedValue([recurringReminder]);
+    closeReminderCycleMock.mockResolvedValue(undefined);
+    const { result } = renderHook(() => useReminders());
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    await act(async () => {
+      await result.current.skipCycle('reminder-2');
+    });
+
+    expect(closeReminderCycleMock).toHaveBeenCalledWith('reminder-2', 'skipped');
+  });
+
+  it('createRecurringReminder() calls the repository and refreshes', async () => {
+    listRemindersMock.mockResolvedValueOnce([]).mockResolvedValueOnce([recurringReminder]);
+    createRecurringReminderMock.mockResolvedValue(recurringReminder);
+    const { result } = renderHook(() => useReminders());
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    await act(async () => {
+      await result.current.createRecurringReminder(
+        { title: 'Water plants', category: 'Home', dueDate: '2026-08-16', priority: 'low' },
+        { frequency: 'weekly' }
+      );
+    });
+
+    expect(createRecurringReminderMock).toHaveBeenCalledWith(
+      { title: 'Water plants', category: 'Home', dueDate: '2026-08-16', priority: 'low' },
+      { frequency: 'weekly' }
+    );
+    expect(result.current.reminders).toEqual([recurringReminder]);
   });
 });
