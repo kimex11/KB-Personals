@@ -13,6 +13,9 @@ const reminder: Reminder = {
   dueDate: '2026-08-15',
   priority: 'high',
   completed: false,
+  seriesId: null,
+  cycleNumber: null,
+  skipped: false,
 };
 
 describe('ReminderRow', () => {

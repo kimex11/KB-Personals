@@ -66,4 +66,33 @@ describe('BillForm', () => {
 
     expect(onSubmit).toHaveBeenCalledWith({ title: 'Electricity', categoryId: 'cat-2', amount: 84.5, dueDate: '2026-08-20', recurrence: 'monthly' });
   });
+
+  it('shows recurring options when Recurring is selected, and includes them on submit', async () => {
+    const user = userEvent.setup();
+    const onSubmit = vi.fn().mockResolvedValue(undefined);
+    render(<BillForm open categories={categories} onSubmit={onSubmit} onOpenChange={vi.fn()} />);
+
+    await user.type(screen.getByLabelText(/title/i), 'Netflix');
+    await user.type(screen.getByLabelText(/amount/i), '15.99');
+    await user.type(screen.getByLabelText(/due date/i), '2026-09-01');
+    await user.click(screen.getByLabelText(/recurring/i));
+    await user.selectOptions(screen.getByLabelText(/frequency/i), 'monthly');
+    await user.click(screen.getByRole('button', { name: /^save$/i }));
+
+    expect(onSubmit).toHaveBeenCalledWith(
+      expect.objectContaining({
+        title: 'Netflix',
+        series: expect.objectContaining({ frequency: 'monthly', autoRenew: true }),
+      })
+    );
+  });
+
+  it('shows custom interval fields only when frequency is Custom', async () => {
+    const user = userEvent.setup();
+    render(<BillForm open categories={categories} onSubmit={vi.fn()} onOpenChange={vi.fn()} />);
+    await user.click(screen.getByLabelText(/recurring/i));
+    expect(screen.queryByLabelText(/custom interval count/i)).not.toBeInTheDocument();
+    await user.selectOptions(screen.getByLabelText(/frequency/i), 'custom');
+    expect(screen.getByLabelText(/custom interval count/i)).toBeInTheDocument();
+  });
 });

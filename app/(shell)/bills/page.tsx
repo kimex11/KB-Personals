@@ -11,7 +11,7 @@ import { useBills } from '@/lib/use-bills';
 import { useReminders } from '@/lib/use-reminders';
 import { useCategories } from '@/lib/use-categories';
 import { BillsListView } from '@/components/bills/BillsListView';
-import { BillForm } from '@/components/bills/BillForm';
+import { BillForm, type BillFormInput } from '@/components/bills/BillForm';
 import { ConfirmDeleteDialog } from '@/components/shared/ConfirmDeleteDialog';
 import { Button } from '@/components/ui/button';
 import type { Bill } from '@/lib/bills-types';
@@ -22,7 +22,7 @@ function BillsPageContent() {
   const isMounted = useIsMounted();
   const searchParams = useSearchParams();
 
-  const { bills, loading, error, createBill, updateBill, deleteBill, togglePaid } = useBills();
+  const { bills, loading, error, createBill, createRecurringBill, updateBill, deleteBill, togglePaid, skipCycle } = useBills();
   const { reminders } = useReminders();
   const { getEventsForDate } = useCalendarEvents(bills, reminders);
   const { activeCategories } = useCategories();
@@ -56,9 +56,11 @@ function BillsPageContent() {
     setFormOpen(true);
   }
 
-  async function handleSubmit(input: { title: string; categoryId: string; amount: number; dueDate: string; recurrence: Bill['recurrence'] }) {
+  async function handleSubmit(input: BillFormInput) {
     if (editingBill) {
       await updateBill(editingBill.id, input);
+    } else if (input.series) {
+      await createRecurringBill({ title: input.title, categoryId: input.categoryId, amount: input.amount, dueDate: input.dueDate }, input.series);
     } else {
       await createBill(input);
     }
@@ -105,6 +107,7 @@ function BillsPageContent() {
             referenceDate={new Date()}
             onEdit={openEditForm}
             onDelete={setDeleteTarget}
+            onSkip={(bill) => skipCycle(bill.id)}
           />
         ) : (
           <>

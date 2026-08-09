@@ -7,9 +7,9 @@ import type { Bill } from '@/lib/bills-types';
 const referenceDate = new Date(2026, 7, 15); // 2026-08-15
 
 const bills: Bill[] = [
-  { id: '1', title: 'Rent', category: 'Housing', amount: 1450, dueDate: '2026-08-01', recurrence: 'monthly', paid: true },
-  { id: '2', title: 'Credit Card', category: 'Shopping', amount: 320, dueDate: '2026-08-10', recurrence: null, paid: false },
-  { id: '3', title: 'Electricity', category: 'Utilities', amount: 85, dueDate: '2026-08-16', recurrence: 'monthly', paid: false },
+  { id: '1', title: 'Rent', category: 'Housing', amount: 1450, dueDate: '2026-08-01', recurrence: 'monthly', paid: true, seriesId: null, cycleNumber: null, skipped: false },
+  { id: '2', title: 'Credit Card', category: 'Shopping', amount: 320, dueDate: '2026-08-10', recurrence: null, paid: false, seriesId: null, cycleNumber: null, skipped: false },
+  { id: '3', title: 'Electricity', category: 'Utilities', amount: 85, dueDate: '2026-08-16', recurrence: 'monthly', paid: false, seriesId: null, cycleNumber: null, skipped: false },
 ];
 
 describe('BillsListView', () => {
@@ -40,7 +40,7 @@ describe('BillsListView', () => {
   it('shows a duplicate warning on bills that look like duplicates', () => {
     const withDuplicate: Bill[] = [
       ...bills,
-      { id: '4', title: 'Electricity', category: 'Utilities', amount: 85, dueDate: '2026-08-17', recurrence: null, paid: false },
+      { id: '4', title: 'Electricity', category: 'Utilities', amount: 85, dueDate: '2026-08-17', recurrence: null, paid: false, seriesId: null, cycleNumber: null, skipped: false },
     ];
     render(<BillsListView bills={withDuplicate} onTogglePaid={vi.fn()} referenceDate={referenceDate} />);
     expect(screen.getAllByTestId('bill-duplicate-warning')).toHaveLength(2);

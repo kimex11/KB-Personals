@@ -14,6 +14,9 @@ const bill: Bill = {
   dueDate: '2026-08-15',
   recurrence: 'monthly',
   paid: false,
+  seriesId: null,
+  cycleNumber: null,
+  skipped: false,
 };
 
 describe('BillRow', () => {

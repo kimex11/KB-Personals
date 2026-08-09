@@ -25,8 +25,8 @@ vi.mock('@/lib/use-reminders', () => ({
 }));
 
 const bills = [
-  { id: 'bill-1', title: 'Rent', category: 'Housing', categoryId: 'cat-1', amount: 1450, dueDate: '2026-08-01', recurrence: 'monthly' as const, paid: true },
-  { id: 'bill-2', title: 'Electricity', category: 'Utilities', categoryId: 'cat-2', amount: 85, dueDate: '2026-08-20', recurrence: 'monthly' as const, paid: false },
+  { id: 'bill-1', title: 'Rent', category: 'Housing', categoryId: 'cat-1', amount: 1450, dueDate: '2026-08-01', recurrence: 'monthly' as const, paid: true, seriesId: null, cycleNumber: null, skipped: false },
+  { id: 'bill-2', title: 'Electricity', category: 'Utilities', categoryId: 'cat-2', amount: 85, dueDate: '2026-08-20', recurrence: 'monthly' as const, paid: false, seriesId: null, cycleNumber: null, skipped: false },
 ];
 
 const categories = [
@@ -35,9 +35,11 @@ const categories = [
 ];
 
 const createBillMock = vi.fn().mockResolvedValue(undefined);
+const createRecurringBillMock = vi.fn().mockResolvedValue(undefined);
 const updateBillMock = vi.fn().mockResolvedValue(undefined);
 const deleteBillMock = vi.fn().mockResolvedValue(undefined);
 const togglePaidMock = vi.fn().mockResolvedValue(undefined);
+const skipCycleMock = vi.fn().mockResolvedValue(undefined);
 
 const { useBillsMock } = vi.hoisted(() => ({ useBillsMock: vi.fn() }));
 
@@ -73,9 +75,11 @@ beforeEach(() => {
     error: null,
     refresh: vi.fn(),
     createBill: createBillMock,
+    createRecurringBill: createRecurringBillMock,
     updateBill: updateBillMock,
     deleteBill: deleteBillMock,
     togglePaid: togglePaidMock,
+    skipCycle: skipCycleMock,
   });
   vi.mocked(useSearchParams).mockReturnValue(new URLSearchParams() as ReturnType<typeof useSearchParams>);
 });
@@ -88,9 +92,11 @@ describe('BillsPage', () => {
       error: null,
       refresh: vi.fn(),
       createBill: createBillMock,
+      createRecurringBill: createRecurringBillMock,
       updateBill: updateBillMock,
       deleteBill: deleteBillMock,
       togglePaid: togglePaidMock,
+      skipCycle: skipCycleMock,
     });
     render(<BillsPage />);
     expect(screen.getByTestId('bills-loading')).toBeInTheDocument();
@@ -162,5 +168,25 @@ describe('BillsPage', () => {
     render(<BillsPage />);
     await waitFor(() => expect(screen.getByRole('heading', { name: /edit bill/i })).toBeInTheDocument());
     expect(screen.getByLabelText(/title/i)).toHaveValue('Electricity');
+  });
+
+  it('calls skipCycle when Skip this cycle is chosen for a recurring bill', async () => {
+    useBillsMock.mockReturnValue({
+      bills: [{ ...bills[1], seriesId: 'series-1', cycleNumber: 1, skipped: false }],
+      loading: false,
+      error: null,
+      refresh: vi.fn(),
+      createBill: createBillMock,
+      createRecurringBill: createRecurringBillMock,
+      updateBill: updateBillMock,
+      deleteBill: deleteBillMock,
+      togglePaid: togglePaidMock,
+      skipCycle: skipCycleMock,
+    });
+    const user = userEvent.setup();
+    render(<BillsPage />);
+    await user.click(screen.getByRole('button', { name: /actions for electricity/i }));
+    await user.click(await screen.findByRole('menuitem', { name: /skip/i }));
+    expect(skipCycleMock).toHaveBeenCalledWith('bill-2');
   });
 });

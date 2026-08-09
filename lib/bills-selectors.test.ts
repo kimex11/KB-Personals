@@ -12,11 +12,11 @@ import type { Bill } from './bills-types';
 const referenceDate = new Date(2026, 7, 15); // 2026-08-15
 
 const bills: Bill[] = [
-  { id: '1', title: 'Rent', category: 'Housing', amount: 1450, dueDate: '2026-08-01', recurrence: 'monthly', paid: true },
-  { id: '2', title: 'Credit Card', category: 'Shopping', amount: 320, dueDate: '2026-08-10', recurrence: null, paid: false },
-  { id: '3', title: 'Electricity', category: 'Utilities', amount: 85, dueDate: '2026-08-15', recurrence: 'monthly', paid: false },
-  { id: '4', title: 'Internet', category: 'Utilities', amount: 60, dueDate: '2026-08-17', recurrence: 'monthly', paid: false },
-  { id: '5', title: 'Car Insurance', category: 'Transport', amount: 145, dueDate: '2026-08-25', recurrence: 'quarterly', paid: false },
+  { id: '1', title: 'Rent', category: 'Housing', amount: 1450, dueDate: '2026-08-01', recurrence: 'monthly', paid: true, seriesId: null, cycleNumber: null, skipped: false },
+  { id: '2', title: 'Credit Card', category: 'Shopping', amount: 320, dueDate: '2026-08-10', recurrence: null, paid: false, seriesId: null, cycleNumber: null, skipped: false },
+  { id: '3', title: 'Electricity', category: 'Utilities', amount: 85, dueDate: '2026-08-15', recurrence: 'monthly', paid: false, seriesId: null, cycleNumber: null, skipped: false },
+  { id: '4', title: 'Internet', category: 'Utilities', amount: 60, dueDate: '2026-08-17', recurrence: 'monthly', paid: false, seriesId: null, cycleNumber: null, skipped: false },
+  { id: '5', title: 'Car Insurance', category: 'Transport', amount: 145, dueDate: '2026-08-25', recurrence: 'quarterly', paid: false, seriesId: null, cycleNumber: null, skipped: false },
 ];
 
 describe('getBillStatus', () => {
@@ -84,7 +84,7 @@ describe('monthlyBillTotal', () => {
   it('excludes bills outside the reference month', () => {
     const withNextMonth: Bill[] = [
       ...bills,
-      { id: '6', title: 'Next Month Bill', category: 'Other', amount: 999, dueDate: '2026-09-01', recurrence: null, paid: false },
+      { id: '6', title: 'Next Month Bill', category: 'Other', amount: 999, dueDate: '2026-09-01', recurrence: null, paid: false, seriesId: null, cycleNumber: null, skipped: false },
     ];
     expect(monthlyBillTotal(withNextMonth, referenceDate)).toBe(1450 + 320 + 85 + 60 + 145);
   });
@@ -94,7 +94,7 @@ describe('findDuplicateBillIds', () => {
   it('flags two unpaid bills with the same title, amount, and nearby due dates', () => {
     const withDuplicate: Bill[] = [
       ...bills,
-      { id: '7', title: 'Electricity', category: 'Utilities', amount: 85, dueDate: '2026-08-16', recurrence: null, paid: false },
+      { id: '7', title: 'Electricity', category: 'Utilities', amount: 85, dueDate: '2026-08-16', recurrence: null, paid: false, seriesId: null, cycleNumber: null, skipped: false },
     ];
     const duplicates = findDuplicateBillIds(withDuplicate);
     expect(duplicates.has('3')).toBe(true);
@@ -104,7 +104,7 @@ describe('findDuplicateBillIds', () => {
   it('does not flag bills with different amounts', () => {
     const notDuplicate: Bill[] = [
       ...bills,
-      { id: '8', title: 'Electricity', category: 'Utilities', amount: 95, dueDate: '2026-08-16', recurrence: null, paid: false },
+      { id: '8', title: 'Electricity', category: 'Utilities', amount: 95, dueDate: '2026-08-16', recurrence: null, paid: false, seriesId: null, cycleNumber: null, skipped: false },
     ];
     const duplicates = findDuplicateBillIds(notDuplicate);
     expect(duplicates.has('3')).toBe(false);
@@ -114,7 +114,7 @@ describe('findDuplicateBillIds', () => {
   it('does not flag bills whose due dates are far apart', () => {
     const notDuplicate: Bill[] = [
       ...bills,
-      { id: '9', title: 'Electricity', category: 'Utilities', amount: 85, dueDate: '2026-09-01', recurrence: null, paid: false },
+      { id: '9', title: 'Electricity', category: 'Utilities', amount: 85, dueDate: '2026-09-01', recurrence: null, paid: false, seriesId: null, cycleNumber: null, skipped: false },
     ];
     const duplicates = findDuplicateBillIds(notDuplicate);
     expect(duplicates.has('3')).toBe(false);
@@ -124,7 +124,7 @@ describe('findDuplicateBillIds', () => {
   it('ignores paid bills when checking for duplicates', () => {
     const withPaidMatch: Bill[] = [
       ...bills,
-      { id: '10', title: 'Rent', category: 'Housing', amount: 1450, dueDate: '2026-08-02', recurrence: null, paid: false },
+      { id: '10', title: 'Rent', category: 'Housing', amount: 1450, dueDate: '2026-08-02', recurrence: null, paid: false, seriesId: null, cycleNumber: null, skipped: false },
     ];
     // bill '1' (Rent) is paid, so this shouldn't count '1' as a duplicate partner, but the
     // new unpaid one has no other unpaid match either, so nothing should be flagged.
@@ -136,7 +136,7 @@ describe('findDuplicateBillIds', () => {
   it('is case-insensitive and trims whitespace when comparing titles', () => {
     const withDuplicate: Bill[] = [
       ...bills,
-      { id: '11', title: '  electricity  ', category: 'Utilities', amount: 85, dueDate: '2026-08-16', recurrence: null, paid: false },
+      { id: '11', title: '  electricity  ', category: 'Utilities', amount: 85, dueDate: '2026-08-16', recurrence: null, paid: false, seriesId: null, cycleNumber: null, skipped: false },
     ];
     const duplicates = findDuplicateBillIds(withDuplicate);
     expect(duplicates.has('3')).toBe(true);

@@ -39,9 +39,10 @@ interface BillRowProps {
   isDuplicate?: boolean;
   onEdit?: (bill: Bill) => void;
   onDelete?: (bill: Bill) => void;
+  onSkip?: (bill: Bill) => void;
 }
 
-export function BillRow({ bill, onTogglePaid, referenceDate = new Date(), isDuplicate = false, onEdit, onDelete }: BillRowProps) {
+export function BillRow({ bill, onTogglePaid, referenceDate = new Date(), isDuplicate = false, onEdit, onDelete, onSkip }: BillRowProps) {
   const status = getBillStatus(bill, referenceDate);
 
   return (
@@ -92,6 +93,7 @@ export function BillRow({ bill, onTogglePaid, referenceDate = new Date(), isDupl
           label={bill.title}
           onEdit={onEdit ? () => onEdit(bill) : undefined}
           onDelete={onDelete ? () => onDelete(bill) : undefined}
+          onSkip={onSkip && bill.seriesId && !bill.paid ? () => onSkip(bill) : undefined}
         />
       </div>
     </div>

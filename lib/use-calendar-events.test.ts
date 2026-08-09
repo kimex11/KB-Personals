@@ -5,11 +5,11 @@ import type { Bill } from './bills-types';
 import type { Reminder } from './reminders-types';
 
 const bills: Bill[] = [
-  { id: 'bill-1', title: 'Test Bill', category: 'Utilities', amount: 10, dueDate: '2026-08-10', recurrence: null, paid: false },
+  { id: 'bill-1', title: 'Test Bill', category: 'Utilities', amount: 10, dueDate: '2026-08-10', recurrence: null, paid: false, seriesId: null, cycleNumber: null, skipped: false },
 ];
 
 const reminders: Reminder[] = [
-  { id: 'reminder-1', title: 'Test Reminder', category: 'Personal', dueDate: '2026-08-10', priority: 'medium', completed: false },
+  { id: 'reminder-1', title: 'Test Reminder', category: 'Personal', dueDate: '2026-08-10', priority: 'medium', completed: false, seriesId: null, cycleNumber: null, skipped: false },
 ];
 
 describe('useCalendarEvents', () => {
