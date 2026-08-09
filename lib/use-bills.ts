@@ -1,9 +1,10 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { listBills, createBill, updateBill, deleteBill } from './bills-repository';
+import { listBills, createBill, updateBill, deleteBill, createRecurringBill, closeBillCycle } from './bills-repository';
 import type { BillWithCategoryId } from './bills-repository';
 import type { RecurrenceInterval } from './bills-types';
+import type { CreateSeriesInput } from './recurring-types';
 
 export interface UseBillsResult {
   bills: BillWithCategoryId[];
@@ -11,12 +12,17 @@ export interface UseBillsResult {
   error: string | null;
   refresh: () => Promise<void>;
   createBill: (input: { title: string; categoryId: string; amount: number; dueDate: string; recurrence: RecurrenceInterval }) => Promise<void>;
+  createRecurringBill: (
+    billInput: { title: string; categoryId: string; amount: number; dueDate: string },
+    seriesInput: Omit<CreateSeriesInput, 'entityType'>
+  ) => Promise<void>;
   updateBill: (
     id: string,
     patch: Partial<{ title: string; categoryId: string; amount: number; dueDate: string; recurrence: RecurrenceInterval; paid: boolean }>
   ) => Promise<void>;
   deleteBill: (id: string) => Promise<void>;
   togglePaid: (id: string) => Promise<void>;
+  skipCycle: (id: string) => Promise<void>;
 }
 
 export function useBills(): UseBillsResult {
@@ -67,11 +73,17 @@ export function useBills(): UseBillsResult {
     error,
     refresh,
     createBill: (input) => runMutation(() => createBill(input)),
+    createRecurringBill: (billInput, seriesInput) => runMutation(() => createRecurringBill(billInput, seriesInput)),
     updateBill: (id, patch) => runMutation(() => updateBill(id, patch)),
     deleteBill: (id) => runMutation(() => deleteBill(id)),
     togglePaid: (id) => {
       const bill = bills.find((b) => b.id === id);
-      return runMutation(() => updateBill(id, { paid: !bill?.paid }));
+      if (!bill) return Promise.resolve();
+      if (!bill.paid && bill.seriesId) {
+        return runMutation(() => closeBillCycle(id, 'paid'));
+      }
+      return runMutation(() => updateBill(id, { paid: !bill.paid }));
     },
+    skipCycle: (id) => runMutation(() => closeBillCycle(id, 'skipped')),
   };
 }
