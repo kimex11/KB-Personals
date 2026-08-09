@@ -1,6 +1,6 @@
 'use client';
 
-import { MoreVertical, Pencil, Trash2 } from 'lucide-react';
+import { MoreVertical, Pencil, SkipForward, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
 
@@ -8,10 +8,11 @@ interface RowActionsMenuProps {
   label: string;
   onEdit?: () => void;
   onDelete?: () => void;
+  onSkip?: () => void;
 }
 
-export function RowActionsMenu({ label, onEdit, onDelete }: RowActionsMenuProps) {
-  if (!onEdit && !onDelete) return null;
+export function RowActionsMenu({ label, onEdit, onDelete, onSkip }: RowActionsMenuProps) {
+  if (!onEdit && !onDelete && !onSkip) return null;
 
   return (
     <DropdownMenu>
@@ -27,6 +28,12 @@ export function RowActionsMenu({ label, onEdit, onDelete }: RowActionsMenuProps)
           <DropdownMenuItem onClick={onEdit}>
             <Pencil className="h-4 w-4" />
             Edit
+          </DropdownMenuItem>
+        )}
+        {onSkip && (
+          <DropdownMenuItem onClick={onSkip}>
+            <SkipForward className="h-4 w-4" />
+            Skip this cycle
           </DropdownMenuItem>
         )}
         {onDelete && (

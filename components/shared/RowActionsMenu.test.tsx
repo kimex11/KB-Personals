@@ -45,3 +45,22 @@ describe('RowActionsMenu', () => {
     expect(screen.queryByRole('menuitem', { name: /edit/i })).not.toBeInTheDocument();
   });
 });
+
+describe('RowActionsMenu skip action', () => {
+  it('renders a Skip menu item when onSkip is provided', async () => {
+    const user = userEvent.setup();
+    const onSkip = vi.fn();
+    render(<RowActionsMenu label="Rent" onEdit={vi.fn()} onDelete={vi.fn()} onSkip={onSkip} />);
+    await user.click(screen.getByRole('button', { name: /actions for rent/i }));
+    const skipItem = await screen.findByRole('menuitem', { name: /skip/i });
+    await user.click(skipItem);
+    expect(onSkip).toHaveBeenCalled();
+  });
+
+  it('does not render a Skip menu item when onSkip is not provided', async () => {
+    const user = userEvent.setup();
+    render(<RowActionsMenu label="Rent" onEdit={vi.fn()} onDelete={vi.fn()} />);
+    await user.click(screen.getByRole('button', { name: /actions for rent/i }));
+    expect(screen.queryByRole('menuitem', { name: /skip/i })).not.toBeInTheDocument();
+  });
+});
