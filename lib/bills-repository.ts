@@ -1,5 +1,8 @@
 import { createClient } from './supabase/client';
 import type { Bill, RecurrenceInterval } from './bills-types';
+import type { CreateSeriesInput } from './recurring-types';
+import { createSeries, getSeries, incrementOccurrencesGenerated } from './recurring-series-repository';
+import { computeNextOccurrence } from './recurring-generation';
 
 interface BillRow {
   id: string;
@@ -11,6 +14,9 @@ interface BillRow {
   paid: boolean;
   created_at: string;
   categories: { name: string } | null;
+  series_id: string | null;
+  cycle_number: number | null;
+  skipped: boolean;
 }
 
 export interface BillWithCategoryId extends Bill {
@@ -27,6 +33,9 @@ function rowToBill(row: BillRow): BillWithCategoryId {
     dueDate: row.due_date,
     recurrence: row.recurrence as RecurrenceInterval,
     paid: row.paid,
+    seriesId: row.series_id,
+    cycleNumber: row.cycle_number,
+    skipped: row.skipped,
   };
 }
 
@@ -63,6 +72,29 @@ export async function createBill(input: {
   return rowToBill(data as BillRow);
 }
 
+export async function createRecurringBill(
+  billInput: { title: string; categoryId: string; amount: number; dueDate: string },
+  seriesInput: Omit<CreateSeriesInput, 'entityType'>
+): Promise<BillWithCategoryId> {
+  const series = await createSeries({ ...seriesInput, entityType: 'bill' });
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from('bills')
+    .insert({
+      title: billInput.title,
+      category_id: billInput.categoryId,
+      amount: billInput.amount,
+      due_date: billInput.dueDate,
+      recurrence: null,
+      series_id: series.id,
+      cycle_number: 1,
+    })
+    .select('*, categories(name)')
+    .single();
+  if (error) throw error;
+  return rowToBill(data as BillRow);
+}
+
 export async function updateBill(
   id: string,
   patch: Partial<{ title: string; categoryId: string; amount: number; dueDate: string; recurrence: RecurrenceInterval; paid: boolean }>
@@ -78,6 +110,36 @@ export async function updateBill(
 
   const { error } = await supabase.from('bills').update(payload).eq('id', id);
   if (error) throw error;
+}
+
+export async function closeBillCycle(id: string, action: 'paid' | 'skipped'): Promise<void> {
+  const supabase = createClient();
+  const { data: currentRow, error: fetchError } = await supabase.from('bills').select('*, categories(name)').eq('id', id).single();
+  if (fetchError) throw fetchError;
+  const current = rowToBill(currentRow as BillRow);
+
+  const closePayload = action === 'paid' ? { paid: true } : { skipped: true };
+  const { error: updateError } = await supabase.from('bills').update(closePayload).eq('id', id);
+  if (updateError) throw updateError;
+
+  if (!current.seriesId || current.cycleNumber === null) return;
+
+  const series = await getSeries(current.seriesId);
+  const next = computeNextOccurrence({ dueDate: current.dueDate, cycleNumber: current.cycleNumber }, series);
+  if (!next) return;
+
+  const { error: insertError } = await supabase.from('bills').insert({
+    title: current.title,
+    category_id: current.categoryId,
+    amount: current.amount,
+    due_date: next.dueDate,
+    recurrence: null,
+    series_id: current.seriesId,
+    cycle_number: next.cycleNumber,
+  });
+  if (insertError) throw insertError;
+
+  await incrementOccurrencesGenerated(current.seriesId, series.occurrencesGenerated + 1);
 }
 
 export async function deleteBill(id: string): Promise<void> {

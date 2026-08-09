@@ -8,6 +8,9 @@ export interface Bill {
   dueDate: string; // ISO 'yyyy-MM-dd'
   recurrence: RecurrenceInterval;
   paid: boolean;
+  seriesId: string | null;
+  cycleNumber: number | null;
+  skipped: boolean;
 }
 
 export type BillStatus = 'paid' | 'overdue' | 'due-soon' | 'upcoming';
