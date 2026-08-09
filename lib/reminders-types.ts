@@ -7,4 +7,7 @@ export interface Reminder {
   dueDate: string; // ISO 'yyyy-MM-dd'
   priority: Priority;
   completed: boolean;
+  seriesId: string | null;
+  cycleNumber: number | null;
+  skipped: boolean;
 }
