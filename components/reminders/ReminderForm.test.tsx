@@ -46,4 +46,24 @@ describe('ReminderForm', () => {
 
     expect(onSubmit).toHaveBeenCalledWith({ title: 'Water plants', category: 'Home', dueDate: '2026-08-20', priority: 'low' });
   });
+
+  it('shows recurring options when Recurring is selected, and includes them on submit', async () => {
+    const user = userEvent.setup();
+    const onSubmit = vi.fn().mockResolvedValue(undefined);
+    render(<ReminderForm open onSubmit={onSubmit} onOpenChange={vi.fn()} />);
+
+    await user.type(screen.getByLabelText(/title/i), 'Water plants');
+    await user.type(screen.getByLabelText(/category/i), 'Home');
+    await user.type(screen.getByLabelText(/due date/i), '2026-09-01');
+    await user.click(screen.getByLabelText(/recurring/i));
+    await user.selectOptions(screen.getByLabelText(/frequency/i), 'weekly');
+    await user.click(screen.getByRole('button', { name: /^save$/i }));
+
+    expect(onSubmit).toHaveBeenCalledWith(
+      expect.objectContaining({
+        title: 'Water plants',
+        series: expect.objectContaining({ frequency: 'weekly', autoRenew: true }),
+      })
+    );
+  });
 });

@@ -22,9 +22,10 @@ interface ReminderRowProps {
   referenceDate?: Date;
   onEdit?: (reminder: Reminder) => void;
   onDelete?: (reminder: Reminder) => void;
+  onSkip?: (reminder: Reminder) => void;
 }
 
-export function ReminderRow({ reminder, onToggleComplete, onSnooze, referenceDate = new Date(), onEdit, onDelete }: ReminderRowProps) {
+export function ReminderRow({ reminder, onToggleComplete, onSnooze, referenceDate = new Date(), onEdit, onDelete, onSkip }: ReminderRowProps) {
   return (
     <div
       data-testid="reminder-row"
@@ -76,6 +77,7 @@ export function ReminderRow({ reminder, onToggleComplete, onSnooze, referenceDat
         label={reminder.title}
         onEdit={onEdit ? () => onEdit(reminder) : undefined}
         onDelete={onDelete ? () => onDelete(reminder) : undefined}
+        onSkip={onSkip && reminder.seriesId && !reminder.completed ? () => onSkip(reminder) : undefined}
       />
     </div>
   );

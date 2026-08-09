@@ -15,6 +15,7 @@ interface RemindersListViewProps {
   referenceDate?: Date;
   onEdit?: (reminder: Reminder) => void;
   onDelete?: (reminder: Reminder) => void;
+  onSkip?: (reminder: Reminder) => void;
 }
 
 export function RemindersListView({
@@ -24,6 +25,7 @@ export function RemindersListView({
   referenceDate = new Date(),
   onEdit,
   onDelete,
+  onSkip,
 }: RemindersListViewProps) {
   const [query, setQuery] = useState('');
   const [priorityFilter, setPriorityFilter] = useState<Priority | 'all'>('all');
@@ -60,6 +62,7 @@ export function RemindersListView({
               referenceDate={referenceDate}
               onEdit={onEdit}
               onDelete={onDelete}
+              onSkip={onSkip}
             />
           ))}
         </div>

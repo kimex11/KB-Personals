@@ -7,14 +7,16 @@ vi.mock('next/navigation', () => ({
 }));
 
 const reminders = [
-  { id: 'reminder-1', title: 'Call insurance provider', category: 'Finance', dueDate: '2026-08-06', priority: 'high' as const, completed: false },
-  { id: 'reminder-2', title: 'Renew car insurance', category: 'Finance', dueDate: '2026-08-03', priority: 'high' as const, completed: true },
+  { id: 'reminder-1', title: 'Call insurance provider', category: 'Finance', dueDate: '2026-08-06', priority: 'high' as const, completed: false, seriesId: null, cycleNumber: null, skipped: false },
+  { id: 'reminder-2', title: 'Renew car insurance', category: 'Finance', dueDate: '2026-08-03', priority: 'high' as const, completed: true, seriesId: null, cycleNumber: null, skipped: false },
 ];
 
 const createReminderMock = vi.fn().mockResolvedValue(undefined);
+const createRecurringReminderMock = vi.fn().mockResolvedValue(undefined);
 const updateReminderMock = vi.fn().mockResolvedValue(undefined);
 const deleteReminderMock = vi.fn().mockResolvedValue(undefined);
 const toggleCompleteMock = vi.fn().mockResolvedValue(undefined);
+const skipCycleMock = vi.fn().mockResolvedValue(undefined);
 const snoozeMock = vi.fn().mockResolvedValue(undefined);
 
 const { useRemindersMock } = vi.hoisted(() => ({ useRemindersMock: vi.fn() }));
@@ -33,9 +35,11 @@ beforeEach(() => {
     error: null,
     refresh: vi.fn(),
     createReminder: createReminderMock,
+    createRecurringReminder: createRecurringReminderMock,
     updateReminder: updateReminderMock,
     deleteReminder: deleteReminderMock,
     toggleComplete: toggleCompleteMock,
+    skipCycle: skipCycleMock,
     snooze: snoozeMock,
   });
   vi.mocked(useSearchParams).mockReturnValue(new URLSearchParams() as ReturnType<typeof useSearchParams>);
@@ -49,9 +53,11 @@ describe('RemindersPage', () => {
       error: null,
       refresh: vi.fn(),
       createReminder: createReminderMock,
+      createRecurringReminder: createRecurringReminderMock,
       updateReminder: updateReminderMock,
       deleteReminder: deleteReminderMock,
       toggleComplete: toggleCompleteMock,
+      skipCycle: skipCycleMock,
       snooze: snoozeMock,
     });
     render(<RemindersPage />);
@@ -119,5 +125,26 @@ describe('RemindersPage', () => {
     render(<RemindersPage />);
     await waitFor(() => expect(screen.getByRole('heading', { name: /edit reminder/i })).toBeInTheDocument());
     expect(screen.getByLabelText(/title/i)).toHaveValue('Renew car insurance');
+  });
+
+  it('calls skipCycle when Skip this cycle is chosen for a recurring reminder', async () => {
+    useRemindersMock.mockReturnValue({
+      reminders: [{ ...reminders[0], seriesId: 'series-1', cycleNumber: 1, skipped: false }],
+      loading: false,
+      error: null,
+      refresh: vi.fn(),
+      createReminder: createReminderMock,
+      createRecurringReminder: createRecurringReminderMock,
+      updateReminder: updateReminderMock,
+      deleteReminder: deleteReminderMock,
+      toggleComplete: toggleCompleteMock,
+      skipCycle: skipCycleMock,
+      snooze: snoozeMock,
+    });
+    const user = userEvent.setup();
+    render(<RemindersPage />);
+    await user.click(screen.getByRole('button', { name: /actions for call insurance provider/i }));
+    await user.click(await screen.findByRole('menuitem', { name: /skip/i }));
+    expect(skipCycleMock).toHaveBeenCalledWith('reminder-1');
   });
 });

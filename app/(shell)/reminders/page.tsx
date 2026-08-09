@@ -5,7 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import { Plus } from 'lucide-react';
 import { useReminders } from '@/lib/use-reminders';
 import { RemindersListView } from '@/components/reminders/RemindersListView';
-import { ReminderForm } from '@/components/reminders/ReminderForm';
+import { ReminderForm, type ReminderFormInput } from '@/components/reminders/ReminderForm';
 import { ConfirmDeleteDialog } from '@/components/shared/ConfirmDeleteDialog';
 import { Button } from '@/components/ui/button';
 import { useIsMounted } from '@/lib/use-is-mounted';
@@ -14,7 +14,7 @@ import type { Reminder } from '@/lib/reminders-types';
 function RemindersPageContent() {
   const isMounted = useIsMounted();
   const searchParams = useSearchParams();
-  const { reminders, loading, error, createReminder, updateReminder, deleteReminder, toggleComplete, snooze } = useReminders();
+  const { reminders, loading, error, createReminder, createRecurringReminder, updateReminder, deleteReminder, toggleComplete, skipCycle, snooze } = useReminders();
 
   const [formOpen, setFormOpen] = useState(false);
   const [editingReminder, setEditingReminder] = useState<Reminder | undefined>(undefined);
@@ -45,9 +45,11 @@ function RemindersPageContent() {
     setFormOpen(true);
   }
 
-  async function handleSubmit(input: { title: string; category: string; dueDate: string; priority: Reminder['priority'] }) {
+  async function handleSubmit(input: ReminderFormInput) {
     if (editingReminder) {
       await updateReminder(editingReminder.id, input);
+    } else if (input.series) {
+      await createRecurringReminder({ title: input.title, category: input.category, dueDate: input.dueDate, priority: input.priority }, input.series);
     } else {
       await createReminder(input);
     }
@@ -75,6 +77,7 @@ function RemindersPageContent() {
           referenceDate={new Date()}
           onEdit={openEditForm}
           onDelete={setDeleteTarget}
+          onSkip={(reminder) => skipCycle(reminder.id)}
         />
       )}
 
