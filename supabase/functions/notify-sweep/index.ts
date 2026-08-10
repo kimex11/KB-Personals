@@ -2,6 +2,7 @@ import { createClient } from 'npm:@supabase/supabase-js@2';
 import webpush from 'npm:web-push@3';
 import { computeBillState, computeReminderState, type BillRow, type ReminderRow } from './priority.ts';
 import { groupByPriority, type NotifiableItem } from './grouping.ts';
+import { philippinesTodayISO, philippinesNowMinutes } from './timezone.ts';
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
@@ -46,9 +47,8 @@ function isWithinQuietHours(start: string | null, end: string | null, nowMinutes
 
 Deno.serve(async () => {
   const supabase = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
-  const todayISO = new Date().toISOString().slice(0, 10);
-  const now = new Date();
-  const nowMinutes = now.getUTCHours() * 60 + now.getUTCMinutes();
+  const todayISO = philippinesTodayISO();
+  const nowMinutes = philippinesNowMinutes();
 
   const [billsRes, remindersRes, subsRes, prefsRes, logRes] = await Promise.all([
     supabase.from('bills').select('id, title, amount, due_date, paid'),
