@@ -1,8 +1,9 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { resetDbForTests } from './db';
-import { enqueueMutation, getQueue, removeFromQueue } from './queue';
+import { enqueueMutation, getQueue, removeFromQueue, resetSequenceForTests } from './queue';
 
 afterEach(async () => {
+  resetSequenceForTests();
   await resetDbForTests();
   await new Promise<void>((resolve, reject) => {
     const req = indexedDB.deleteDatabase('kb-personals-offline');
@@ -31,5 +32,18 @@ describe('enqueueMutation / getQueue / removeFromQueue', () => {
     const [entry] = await getQueue();
     await removeFromQueue(entry.id);
     expect(await getQueue()).toEqual([]);
+  });
+
+  it('keeps replay order across a simulated page reload (in-memory counter reset)', async () => {
+    await enqueueMutation({ entity: 'bill', operation: 'createBill', args: [{ title: 'before reload' }] });
+
+    // Simulate a reload: the module-level counter resets, but the IndexedDB
+    // queue (a different, real database) still has the entry above in it.
+    resetSequenceForTests();
+
+    await enqueueMutation({ entity: 'bill', operation: 'deleteBill', args: ['after-reload'] });
+
+    const queue = await getQueue();
+    expect(queue.map((e) => e.args[0])).toEqual([{ title: 'before reload' }, 'after-reload']);
   });
 });
