@@ -5,11 +5,17 @@ import { listBills, createBill, updateBill, deleteBill, createRecurringBill, clo
 import type { BillWithCategoryId } from './bills-repository';
 import type { RecurrenceInterval } from './bills-types';
 import type { CreateSeriesInput } from './recurring-types';
+import { cacheList, getCachedList } from './offline/cache';
+import { attemptOrQueue } from './offline/attempt-or-queue';
+import { isNetworkError } from './offline/network-error';
+import { useOnlineStatus } from './offline/connectivity';
+import { processQueue } from './offline/sync-engine';
 
 export interface UseBillsResult {
   bills: BillWithCategoryId[];
   loading: boolean;
   error: string | null;
+  pendingSyncIds: Set<string>;
   refresh: () => Promise<void>;
   createBill: (input: { title: string; categoryId: string; amount: number; dueDate: string; recurrence: RecurrenceInterval }) => Promise<void>;
   createRecurringBill: (
@@ -29,7 +35,9 @@ export function useBills(): UseBillsResult {
   const [bills, setBills] = useState<BillWithCategoryId[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [pendingSyncIds, setPendingSyncIds] = useState<Set<string>>(new Set());
   const requestIdRef = useRef(0);
+  const isOnline = useOnlineStatus();
 
   const refresh = useCallback(async () => {
     const requestId = ++requestIdRef.current;
@@ -37,31 +45,44 @@ export function useBills(): UseBillsResult {
     setError(null);
     try {
       const result = await listBills();
-      if (requestId !== requestIdRef.current) return; // a newer refresh already landed
+      if (requestId !== requestIdRef.current) return;
       setBills(result);
+      await cacheList('bills', result);
     } catch (err) {
       if (requestId !== requestIdRef.current) return;
-      setError(err instanceof Error ? err.message : 'Failed to load bills');
+      if (isNetworkError(err)) {
+        const cached = await getCachedList<BillWithCategoryId>('bills');
+        setBills(cached);
+        setError(null);
+      } else {
+        setError(err instanceof Error ? err.message : 'Failed to load bills');
+      }
     } finally {
       if (requestId === requestIdRef.current) setLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     refresh();
   }, [refresh]);
 
-  const runMutation = useCallback(
-    async (fn: () => Promise<unknown>) => {
+  useEffect(() => {
+    if (!isOnline) return;
+    processQueue(refresh).then(() => setPendingSyncIds(new Set()));
+  }, [isOnline, refresh]);
+
+  const mutate = useCallback(
+    async (operation: string, args: unknown[], liveCall: () => Promise<unknown>, applyOptimistic: () => void) => {
       setError(null);
       try {
-        await fn();
+        await liveCall();
         await refresh();
       } catch (err) {
-        const message = err instanceof Error ? err.message : 'Action failed';
-        setError(message);
-        throw err;
+        if (!isNetworkError(err)) {
+          setError(err instanceof Error ? err.message : 'Action failed');
+          throw err;
+        }
+        await attemptOrQueue('bill', operation, args, () => Promise.reject(err), applyOptimistic);
       }
     },
     [refresh]
@@ -71,19 +92,89 @@ export function useBills(): UseBillsResult {
     bills,
     loading,
     error,
+    pendingSyncIds,
     refresh,
-    createBill: (input) => runMutation(() => createBill(input)),
-    createRecurringBill: (billInput, seriesInput) => runMutation(() => createRecurringBill(billInput, seriesInput)),
-    updateBill: (id, patch) => runMutation(() => updateBill(id, patch)),
-    deleteBill: (id) => runMutation(() => deleteBill(id)),
+    createBill: (input) => {
+      const tempId = crypto.randomUUID();
+      return mutate(
+        'createBill',
+        [input],
+        () => createBill(input),
+        () => {
+          setBills((prev) => [
+            ...prev,
+            {
+              id: tempId,
+              title: input.title,
+              category: '',
+              categoryId: input.categoryId,
+              amount: input.amount,
+              dueDate: input.dueDate,
+              recurrence: input.recurrence,
+              paid: false,
+              seriesId: null,
+              cycleNumber: null,
+              skipped: false,
+            },
+          ]);
+          setPendingSyncIds((prev) => new Set(prev).add(tempId));
+        }
+      );
+    },
+    createRecurringBill: (billInput, seriesInput) => {
+      const tempId = crypto.randomUUID();
+      return mutate(
+        'createRecurringBill',
+        [billInput, seriesInput],
+        () => createRecurringBill(billInput, seriesInput),
+        () => {
+          setBills((prev) => [
+            ...prev,
+            {
+              id: tempId,
+              title: billInput.title,
+              category: '',
+              categoryId: billInput.categoryId,
+              amount: billInput.amount,
+              dueDate: billInput.dueDate,
+              recurrence: null,
+              paid: false,
+              seriesId: null,
+              cycleNumber: null,
+              skipped: false,
+            },
+          ]);
+          setPendingSyncIds((prev) => new Set(prev).add(tempId));
+        }
+      );
+    },
+    updateBill: (id, patch) =>
+      mutate('updateBill', [id, patch], () => updateBill(id, patch), () => {
+        setBills((prev) => prev.map((b) => (b.id === id ? { ...b, ...patch } : b)));
+        setPendingSyncIds((prev) => new Set(prev).add(id));
+      }),
+    deleteBill: (id) =>
+      mutate('deleteBill', [id], () => deleteBill(id), () => {
+        setBills((prev) => prev.filter((b) => b.id !== id));
+      }),
     togglePaid: (id) => {
       const bill = bills.find((b) => b.id === id);
       if (!bill) return Promise.resolve();
       if (!bill.paid && bill.seriesId) {
-        return runMutation(() => closeBillCycle(id, 'paid'));
+        return mutate('closeBillCycle', [id, 'paid'], () => closeBillCycle(id, 'paid'), () => {
+          setBills((prev) => prev.map((b) => (b.id === id ? { ...b, paid: true } : b)));
+          setPendingSyncIds((prev) => new Set(prev).add(id));
+        });
       }
-      return runMutation(() => updateBill(id, { paid: !bill.paid }));
+      return mutate('updateBill', [id, { paid: !bill.paid }], () => updateBill(id, { paid: !bill.paid }), () => {
+        setBills((prev) => prev.map((b) => (b.id === id ? { ...b, paid: !bill.paid } : b)));
+        setPendingSyncIds((prev) => new Set(prev).add(id));
+      });
     },
-    skipCycle: (id) => runMutation(() => closeBillCycle(id, 'skipped')),
+    skipCycle: (id) =>
+      mutate('closeBillCycle', [id, 'skipped'], () => closeBillCycle(id, 'skipped'), () => {
+        setBills((prev) => prev.map((b) => (b.id === id ? { ...b, skipped: true } : b)));
+        setPendingSyncIds((prev) => new Set(prev).add(id));
+      }),
   };
 }

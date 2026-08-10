@@ -1,5 +1,8 @@
 import { describe, expect, it, vi, afterEach } from 'vitest';
 import { renderHook, waitFor, act } from '@testing-library/react';
+import { cacheList } from './offline/cache';
+import { getQueue } from './offline/queue';
+import { resetDbForTests } from './offline/db';
 
 const { listBillsMock, createBillMock, updateBillMock, deleteBillMock, createRecurringBillMock, closeBillCycleMock } = vi.hoisted(() => ({
   listBillsMock: vi.fn(),
@@ -186,5 +189,43 @@ describe('useBills recurring behavior', () => {
       { frequency: 'monthly' }
     );
     expect(result.current.bills).toEqual([recurringBill]);
+  });
+});
+
+describe('useBills offline behavior', () => {
+  afterEach(async () => {
+    await resetDbForTests();
+    await new Promise<void>((resolve, reject) => {
+      const req = indexedDB.deleteDatabase('kb-personals-offline');
+      req.onsuccess = () => resolve();
+      req.onerror = () => reject(req.error);
+    });
+  });
+
+  it('falls back to cached bills when the list fetch fails with a network error', async () => {
+    await cacheList('bills', [bill]);
+    listBillsMock.mockRejectedValue(new TypeError('Failed to fetch'));
+    const { result } = renderHook(() => useBills());
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(result.current.bills).toEqual([bill]);
+    expect(result.current.error).toBeNull();
+  });
+
+  it('queues a create and applies an optimistic update when offline', async () => {
+    listBillsMock.mockResolvedValue([]);
+    createBillMock.mockRejectedValue(new TypeError('Failed to fetch'));
+    const { result } = renderHook(() => useBills());
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    await act(async () => {
+      await result.current.createBill({ title: 'Water Bill', categoryId: 'cat-1', amount: 30, dueDate: '2026-09-01', recurrence: null });
+    });
+
+    expect(result.current.bills).toHaveLength(1);
+    expect(result.current.bills[0]).toMatchObject({ title: 'Water Bill', amount: 30 });
+    expect(result.current.pendingSyncIds.size).toBe(1);
+    const queue = await getQueue();
+    expect(queue).toHaveLength(1);
+    expect(queue[0].operation).toBe('createBill');
   });
 });
