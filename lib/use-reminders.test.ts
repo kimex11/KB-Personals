@@ -1,5 +1,8 @@
 import { describe, expect, it, vi, afterEach } from 'vitest';
 import { renderHook, waitFor, act } from '@testing-library/react';
+import { cacheList } from './offline/cache';
+import { getQueue } from './offline/queue';
+import { resetDbForTests } from './offline/db';
 
 const { listRemindersMock, createReminderMock, updateReminderMock, deleteReminderMock, createRecurringReminderMock, closeReminderCycleMock } = vi.hoisted(() => ({
   listRemindersMock: vi.fn(),
@@ -192,5 +195,43 @@ describe('useReminders recurring behavior', () => {
       { frequency: 'weekly' }
     );
     expect(result.current.reminders).toEqual([recurringReminder]);
+  });
+});
+
+describe('useReminders offline behavior', () => {
+  afterEach(async () => {
+    await resetDbForTests();
+    await new Promise<void>((resolve, reject) => {
+      const req = indexedDB.deleteDatabase('kb-personals-offline');
+      req.onsuccess = () => resolve();
+      req.onerror = () => reject(req.error);
+    });
+  });
+
+  it('falls back to cached reminders when the list fetch fails with a network error', async () => {
+    await cacheList('reminders', [reminder]);
+    listRemindersMock.mockRejectedValue(new TypeError('Failed to fetch'));
+    const { result } = renderHook(() => useReminders());
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(result.current.reminders).toEqual([reminder]);
+    expect(result.current.error).toBeNull();
+  });
+
+  it('queues a create and applies an optimistic update when offline', async () => {
+    listRemindersMock.mockResolvedValue([]);
+    createReminderMock.mockRejectedValue(new TypeError('Failed to fetch'));
+    const { result } = renderHook(() => useReminders());
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    await act(async () => {
+      await result.current.createReminder({ title: 'Water plants', category: 'Home', dueDate: '2026-09-01', priority: 'low' });
+    });
+
+    expect(result.current.reminders).toHaveLength(1);
+    expect(result.current.reminders[0]).toMatchObject({ title: 'Water plants' });
+    expect(result.current.pendingSyncIds.size).toBe(1);
+    const queue = await getQueue();
+    expect(queue).toHaveLength(1);
+    expect(queue[0].operation).toBe('createReminder');
   });
 });
