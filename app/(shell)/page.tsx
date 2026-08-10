@@ -28,6 +28,7 @@ export default function HomePage() {
   const { events, getEventsForDate } = useCalendarEvents(bills, reminders);
   const [selectedDate, setSelectedDate] = useState(() => new Date());
   const [requestedPermission, setRequestedPermission] = useState<NotificationPermission | null>(null);
+  const [pushSubscriptionError, setPushSubscriptionError] = useState<string | null>(null);
   const [preferences, setPreferences] = useState<NotificationPreferences>({
     quietHoursStart: null,
     quietHoursEnd: null,
@@ -106,10 +107,16 @@ export default function HomePage() {
   useOverdueAlerts(alertItems, { soundEnabled: preferences.soundEnabled });
 
   async function handleRequestPermission() {
+    setPushSubscriptionError(null);
     const result = await requestNotificationPermission();
     setRequestedPermission(result);
     if (result === 'granted') {
-      await subscribeToPush();
+      const subscribed = await subscribeToPush();
+      if (!subscribed) {
+        setPushSubscriptionError(
+          "Notifications are enabled, but this device couldn't register for background alerts. In-app alerts will still work while the app is open."
+        );
+      }
     }
   }
 
@@ -142,6 +149,11 @@ export default function HomePage() {
         <>
           {error && <p className="text-sm text-status-critical">{error}</p>}
           <AlertsBanner overdueBills={overdueBills} referenceDate={now} />
+          {pushSubscriptionError && (
+            <p data-testid="push-subscription-error" className="text-sm text-status-warning">
+              {pushSubscriptionError}
+            </p>
+          )}
           <NotificationSettings
             permission={permission}
             onRequestPermission={handleRequestPermission}

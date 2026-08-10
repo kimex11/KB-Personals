@@ -1,13 +1,24 @@
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import HomePage from './page';
 import type { CalendarEvent } from '@/lib/types';
 import { listSentStateKeys } from '@/lib/notification-log-repository';
+import { subscribeToPush } from '@/lib/push-subscription';
+import { requestNotificationPermission } from '@/lib/notifications';
 
 vi.mock('@/lib/push-subscription', () => ({
   subscribeToPush: vi.fn().mockResolvedValue(true),
   isPushSupported: vi.fn().mockReturnValue(true),
 }));
+vi.mock('@/lib/notifications', async () => {
+  const actual = await vi.importActual<typeof import('@/lib/notifications')>('@/lib/notifications');
+  return {
+    ...actual,
+    isNotificationSupported: vi.fn().mockReturnValue(true),
+    requestNotificationPermission: vi.fn().mockResolvedValue('default'),
+  };
+});
 vi.mock('@/lib/notification-preferences-repository', () => ({
   getPreferences: vi.fn().mockResolvedValue({
     quietHoursStart: null,
@@ -20,6 +31,14 @@ vi.mock('@/lib/notification-preferences-repository', () => ({
 vi.mock('@/lib/notification-log-repository', () => ({
   listSentStateKeys: vi.fn().mockResolvedValue(new Set()),
 }));
+
+// HomePage reads the global Notification.permission directly (not via an
+// import) when isNotificationSupported() reports true.
+vi.stubGlobal('Notification', { permission: 'default', requestPermission: vi.fn() });
+
+afterEach(() => {
+  vi.mocked(requestNotificationPermission).mockResolvedValue('default');
+});
 
 const mockEvents: CalendarEvent[] = [
   { id: 'overdue-1', type: 'bill', title: 'Overdue Rent', date: '2026-08-01', amount: 1450 },
@@ -119,6 +138,17 @@ describe('HomePage', () => {
     // Give any (incorrectly) re-triggered effect a tick to fire before asserting.
     await new Promise((resolve) => setTimeout(resolve, 0));
     expect(listSentStateKeys).not.toHaveBeenCalled();
+  });
+
+  it('shows a warning when push registration fails after granting permission', async () => {
+    vi.mocked(requestNotificationPermission).mockResolvedValueOnce('granted');
+    vi.mocked(subscribeToPush).mockResolvedValueOnce(false);
+    const user = userEvent.setup();
+    render(<HomePage />);
+
+    await user.click(screen.getByTestId('enable-notifications-button'));
+
+    expect(await screen.findByTestId('push-subscription-error')).toHaveTextContent(/couldn't register/i);
   });
 
   it('excludes an already-paid bill from the overdue alerts banner', () => {
