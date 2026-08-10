@@ -113,7 +113,7 @@ export function ReminderForm({ open, onOpenChange, initialReminder, onSubmit }: 
           </div>
           {!initialReminder && (
             <div className="flex flex-col gap-3 rounded-2xl border border-neutral-200 p-3">
-              <label className="flex items-center gap-2 text-sm text-neutral-700">
+              <label className="flex min-h-11 items-center gap-2 text-sm text-neutral-700">
                 <input
                   type="checkbox"
                   id="reminder-is-recurring"
@@ -164,7 +164,7 @@ export function ReminderForm({ open, onOpenChange, initialReminder, onSubmit }: 
                       </select>
                     </div>
                   )}
-                  <label className="flex items-center gap-2 text-sm text-neutral-700">
+                  <label className="flex min-h-11 items-center gap-2 text-sm text-neutral-700">
                     <input type="checkbox" checked={autoRenew} onChange={(e) => setAutoRenew(e.target.checked)} />
                     Auto-renew (repeats indefinitely)
                   </label>

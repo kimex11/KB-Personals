@@ -143,7 +143,7 @@ export function BillForm({ open, onOpenChange, categories, initialBill, onSubmit
           </div>
           {!initialBill && (
             <div className="flex flex-col gap-3 rounded-2xl border border-neutral-200 p-3">
-              <label className="flex items-center gap-2 text-sm text-neutral-700">
+              <label className="flex min-h-11 items-center gap-2 text-sm text-neutral-700">
                 <input
                   type="checkbox"
                   id="bill-is-recurring"
@@ -206,7 +206,7 @@ export function BillForm({ open, onOpenChange, categories, initialBill, onSubmit
                       <option value="editable">Editable per cycle</option>
                     </select>
                   </div>
-                  <label className="flex items-center gap-2 text-sm text-neutral-700">
+                  <label className="flex min-h-11 items-center gap-2 text-sm text-neutral-700">
                     <input type="checkbox" checked={autoRenew} onChange={(e) => setAutoRenew(e.target.checked)} />
                     Auto-renew (repeats indefinitely)
                   </label>

@@ -85,7 +85,7 @@ export function NotificationSettings({
 
       {permission === 'granted' && (
         <>
-          <div className="flex items-center gap-2 text-xs text-neutral-600">
+          <div className="flex min-h-11 items-center gap-2 text-xs text-neutral-600">
             <label className="flex items-center gap-1">
               Quiet hours
               <input
@@ -107,7 +107,7 @@ export function NotificationSettings({
           </div>
           <div className="flex flex-col gap-1">
             {(Object.keys(PRIORITY_LABELS) as NotificationPriority[]).map((priority) => (
-              <label key={priority} className="flex items-center gap-2 text-xs text-neutral-600">
+              <label key={priority} className="flex min-h-11 items-center gap-2 text-xs text-neutral-600">
                 <input
                   type="checkbox"
                   data-testid={`priority-toggle-${priority}`}
