@@ -62,7 +62,14 @@ export function BillForm({ open, onOpenChange, categories, initialBill, onSubmit
   const [endDate, setEndDate] = useState('');
   const [maxOccurrences, setMaxOccurrences] = useState('');
 
-  const isValid = title.trim() !== '' && categoryId !== '' && amount !== '' && !Number.isNaN(Number(amount)) && dueDate !== '';
+  const isCustomIntervalValid = frequency !== 'custom' || (customIntervalCount !== '' && Number(customIntervalCount) > 0);
+  const isValid =
+    title.trim() !== '' &&
+    categoryId !== '' &&
+    amount !== '' &&
+    !Number.isNaN(Number(amount)) &&
+    dueDate !== '' &&
+    (!isRecurring || isCustomIntervalValid);
 
   async function handleSubmit() {
     setSubmitting(true);

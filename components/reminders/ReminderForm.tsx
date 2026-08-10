@@ -56,7 +56,8 @@ export function ReminderForm({ open, onOpenChange, initialReminder, onSubmit }: 
   const [endDate, setEndDate] = useState('');
   const [maxOccurrences, setMaxOccurrences] = useState('');
 
-  const isValid = title.trim() !== '' && category.trim() !== '' && dueDate !== '';
+  const isCustomIntervalValid = frequency !== 'custom' || (customIntervalCount !== '' && Number(customIntervalCount) > 0);
+  const isValid = title.trim() !== '' && category.trim() !== '' && dueDate !== '' && (!isRecurring || isCustomIntervalValid);
 
   async function handleSubmit() {
     setSubmitting(true);

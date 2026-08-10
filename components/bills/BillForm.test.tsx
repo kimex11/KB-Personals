@@ -95,4 +95,19 @@ describe('BillForm', () => {
     await user.selectOptions(screen.getByLabelText(/frequency/i), 'custom');
     expect(screen.getByLabelText(/custom interval count/i)).toBeInTheDocument();
   });
+
+  it('disables save when Custom frequency is selected and the interval count is cleared', async () => {
+    const user = userEvent.setup();
+    render(<BillForm open categories={categories} onSubmit={vi.fn()} onOpenChange={vi.fn()} />);
+
+    await user.type(screen.getByLabelText(/title/i), 'Netflix');
+    await user.type(screen.getByLabelText(/amount/i), '15.99');
+    await user.type(screen.getByLabelText(/due date/i), '2026-09-01');
+    await user.click(screen.getByLabelText(/recurring/i));
+    await user.selectOptions(screen.getByLabelText(/frequency/i), 'custom');
+    expect(screen.getByRole('button', { name: /^save$/i })).not.toBeDisabled();
+
+    await user.clear(screen.getByLabelText(/custom interval count/i));
+    expect(screen.getByRole('button', { name: /^save$/i })).toBeDisabled();
+  });
 });

@@ -66,4 +66,19 @@ describe('ReminderForm', () => {
       })
     );
   });
+
+  it('disables save when Custom frequency is selected and the interval count is cleared', async () => {
+    const user = userEvent.setup();
+    render(<ReminderForm open onSubmit={vi.fn()} onOpenChange={vi.fn()} />);
+
+    await user.type(screen.getByLabelText(/title/i), 'Water plants');
+    await user.type(screen.getByLabelText(/category/i), 'Home');
+    await user.type(screen.getByLabelText(/due date/i), '2026-09-01');
+    await user.click(screen.getByLabelText(/recurring/i));
+    await user.selectOptions(screen.getByLabelText(/frequency/i), 'custom');
+    expect(screen.getByRole('button', { name: /^save$/i })).not.toBeDisabled();
+
+    await user.clear(screen.getByLabelText(/custom interval count/i));
+    expect(screen.getByRole('button', { name: /^save$/i })).toBeDisabled();
+  });
 });
