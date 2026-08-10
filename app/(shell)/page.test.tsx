@@ -1,7 +1,8 @@
 import { describe, expect, it, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import HomePage from './page';
 import type { CalendarEvent } from '@/lib/types';
+import { listSentStateKeys } from '@/lib/notification-log-repository';
 
 vi.mock('@/lib/push-subscription', () => ({
   subscribeToPush: vi.fn().mockResolvedValue(true),
@@ -105,6 +106,19 @@ describe('HomePage', () => {
     useBillsMock.mockReturnValueOnce({ ...defaultUseBillsResult, error: 'Could not load bills.' });
     render(<HomePage />);
     expect(screen.getByText('Could not load bills.')).toBeInTheDocument();
+  });
+
+  it('does not re-query notification_log on a re-render when bills/reminders/events are unchanged', async () => {
+    vi.mocked(listSentStateKeys).mockClear();
+    const { rerender } = render(<HomePage />);
+    await waitFor(() => expect(vi.mocked(listSentStateKeys)).toHaveBeenCalledTimes(1));
+
+    vi.mocked(listSentStateKeys).mockClear();
+    rerender(<HomePage />);
+
+    // Give any (incorrectly) re-triggered effect a tick to fire before asserting.
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(listSentStateKeys).not.toHaveBeenCalled();
   });
 
   it('excludes an already-paid bill from the overdue alerts banner', () => {

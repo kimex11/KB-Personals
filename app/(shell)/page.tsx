@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useCalendarEvents } from '@/lib/use-calendar-events';
 import { useBudget } from '@/lib/use-budget';
 import { useBills } from '@/lib/use-bills';
@@ -57,39 +57,52 @@ export default function HomePage() {
   const actionableEvents = events.filter((event) => event.type !== 'bill' || !paidBillIds.has(event.id));
   const overdueBills = getOverdueBills(actionableEvents, now);
   const weeklyBills = getBillsDueWithinDays(actionableEvents, 7, now);
-  const dueSoonBills = getBillsDueWithinDays(actionableEvents, 3, now);
   const upcomingReminders = getUpcomingReminders(events, 3, now);
-  const dueTodayReminders = events.filter((e) => e.type === 'reminder' && e.date === toISODateString(now));
 
-  const alertItems: AlertItem[] = [
-    ...overdueBills.map((bill) => ({
-      id: `bill:${bill.id}:overdue`,
-      title: `Overdue: ${bill.title}`,
-      body: bill.amount !== undefined ? `₱${bill.amount.toFixed(2)} was due` : 'Payment is overdue',
-      priority: 'critical' as NotificationPriority,
-      entityType: 'bill' as const,
-      entityId: bill.id,
-      stateKey: 'overdue',
-    })),
-    ...dueSoonBills.map((bill) => ({
-      id: `bill:${bill.id}:due_soon:${bill.date}`,
-      title: `Due soon: ${bill.title}`,
-      body: bill.amount !== undefined ? `₱${bill.amount.toFixed(2)} due ${bill.date}` : `Due ${bill.date}`,
-      priority: 'urgent' as NotificationPriority,
-      entityType: 'bill' as const,
-      entityId: bill.id,
-      stateKey: `due_soon:${bill.date}`,
-    })),
-    ...dueTodayReminders.map((reminder) => ({
-      id: `reminder:${reminder.id}:due:${reminder.date}`,
-      title: `Reminder: ${reminder.title}`,
-      body: `Due ${reminder.date}`,
-      priority: 'reminder' as NotificationPriority,
-      entityType: 'reminder' as const,
-      entityId: reminder.id,
-      stateKey: `due:${reminder.date}`,
-    })),
-  ];
+  // Memoized on [bills, events] rather than rebuilt every render: this feeds
+  // useOverdueAlerts below, whose effect re-runs (and re-queries
+  // notification_log via listSentStateKeys) whenever this array's identity
+  // changes. Without memoizing, unrelated re-renders — selecting a calendar
+  // date, a budget refresh — would rebuild a fresh array each time and
+  // trigger a redundant Supabase round trip on every render.
+  const alertItems = useMemo<AlertItem[]>(() => {
+    const referenceNow = new Date();
+    const paidIds = new Set(bills.filter((bill) => bill.paid).map((bill) => bill.id));
+    const actionable = events.filter((event) => event.type !== 'bill' || !paidIds.has(event.id));
+    const overdue = getOverdueBills(actionable, referenceNow);
+    const dueSoon = getBillsDueWithinDays(actionable, 3, referenceNow);
+    const dueToday = events.filter((e) => e.type === 'reminder' && e.date === toISODateString(referenceNow));
+
+    return [
+      ...overdue.map((bill) => ({
+        id: `bill:${bill.id}:overdue`,
+        title: `Overdue: ${bill.title}`,
+        body: bill.amount !== undefined ? `₱${bill.amount.toFixed(2)} was due` : 'Payment is overdue',
+        priority: 'critical' as NotificationPriority,
+        entityType: 'bill' as const,
+        entityId: bill.id,
+        stateKey: 'overdue',
+      })),
+      ...dueSoon.map((bill) => ({
+        id: `bill:${bill.id}:due_soon:${bill.date}`,
+        title: `Due soon: ${bill.title}`,
+        body: bill.amount !== undefined ? `₱${bill.amount.toFixed(2)} due ${bill.date}` : `Due ${bill.date}`,
+        priority: 'urgent' as NotificationPriority,
+        entityType: 'bill' as const,
+        entityId: bill.id,
+        stateKey: `due_soon:${bill.date}`,
+      })),
+      ...dueToday.map((reminder) => ({
+        id: `reminder:${reminder.id}:due:${reminder.date}`,
+        title: `Reminder: ${reminder.title}`,
+        body: `Due ${reminder.date}`,
+        priority: 'reminder' as NotificationPriority,
+        entityType: 'reminder' as const,
+        entityId: reminder.id,
+        stateKey: `due:${reminder.date}`,
+      })),
+    ];
+  }, [bills, events]);
   useOverdueAlerts(alertItems, { soundEnabled: preferences.soundEnabled });
 
   async function handleRequestPermission() {
