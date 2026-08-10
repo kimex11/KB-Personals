@@ -88,6 +88,18 @@ export function useBills(): UseBillsResult {
     [refresh]
   );
 
+  // Guards against a rapid double-tap firing the same mutation twice for the
+  // same row before the first one resolves -- e.g. two closeBillCycle calls
+  // racing would both try to insert the series' next cycle_number and the
+  // second hits the (series_id, cycle_number) unique constraint, surfacing a
+  // raw Postgres error instead of just being a harmless no-op.
+  const pendingIdsRef = useRef<Set<string>>(new Set());
+  const withIdGuard = useCallback((id: string, fn: () => Promise<void>): Promise<void> => {
+    if (pendingIdsRef.current.has(id)) return Promise.resolve();
+    pendingIdsRef.current.add(id);
+    return fn().finally(() => pendingIdsRef.current.delete(id));
+  }, []);
+
   return {
     bills,
     loading,
@@ -149,32 +161,39 @@ export function useBills(): UseBillsResult {
       );
     },
     updateBill: (id, patch) =>
-      mutate('updateBill', [id, patch], () => updateBill(id, patch), () => {
-        setBills((prev) => prev.map((b) => (b.id === id ? { ...b, ...patch } : b)));
-        setPendingSyncIds((prev) => new Set(prev).add(id));
-      }),
+      withIdGuard(id, () =>
+        mutate('updateBill', [id, patch], () => updateBill(id, patch), () => {
+          setBills((prev) => prev.map((b) => (b.id === id ? { ...b, ...patch } : b)));
+          setPendingSyncIds((prev) => new Set(prev).add(id));
+        })
+      ),
     deleteBill: (id) =>
-      mutate('deleteBill', [id], () => deleteBill(id), () => {
-        setBills((prev) => prev.filter((b) => b.id !== id));
-      }),
-    togglePaid: (id) => {
-      const bill = bills.find((b) => b.id === id);
-      if (!bill) return Promise.resolve();
-      if (!bill.paid && bill.seriesId) {
-        return mutate('closeBillCycle', [id, 'paid'], () => closeBillCycle(id, 'paid'), () => {
-          setBills((prev) => prev.map((b) => (b.id === id ? { ...b, paid: true } : b)));
+      withIdGuard(id, () =>
+        mutate('deleteBill', [id], () => deleteBill(id), () => {
+          setBills((prev) => prev.filter((b) => b.id !== id));
+        })
+      ),
+    togglePaid: (id) =>
+      withIdGuard(id, () => {
+        const bill = bills.find((b) => b.id === id);
+        if (!bill) return Promise.resolve();
+        if (!bill.paid && bill.seriesId) {
+          return mutate('closeBillCycle', [id, 'paid'], () => closeBillCycle(id, 'paid'), () => {
+            setBills((prev) => prev.map((b) => (b.id === id ? { ...b, paid: true } : b)));
+            setPendingSyncIds((prev) => new Set(prev).add(id));
+          });
+        }
+        return mutate('updateBill', [id, { paid: !bill.paid }], () => updateBill(id, { paid: !bill.paid }), () => {
+          setBills((prev) => prev.map((b) => (b.id === id ? { ...b, paid: !bill.paid } : b)));
           setPendingSyncIds((prev) => new Set(prev).add(id));
         });
-      }
-      return mutate('updateBill', [id, { paid: !bill.paid }], () => updateBill(id, { paid: !bill.paid }), () => {
-        setBills((prev) => prev.map((b) => (b.id === id ? { ...b, paid: !bill.paid } : b)));
-        setPendingSyncIds((prev) => new Set(prev).add(id));
-      });
-    },
-    skipCycle: (id) =>
-      mutate('closeBillCycle', [id, 'skipped'], () => closeBillCycle(id, 'skipped'), () => {
-        setBills((prev) => prev.map((b) => (b.id === id ? { ...b, skipped: true } : b)));
-        setPendingSyncIds((prev) => new Set(prev).add(id));
       }),
+    skipCycle: (id) =>
+      withIdGuard(id, () =>
+        mutate('closeBillCycle', [id, 'skipped'], () => closeBillCycle(id, 'skipped'), () => {
+          setBills((prev) => prev.map((b) => (b.id === id ? { ...b, skipped: true } : b)));
+          setPendingSyncIds((prev) => new Set(prev).add(id));
+        })
+      ),
   };
 }

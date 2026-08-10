@@ -190,6 +190,25 @@ describe('useBills recurring behavior', () => {
     );
     expect(result.current.bills).toEqual([recurringBill]);
   });
+
+  it('ignores a second togglePaid call for the same bill while the first is still in flight', async () => {
+    listBillsMock.mockResolvedValue([recurringBill]);
+    let resolveClose: () => void = () => {};
+    closeBillCycleMock.mockReturnValue(new Promise<void>((resolve) => (resolveClose = resolve)));
+    const { result } = renderHook(() => useBills());
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    let firstCall: Promise<void> = Promise.resolve();
+    let secondCall: Promise<void> = Promise.resolve();
+    await act(async () => {
+      firstCall = result.current.togglePaid('bill-2');
+      secondCall = result.current.togglePaid('bill-2');
+      resolveClose();
+      await Promise.all([firstCall, secondCall]);
+    });
+
+    expect(closeBillCycleMock).toHaveBeenCalledTimes(1);
+  });
 });
 
 describe('useBills offline behavior', () => {

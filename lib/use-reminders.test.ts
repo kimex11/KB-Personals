@@ -196,6 +196,25 @@ describe('useReminders recurring behavior', () => {
     );
     expect(result.current.reminders).toEqual([recurringReminder]);
   });
+
+  it('ignores a second toggleComplete call for the same reminder while the first is still in flight', async () => {
+    listRemindersMock.mockResolvedValue([recurringReminder]);
+    let resolveClose: () => void = () => {};
+    closeReminderCycleMock.mockReturnValue(new Promise<void>((resolve) => (resolveClose = resolve)));
+    const { result } = renderHook(() => useReminders());
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    let firstCall: Promise<void> = Promise.resolve();
+    let secondCall: Promise<void> = Promise.resolve();
+    await act(async () => {
+      firstCall = result.current.toggleComplete('reminder-2');
+      secondCall = result.current.toggleComplete('reminder-2');
+      resolveClose();
+      await Promise.all([firstCall, secondCall]);
+    });
+
+    expect(closeReminderCycleMock).toHaveBeenCalledTimes(1);
+  });
 });
 
 describe('useReminders offline behavior', () => {
