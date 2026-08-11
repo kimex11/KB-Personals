@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { addDays, parseISO } from 'date-fns';
 import { listReminders, createReminder, updateReminder, deleteReminder, createRecurringReminder, closeReminderCycle } from './reminders-repository';
 import { toISODateString } from './date-utils';
+import { logActivity } from './audit-log-repository';
 import type { Priority, Reminder } from './reminders-types';
 import type { CreateSeriesInput } from './recurring-types';
 import { cacheList, getCachedList } from './offline/cache';
@@ -108,7 +109,17 @@ export function useReminders(): UseRemindersResult {
       return mutate(
         'createReminder',
         [input],
-        () => createReminder(input),
+        () =>
+          createReminder(input).then((created) => {
+            logActivity({
+              action: 'create',
+              entityType: 'reminder',
+              entityId: created.id,
+              entityLabel: created.title,
+              afterValue: { title: created.title, category: created.category, dueDate: created.dueDate, priority: created.priority },
+            }).catch(() => {});
+            return created;
+          }),
         () => {
           setReminders((prev) => [
             ...prev,
@@ -133,7 +144,17 @@ export function useReminders(): UseRemindersResult {
       return mutate(
         'createRecurringReminder',
         [reminderInput, seriesInput],
-        () => createRecurringReminder(reminderInput, seriesInput),
+        () =>
+          createRecurringReminder(reminderInput, seriesInput).then((created) => {
+            logActivity({
+              action: 'create',
+              entityType: 'reminder',
+              entityId: created.id,
+              entityLabel: created.title,
+              afterValue: { title: created.title, category: created.category, dueDate: created.dueDate, priority: created.priority, recurring: true },
+            }).catch(() => {});
+            return created;
+          }),
         () => {
           setReminders((prev) => [
             ...prev,
@@ -153,50 +174,146 @@ export function useReminders(): UseRemindersResult {
         }
       );
     },
-    updateReminder: (id, patch) =>
-      withIdGuard(id, () =>
-        mutate('updateReminder', [id, patch], () => updateReminder(id, patch), () => {
-          setReminders((prev) => prev.map((r) => (r.id === id ? { ...r, ...patch } : r)));
-          setPendingSyncIds((prev) => new Set(prev).add(id));
-        })
-      ),
-    deleteReminder: (id) =>
-      withIdGuard(id, () =>
-        mutate('deleteReminder', [id], () => deleteReminder(id), () => {
-          setReminders((prev) => prev.filter((r) => r.id !== id));
-        })
-      ),
+    updateReminder: (id, patch) => {
+      const before = reminders.find((r) => r.id === id);
+      return withIdGuard(id, () =>
+        mutate(
+          'updateReminder',
+          [id, patch],
+          () =>
+            updateReminder(id, patch).then(() => {
+              logActivity({
+                action: 'update',
+                entityType: 'reminder',
+                entityId: id,
+                entityLabel: patch.title ?? before?.title ?? 'Reminder',
+                beforeValue: before
+                  ? { title: before.title, category: before.category, dueDate: before.dueDate, priority: before.priority, completed: before.completed }
+                  : null,
+                afterValue: { ...before, ...patch },
+              }).catch(() => {});
+            }),
+          () => {
+            setReminders((prev) => prev.map((r) => (r.id === id ? { ...r, ...patch } : r)));
+            setPendingSyncIds((prev) => new Set(prev).add(id));
+          }
+        )
+      );
+    },
+    deleteReminder: (id) => {
+      const before = reminders.find((r) => r.id === id);
+      return withIdGuard(id, () =>
+        mutate(
+          'deleteReminder',
+          [id],
+          () =>
+            deleteReminder(id).then(() => {
+              logActivity({
+                action: 'delete',
+                entityType: 'reminder',
+                entityId: id,
+                entityLabel: before?.title ?? 'Reminder',
+                beforeValue: before ? { title: before.title, category: before.category, dueDate: before.dueDate } : null,
+              }).catch(() => {});
+            }),
+          () => {
+            setReminders((prev) => prev.filter((r) => r.id !== id));
+          }
+        )
+      );
+    },
     toggleComplete: (id) =>
       withIdGuard(id, () => {
         const reminder = reminders.find((r) => r.id === id);
         if (!reminder) return Promise.resolve();
         if (!reminder.completed && reminder.seriesId) {
-          return mutate('closeReminderCycle', [id, 'completed'], () => closeReminderCycle(id, 'completed'), () => {
-            setReminders((prev) => prev.map((r) => (r.id === id ? { ...r, completed: true } : r)));
-            setPendingSyncIds((prev) => new Set(prev).add(id));
-          });
+          return mutate(
+            'closeReminderCycle',
+            [id, 'completed'],
+            () =>
+              closeReminderCycle(id, 'completed').then(() => {
+                logActivity({
+                  action: 'update',
+                  entityType: 'reminder',
+                  entityId: id,
+                  entityLabel: reminder.title,
+                  beforeValue: { completed: false },
+                  afterValue: { completed: true },
+                }).catch(() => {});
+              }),
+            () => {
+              setReminders((prev) => prev.map((r) => (r.id === id ? { ...r, completed: true } : r)));
+              setPendingSyncIds((prev) => new Set(prev).add(id));
+            }
+          );
         }
-        return mutate('updateReminder', [id, { completed: !reminder.completed }], () => updateReminder(id, { completed: !reminder.completed }), () => {
-          setReminders((prev) => prev.map((r) => (r.id === id ? { ...r, completed: !reminder.completed } : r)));
-          setPendingSyncIds((prev) => new Set(prev).add(id));
-        });
+        return mutate(
+          'updateReminder',
+          [id, { completed: !reminder.completed }],
+          () =>
+            updateReminder(id, { completed: !reminder.completed }).then(() => {
+              logActivity({
+                action: 'update',
+                entityType: 'reminder',
+                entityId: id,
+                entityLabel: reminder.title,
+                beforeValue: { completed: reminder.completed },
+                afterValue: { completed: !reminder.completed },
+              }).catch(() => {});
+            }),
+          () => {
+            setReminders((prev) => prev.map((r) => (r.id === id ? { ...r, completed: !reminder.completed } : r)));
+            setPendingSyncIds((prev) => new Set(prev).add(id));
+          }
+        );
       }),
     skipCycle: (id) =>
-      withIdGuard(id, () =>
-        mutate('closeReminderCycle', [id, 'skipped'], () => closeReminderCycle(id, 'skipped'), () => {
-          setReminders((prev) => prev.map((r) => (r.id === id ? { ...r, skipped: true } : r)));
-          setPendingSyncIds((prev) => new Set(prev).add(id));
-        })
-      ),
+      withIdGuard(id, () => {
+        const reminder = reminders.find((r) => r.id === id);
+        return mutate(
+          'closeReminderCycle',
+          [id, 'skipped'],
+          () =>
+            closeReminderCycle(id, 'skipped').then(() => {
+              logActivity({
+                action: 'skip',
+                entityType: 'reminder',
+                entityId: id,
+                entityLabel: reminder?.title ?? 'Reminder',
+                beforeValue: { skipped: false },
+                afterValue: { skipped: true },
+              }).catch(() => {});
+            }),
+          () => {
+            setReminders((prev) => prev.map((r) => (r.id === id ? { ...r, skipped: true } : r)));
+            setPendingSyncIds((prev) => new Set(prev).add(id));
+          }
+        );
+      }),
     snooze: (id) =>
       withIdGuard(id, () => {
         const reminder = reminders.find((r) => r.id === id);
         if (!reminder) return Promise.resolve();
         const nextDate = toISODateString(addDays(parseISO(reminder.dueDate), 1));
-        return mutate('updateReminder', [id, { dueDate: nextDate }], () => updateReminder(id, { dueDate: nextDate }), () => {
-          setReminders((prev) => prev.map((r) => (r.id === id ? { ...r, dueDate: nextDate } : r)));
-          setPendingSyncIds((prev) => new Set(prev).add(id));
-        });
+        return mutate(
+          'updateReminder',
+          [id, { dueDate: nextDate }],
+          () =>
+            updateReminder(id, { dueDate: nextDate }).then(() => {
+              logActivity({
+                action: 'update',
+                entityType: 'reminder',
+                entityId: id,
+                entityLabel: reminder.title,
+                beforeValue: { dueDate: reminder.dueDate },
+                afterValue: { dueDate: nextDate },
+              }).catch(() => {});
+            }),
+          () => {
+            setReminders((prev) => prev.map((r) => (r.id === id ? { ...r, dueDate: nextDate } : r)));
+            setPendingSyncIds((prev) => new Set(prev).add(id));
+          }
+        );
       }),
   };
 }
