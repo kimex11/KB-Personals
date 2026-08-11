@@ -5,7 +5,8 @@ import type { Bill, BillStatus } from '@/lib/bills-types';
 import { filterBills, sortBills, groupBillsByStatus, monthlyBillTotal, findDuplicateBillIds } from '@/lib/bills-selectors';
 import { BillsSummary } from './BillsSummary';
 import { BillsFilterBar } from './BillsFilterBar';
-import { BillRow } from './BillRow';
+import { BillTile } from './BillTile';
+import { TileGrid } from '@/components/shared/TileGrid';
 import { EmptyState } from '@/components/shared/EmptyState';
 
 const SECTION_ORDER: { status: BillStatus; label: string }[] = [
@@ -77,9 +78,9 @@ export function BillsListView({ bills, onTogglePaid, referenceDate = new Date(),
                     />
                     {label}
                   </h2>
-                  <div className="flex flex-col gap-2">
+                  <TileGrid testId={`bills-tile-grid-${status}`}>
                     {grouped[status].map((bill) => (
-                      <BillRow
+                      <BillTile
                         key={bill.id}
                         bill={bill}
                         onTogglePaid={onTogglePaid}
@@ -90,7 +91,7 @@ export function BillsListView({ bills, onTogglePaid, referenceDate = new Date(),
                         onSkip={onSkip}
                       />
                     ))}
-                  </div>
+                  </TileGrid>
                 </div>
               )
           )}
