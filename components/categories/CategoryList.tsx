@@ -7,7 +7,7 @@ import { GripVertical, MoreVertical, Pencil, Archive, ArchiveRestore, Trash2 } f
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
 import { ICON_MAP } from '@/lib/category-icons';
-import { DOT_COLOR_CLASS } from '@/lib/category-colors';
+import { DOT_COLOR_CLASS, CARD_TINT_COLOR_CLASS } from '@/lib/category-colors';
 import { reorderIds } from '@/lib/categories-reorder';
 import type { Category } from '@/lib/categories-types';
 import { EmptyState } from '@/components/shared/EmptyState';
@@ -82,7 +82,7 @@ function CategoryRow({
       ref={setNodeRef}
       style={style}
       data-testid="category-row"
-      className="flex items-center gap-3 rounded-2xl border border-neutral-200 bg-white p-3"
+      className={`flex items-center gap-3 rounded-2xl p-4 ${category.archived ? 'bg-neutral-100' : CARD_TINT_COLOR_CLASS[category.colorSlot]}`}
     >
       {!category.archived && (
         <button
@@ -96,8 +96,8 @@ function CategoryRow({
           <GripVertical className="h-4 w-4" />
         </button>
       )}
-      <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${DOT_COLOR_CLASS[category.colorSlot]}`}>
-        <Icon className="h-4 w-4 text-white" />
+      <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${DOT_COLOR_CLASS[category.colorSlot]}`}>
+        <Icon className="h-5 w-5 text-white" />
       </span>
       <span className="flex-1 text-sm font-medium text-neutral-900">{category.name}</span>
       {category.archived && (

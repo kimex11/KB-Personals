@@ -93,4 +93,11 @@ describe('CategoryList', () => {
     await user.click(await screen.findByRole('menuitem', { name: /^delete$/i }));
     expect(onDelete).toHaveBeenCalledWith(categories[0]);
   });
+
+  it('tints each row to match its color slot, and archived rows a neutral gray', () => {
+    render(<CategoryList categories={[categories[0], archivedCategory]} onReorder={noop} onEdit={noop} onArchive={noop} onUnarchive={noop} onDelete={noop} />);
+    const rows = screen.getAllByTestId('category-row');
+    expect(rows[0]).toHaveClass('bg-budget-1/8');
+    expect(rows[1]).toHaveClass('bg-neutral-100');
+  });
 });
