@@ -5,7 +5,8 @@ import type { Reminder, Priority } from '@/lib/reminders-types';
 import { filterReminders, sortReminders, remindersSummary } from '@/lib/reminders-selectors';
 import { RemindersSummary } from './RemindersSummary';
 import { RemindersFilterBar } from './RemindersFilterBar';
-import { ReminderRow } from './ReminderRow';
+import { ReminderTile } from './ReminderTile';
+import { TileGrid } from '@/components/shared/TileGrid';
 import { EmptyState } from '@/components/shared/EmptyState';
 
 interface RemindersListViewProps {
@@ -52,9 +53,9 @@ export function RemindersListView({
       {visibleReminders.length === 0 ? (
         <EmptyState message="No reminders match your filters." />
       ) : (
-        <div className="flex flex-col gap-2">
+        <TileGrid testId="reminders-tile-grid">
           {visibleReminders.map((reminder) => (
-            <ReminderRow
+            <ReminderTile
               key={reminder.id}
               reminder={reminder}
               onToggleComplete={onToggleComplete}
@@ -65,7 +66,7 @@ export function RemindersListView({
               onSkip={onSkip}
             />
           ))}
-        </div>
+        </TileGrid>
       )}
     </div>
   );
