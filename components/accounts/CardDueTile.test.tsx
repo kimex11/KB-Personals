@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { CardDueRow } from './CardDueRow';
+import { CardDueTile } from './CardDueTile';
 import type { CreditCardDue } from '@/lib/accounts-types';
 
 const referenceDate = new Date(2026, 7, 15);
@@ -15,38 +15,43 @@ const card: CreditCardDue = {
   dueDate: '2026-08-16',
 };
 
-describe('CardDueRow', () => {
+describe('CardDueTile', () => {
   it('shows card name, masked last 4 digits, statement balance, and minimum payment', () => {
-    render(<CardDueRow card={card} referenceDate={referenceDate} />);
-    const row = screen.getByTestId('card-due-row');
-    expect(row).toHaveTextContent('Visa Platinum');
-    expect(row).toHaveTextContent('••4821');
-    expect(row).toHaveTextContent('₱842.50');
-    expect(row).toHaveTextContent('₱45.00');
+    render(<CardDueTile card={card} referenceDate={referenceDate} />);
+    const tile = screen.getByTestId('card-due-row');
+    expect(tile).toHaveTextContent('Visa Platinum');
+    expect(tile).toHaveTextContent('••4821');
+    expect(tile).toHaveTextContent('₱842.50');
+    expect(tile).toHaveTextContent('₱45.00');
   });
 
   it('shows the due status badge', () => {
-    render(<CardDueRow card={card} referenceDate={referenceDate} />);
+    render(<CardDueTile card={card} referenceDate={referenceDate} />);
     expect(screen.getByTestId('card-due-status-badge')).toBeInTheDocument();
   });
 
-  it('colors the balance, left border, and card background to match status: overdue', () => {
+  it('tints the balance and card background to match status: overdue', () => {
     const overdue: CreditCardDue = { ...card, dueDate: '2026-08-01' };
-    render(<CardDueRow card={overdue} referenceDate={referenceDate} />);
+    render(<CardDueTile card={overdue} referenceDate={referenceDate} />);
     expect(screen.getByTestId('card-due-balance')).toHaveClass('text-status-critical');
-    expect(screen.getByTestId('card-due-row')).toHaveClass('border-l-status-critical');
-    expect(screen.getByTestId('card-due-row')).toHaveClass('bg-status-critical/5');
+    expect(screen.getByTestId('card-due-row')).toHaveClass('bg-status-critical/10');
   });
 
-  it('colors the balance and left border to match status: due-soon', () => {
+  it('tints the balance to match status: due-soon', () => {
     const dueSoon: CreditCardDue = { ...card, dueDate: '2026-08-16' };
-    render(<CardDueRow card={dueSoon} referenceDate={referenceDate} />);
+    render(<CardDueTile card={dueSoon} referenceDate={referenceDate} />);
     expect(screen.getByTestId('card-due-balance')).toHaveClass('text-status-warning');
-    expect(screen.getByTestId('card-due-row')).toHaveClass('border-l-status-warning');
+    expect(screen.getByTestId('card-due-row')).toHaveClass('bg-status-warning/10');
+  });
+
+  it('uses a neutral gray background for status: upcoming', () => {
+    const upcoming: CreditCardDue = { ...card, dueDate: '2026-09-30' };
+    render(<CardDueTile card={upcoming} referenceDate={referenceDate} />);
+    expect(screen.getByTestId('card-due-row')).toHaveClass('bg-neutral-100');
   });
 
   it('does not render an actions menu when no handlers are given', () => {
-    render(<CardDueRow card={card} referenceDate={referenceDate} />);
+    render(<CardDueTile card={card} referenceDate={referenceDate} />);
     expect(screen.queryByRole('button', { name: /actions for visa platinum/i })).not.toBeInTheDocument();
   });
 
@@ -54,7 +59,7 @@ describe('CardDueRow', () => {
     const onEdit = vi.fn();
     const onDelete = vi.fn();
     const user = userEvent.setup();
-    render(<CardDueRow card={card} referenceDate={referenceDate} onEdit={onEdit} onDelete={onDelete} />);
+    render(<CardDueTile card={card} referenceDate={referenceDate} onEdit={onEdit} onDelete={onDelete} />);
 
     await user.click(screen.getByRole('button', { name: /actions for visa platinum/i }));
     await user.click(await screen.findByRole('menuitem', { name: /edit/i }));
