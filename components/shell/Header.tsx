@@ -18,7 +18,7 @@ export function Header() {
       </span>
       <h1 className="font-serif text-xl text-neutral-900">{title}</h1>
       <div className="ml-auto flex items-center gap-2">
-        <Link href="/activity" aria-label="Activity Log" className="text-neutral-500">
+        <Link href="/activity" aria-label="Activity Log" className="flex min-h-11 min-w-11 items-center justify-center text-neutral-500">
           <History className="h-5 w-5" />
         </Link>
         <InstallPrompt />
