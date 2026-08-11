@@ -2,6 +2,7 @@ import type { StoredReceipt } from '@/lib/receipts-types';
 import type { ExtractedReceiptFields, OcrStatus } from '@/lib/receipt-ocr-types';
 import { ReceiptCard, type LinkableBill } from './ReceiptCard';
 import { EmptyState } from '@/components/shared/EmptyState';
+import { TileGrid } from '@/components/shared/TileGrid';
 
 interface ReceiptGridProps {
   receipts: StoredReceipt[];
@@ -31,7 +32,7 @@ export function ReceiptGrid({
   }
 
   return (
-    <div data-testid="receipt-grid" className="grid grid-cols-2 gap-3">
+    <TileGrid testId="receipt-grid">
       {receipts.map((receipt) => (
         <ReceiptCard
           key={receipt.id}
@@ -46,6 +47,6 @@ export function ReceiptGrid({
           onLinkBill={onLinkBill}
         />
       ))}
-    </div>
+    </TileGrid>
   );
 }
