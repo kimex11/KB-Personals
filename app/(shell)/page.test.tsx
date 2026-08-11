@@ -73,6 +73,21 @@ vi.mock('@/lib/use-reminders', () => ({
   }),
 }));
 
+vi.mock('@/lib/use-accounts', () => ({
+  useAccounts: () => ({
+    cards: [{ id: 'card-1', cardName: 'Visa', last4: '1234', statementBalance: 100, minimumPayment: 10, dueDate: '2026-09-01' }],
+    incomeSources: [],
+    loading: false,
+    error: null,
+    createCard: vi.fn(),
+    updateCard: vi.fn(),
+    deleteCard: vi.fn(),
+    createIncome: vi.fn(),
+    updateIncome: vi.fn(),
+    deleteIncome: vi.fn(),
+  }),
+}));
+
 const { useBillsMock } = vi.hoisted(() => ({ useBillsMock: vi.fn() }));
 vi.mock('@/lib/use-bills', () => ({ useBills: useBillsMock }));
 
@@ -95,12 +110,17 @@ describe('HomePage', () => {
     expect(screen.getByTestId('alerts-banner')).toBeInTheDocument();
   });
 
-  it('renders the weekly bills panel, spending snapshot, reminders, and quick actions', () => {
+  it('renders the weekly bills panel, spending snapshot, reminders, and launcher tiles', () => {
     render(<HomePage />);
     expect(screen.getByTestId('weekly-bills-panel')).toBeInTheDocument();
     expect(screen.getByTestId('spending-snapshot')).toBeInTheDocument();
     expect(screen.getByTestId('reminders-panel')).toBeInTheDocument();
-    expect(screen.getByTestId('quick-actions-row')).toBeInTheDocument();
+    expect(screen.getByTestId('launcher-tiles')).toBeInTheDocument();
+  });
+
+  it('shows the accounts card count on the Accounts launcher tile', () => {
+    render(<HomePage />);
+    expect(screen.getByTestId('launcher-tile-accounts')).toHaveTextContent('1 card linked');
   });
 
   it('does not render Recent Transactions or Goal Progress (no backing feature)', () => {

@@ -5,6 +5,7 @@ import { useCalendarEvents } from '@/lib/use-calendar-events';
 import { useBudget } from '@/lib/use-budget';
 import { useBills } from '@/lib/use-bills';
 import { useReminders } from '@/lib/use-reminders';
+import { useAccounts } from '@/lib/use-accounts';
 import { useIsMounted } from '@/lib/use-is-mounted';
 import { getOverdueBills, getBillsDueWithinDays, getUpcomingReminders } from '@/lib/dashboard-selectors';
 import { toISODateString } from '@/lib/date-utils';
@@ -19,12 +20,13 @@ import { DashboardCalendarCard } from '@/components/dashboard/DashboardCalendarC
 import { WeeklyBillsPanel } from '@/components/dashboard/WeeklyBillsPanel';
 import { SpendingSnapshot } from '@/components/dashboard/SpendingSnapshot';
 import { RemindersPanel } from '@/components/dashboard/RemindersPanel';
-import { QuickActionsRow } from '@/components/dashboard/QuickActionsRow';
+import { LauncherTiles, type LauncherTileData } from '@/components/dashboard/LauncherTiles';
 
 export default function HomePage() {
   const { totals, error: budgetError } = useBudget();
   const { bills, error: billsError, togglePaid } = useBills();
   const { reminders, error: remindersError } = useReminders();
+  const { cards } = useAccounts();
   const { events, getEventsForDate } = useCalendarEvents(bills, reminders);
   const [selectedDate, setSelectedDate] = useState(() => new Date());
   const [requestedPermission, setRequestedPermission] = useState<NotificationPermission | null>(null);
@@ -106,6 +108,39 @@ export default function HomePage() {
   }, [bills, events]);
   useOverdueAlerts(alertItems, { soundEnabled: preferences.soundEnabled });
 
+  const launcherTiles: LauncherTileData[] = [
+    {
+      id: 'bills',
+      label: 'Bills',
+      stat: overdueBills.length > 0 ? `${overdueBills.length} overdue` : weeklyBills.length > 0 ? `${weeklyBills.length} due this week` : 'All caught up',
+      href: '/bills',
+    },
+    {
+      id: 'reminders',
+      label: 'Reminders',
+      stat: upcomingReminders.length > 0 ? `${upcomingReminders.length} upcoming` : 'Nothing upcoming',
+      href: '/reminders',
+    },
+    {
+      id: 'budget',
+      label: 'Budget',
+      stat: `₱${totals.spent.toFixed(0)} of ₱${totals.budgeted.toFixed(0)}`,
+      href: '/budget',
+    },
+    {
+      id: 'accounts',
+      label: 'Accounts',
+      stat: cards.length === 1 ? '1 card linked' : `${cards.length} cards linked`,
+      href: '/accounts',
+    },
+    {
+      id: 'receipts',
+      label: 'Receipts',
+      stat: 'Scan a new receipt',
+      href: '/receipts',
+    },
+  ];
+
   async function handleRequestPermission() {
     setPushSubscriptionError(null);
     const result = await requestNotificationPermission();
@@ -173,7 +208,7 @@ export default function HomePage() {
           <WeeklyBillsPanel bills={weeklyBills} referenceDate={now} onMarkPaid={togglePaid} />
           <SpendingSnapshot budgeted={totals.budgeted} spent={totals.spent} remaining={totals.remaining} />
           <RemindersPanel reminders={upcomingReminders} referenceDate={now} />
-          <QuickActionsRow />
+          <LauncherTiles tiles={launcherTiles} />
         </>
       )}
     </div>
