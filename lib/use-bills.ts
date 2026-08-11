@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { listBills, createBill, updateBill, deleteBill, createRecurringBill, closeBillCycle } from './bills-repository';
 import type { BillWithCategoryId } from './bills-repository';
+import { logActivity } from './audit-log-repository';
 import type { RecurrenceInterval } from './bills-types';
 import type { CreateSeriesInput } from './recurring-types';
 import { cacheList, getCachedList } from './offline/cache';
@@ -111,7 +112,17 @@ export function useBills(): UseBillsResult {
       return mutate(
         'createBill',
         [input],
-        () => createBill(input),
+        () =>
+          createBill(input).then((created) => {
+            logActivity({
+              action: 'create',
+              entityType: 'bill',
+              entityId: created.id,
+              entityLabel: created.title,
+              afterValue: { title: created.title, category: created.category, amount: created.amount, dueDate: created.dueDate, recurrence: created.recurrence },
+            }).catch(() => {});
+            return created;
+          }),
         () => {
           setBills((prev) => [
             ...prev,
@@ -138,7 +149,17 @@ export function useBills(): UseBillsResult {
       return mutate(
         'createRecurringBill',
         [billInput, seriesInput],
-        () => createRecurringBill(billInput, seriesInput),
+        () =>
+          createRecurringBill(billInput, seriesInput).then((created) => {
+            logActivity({
+              action: 'create',
+              entityType: 'bill',
+              entityId: created.id,
+              entityLabel: created.title,
+              afterValue: { title: created.title, category: created.category, amount: created.amount, dueDate: created.dueDate, recurring: true },
+            }).catch(() => {});
+            return created;
+          }),
         () => {
           setBills((prev) => [
             ...prev,
@@ -160,40 +181,121 @@ export function useBills(): UseBillsResult {
         }
       );
     },
-    updateBill: (id, patch) =>
-      withIdGuard(id, () =>
-        mutate('updateBill', [id, patch], () => updateBill(id, patch), () => {
-          setBills((prev) => prev.map((b) => (b.id === id ? { ...b, ...patch } : b)));
-          setPendingSyncIds((prev) => new Set(prev).add(id));
-        })
-      ),
-    deleteBill: (id) =>
-      withIdGuard(id, () =>
-        mutate('deleteBill', [id], () => deleteBill(id), () => {
-          setBills((prev) => prev.filter((b) => b.id !== id));
-        })
-      ),
+    updateBill: (id, patch) => {
+      const before = bills.find((b) => b.id === id);
+      return withIdGuard(id, () =>
+        mutate(
+          'updateBill',
+          [id, patch],
+          () =>
+            updateBill(id, patch).then(() => {
+              logActivity({
+                action: 'update',
+                entityType: 'bill',
+                entityId: id,
+                entityLabel: patch.title ?? before?.title ?? 'Bill',
+                beforeValue: before
+                  ? { title: before.title, category: before.category, amount: before.amount, dueDate: before.dueDate, recurrence: before.recurrence, paid: before.paid }
+                  : null,
+                afterValue: { ...before, ...patch },
+              }).catch(() => {});
+            }),
+          () => {
+            setBills((prev) => prev.map((b) => (b.id === id ? { ...b, ...patch } : b)));
+            setPendingSyncIds((prev) => new Set(prev).add(id));
+          }
+        )
+      );
+    },
+    deleteBill: (id) => {
+      const before = bills.find((b) => b.id === id);
+      return withIdGuard(id, () =>
+        mutate(
+          'deleteBill',
+          [id],
+          () =>
+            deleteBill(id).then(() => {
+              logActivity({
+                action: 'delete',
+                entityType: 'bill',
+                entityId: id,
+                entityLabel: before?.title ?? 'Bill',
+                beforeValue: before ? { title: before.title, category: before.category, amount: before.amount, dueDate: before.dueDate } : null,
+              }).catch(() => {});
+            }),
+          () => {
+            setBills((prev) => prev.filter((b) => b.id !== id));
+          }
+        )
+      );
+    },
     togglePaid: (id) =>
       withIdGuard(id, () => {
         const bill = bills.find((b) => b.id === id);
         if (!bill) return Promise.resolve();
         if (!bill.paid && bill.seriesId) {
-          return mutate('closeBillCycle', [id, 'paid'], () => closeBillCycle(id, 'paid'), () => {
-            setBills((prev) => prev.map((b) => (b.id === id ? { ...b, paid: true } : b)));
-            setPendingSyncIds((prev) => new Set(prev).add(id));
-          });
+          return mutate(
+            'closeBillCycle',
+            [id, 'paid'],
+            () =>
+              closeBillCycle(id, 'paid').then(() => {
+                logActivity({
+                  action: 'update',
+                  entityType: 'bill',
+                  entityId: id,
+                  entityLabel: bill.title,
+                  beforeValue: { paid: false },
+                  afterValue: { paid: true },
+                }).catch(() => {});
+              }),
+            () => {
+              setBills((prev) => prev.map((b) => (b.id === id ? { ...b, paid: true } : b)));
+              setPendingSyncIds((prev) => new Set(prev).add(id));
+            }
+          );
         }
-        return mutate('updateBill', [id, { paid: !bill.paid }], () => updateBill(id, { paid: !bill.paid }), () => {
-          setBills((prev) => prev.map((b) => (b.id === id ? { ...b, paid: !bill.paid } : b)));
-          setPendingSyncIds((prev) => new Set(prev).add(id));
-        });
+        return mutate(
+          'updateBill',
+          [id, { paid: !bill.paid }],
+          () =>
+            updateBill(id, { paid: !bill.paid }).then(() => {
+              logActivity({
+                action: 'update',
+                entityType: 'bill',
+                entityId: id,
+                entityLabel: bill.title,
+                beforeValue: { paid: bill.paid },
+                afterValue: { paid: !bill.paid },
+              }).catch(() => {});
+            }),
+          () => {
+            setBills((prev) => prev.map((b) => (b.id === id ? { ...b, paid: !bill.paid } : b)));
+            setPendingSyncIds((prev) => new Set(prev).add(id));
+          }
+        );
       }),
     skipCycle: (id) =>
-      withIdGuard(id, () =>
-        mutate('closeBillCycle', [id, 'skipped'], () => closeBillCycle(id, 'skipped'), () => {
-          setBills((prev) => prev.map((b) => (b.id === id ? { ...b, skipped: true } : b)));
-          setPendingSyncIds((prev) => new Set(prev).add(id));
-        })
-      ),
+      withIdGuard(id, () => {
+        const bill = bills.find((b) => b.id === id);
+        return mutate(
+          'closeBillCycle',
+          [id, 'skipped'],
+          () =>
+            closeBillCycle(id, 'skipped').then(() => {
+              logActivity({
+                action: 'skip',
+                entityType: 'bill',
+                entityId: id,
+                entityLabel: bill?.title ?? 'Bill',
+                beforeValue: { skipped: false },
+                afterValue: { skipped: true },
+              }).catch(() => {});
+            }),
+          () => {
+            setBills((prev) => prev.map((b) => (b.id === id ? { ...b, skipped: true } : b)));
+            setPendingSyncIds((prev) => new Set(prev).add(id));
+          }
+        );
+      }),
   };
 }
