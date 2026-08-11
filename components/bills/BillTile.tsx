@@ -11,18 +11,11 @@ const RECURRENCE_LABEL: Record<NonNullable<Bill['recurrence']>, string> = {
   yearly: 'Yearly',
 };
 
-const STATUS_ACCENT_BORDER: Record<BillStatus, string> = {
-  overdue: 'border-l-status-critical',
-  'due-soon': 'border-l-status-warning',
-  paid: 'border-l-status-success',
-  upcoming: 'border-l-neutral-200',
-};
-
-const STATUS_CARD_BG: Record<BillStatus, string> = {
-  overdue: 'bg-status-critical/5',
-  'due-soon': 'bg-status-warning/5',
-  paid: 'bg-status-success/5',
-  upcoming: 'bg-white',
+const STATUS_TINT: Record<BillStatus, string> = {
+  overdue: 'bg-status-critical/10',
+  'due-soon': 'bg-status-warning/10',
+  paid: 'bg-status-success/10',
+  upcoming: 'bg-neutral-100',
 };
 
 const STATUS_AMOUNT_COLOR: Record<BillStatus, string> = {
@@ -32,7 +25,7 @@ const STATUS_AMOUNT_COLOR: Record<BillStatus, string> = {
   upcoming: 'text-neutral-900',
 };
 
-interface BillRowProps {
+interface BillTileProps {
   bill: Bill;
   onTogglePaid: (id: string) => void;
   referenceDate?: Date;
@@ -42,22 +35,17 @@ interface BillRowProps {
   onSkip?: (bill: Bill) => void;
 }
 
-export function BillRow({ bill, onTogglePaid, referenceDate = new Date(), isDuplicate = false, onEdit, onDelete, onSkip }: BillRowProps) {
+export function BillTile({ bill, onTogglePaid, referenceDate = new Date(), isDuplicate = false, onEdit, onDelete, onSkip }: BillTileProps) {
   const status = getBillStatus(bill, referenceDate);
 
   return (
-    <div
-      data-testid="bill-row"
-      className={`flex flex-col gap-2 rounded-2xl border border-l-4 px-4 py-3 ${STATUS_CARD_BG[status]} ${
-        isDuplicate ? 'border-status-warning' : `border-neutral-200 ${STATUS_ACCENT_BORDER[status]}`
-      }`}
-    >
+    <div data-testid="bill-row" className={`flex flex-col gap-2 rounded-2xl p-4 ${STATUS_TINT[status]}`}>
       {isDuplicate && (
         <p data-testid="bill-duplicate-warning" className="text-[10px] font-medium text-status-warning">
           Possible duplicate — check for a matching bill nearby
         </p>
       )}
-      <div className="flex items-center justify-between gap-3">
+      <div className="flex items-center justify-between">
         <button
           type="button"
           data-testid="bill-paid-toggle"
@@ -70,31 +58,31 @@ export function BillRow({ bill, onTogglePaid, referenceDate = new Date(), isDupl
         >
           ✓
         </button>
-        <div className="flex-1">
-          <div className="flex items-center gap-2">
-            <p className="text-sm font-medium text-neutral-900">{bill.title}</p>
-            {bill.recurrence && (
-              <span className="rounded-full bg-neutral-100 px-2 py-0.5 text-[10px] text-neutral-500">
-                {RECURRENCE_LABEL[bill.recurrence]}
-              </span>
-            )}
-          </div>
-          <p className="text-xs text-neutral-500">
-            {bill.category} · {formatRelativeDate(bill.dueDate, referenceDate)}
-          </p>
-        </div>
-        <div className="flex flex-col items-end gap-1">
-          <span data-testid="bill-amount" className={`font-serif text-sm ${STATUS_AMOUNT_COLOR[status]}`}>
-            ₱{bill.amount.toFixed(2)}
-          </span>
-          <BillStatusBadge status={status} />
-        </div>
         <RowActionsMenu
           label={bill.title}
           onEdit={onEdit ? () => onEdit(bill) : undefined}
           onDelete={onDelete ? () => onDelete(bill) : undefined}
           onSkip={onSkip && bill.seriesId && !bill.paid ? () => onSkip(bill) : undefined}
         />
+      </div>
+      <div>
+        <div className="flex items-center gap-2">
+          <p className="text-sm font-medium text-neutral-900">{bill.title}</p>
+          {bill.recurrence && (
+            <span className="rounded-full bg-neutral-200 px-2 py-0.5 text-[10px] text-neutral-500">
+              {RECURRENCE_LABEL[bill.recurrence]}
+            </span>
+          )}
+        </div>
+        <p className="text-xs text-neutral-500">
+          {bill.category} · {formatRelativeDate(bill.dueDate, referenceDate)}
+        </p>
+      </div>
+      <div className="flex items-center justify-between">
+        <span data-testid="bill-amount" className={`font-serif text-sm ${STATUS_AMOUNT_COLOR[status]}`}>
+          ₱{bill.amount.toFixed(2)}
+        </span>
+        <BillStatusBadge status={status} />
       </div>
     </div>
   );
