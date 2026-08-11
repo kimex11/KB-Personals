@@ -5,8 +5,9 @@ import { Plus } from 'lucide-react';
 import { useAccounts } from '@/lib/use-accounts';
 import { totalStatementBalance, totalMonthlyIncome } from '@/lib/accounts-selectors';
 import { AccountsSummary } from '@/components/accounts/AccountsSummary';
-import { CardDueRow } from '@/components/accounts/CardDueRow';
-import { IncomeRow } from '@/components/accounts/IncomeRow';
+import { CardDueTile } from '@/components/accounts/CardDueTile';
+import { IncomeTile } from '@/components/accounts/IncomeTile';
+import { TileGrid } from '@/components/shared/TileGrid';
 import { CardDueForm } from '@/components/accounts/CardDueForm';
 import { IncomeForm } from '@/components/accounts/IncomeForm';
 import { ConfirmDeleteDialog } from '@/components/shared/ConfirmDeleteDialog';
@@ -86,21 +87,21 @@ export default function AccountsPage() {
                 Add Card
               </Button>
             </div>
-            <div className="flex flex-col gap-2">
-              {cards.length === 0 ? (
-                <EmptyState message="No credit cards yet." />
-              ) : (
-                cards.map((card) => (
-                  <CardDueRow
+            {cards.length === 0 ? (
+              <EmptyState message="No credit cards yet." />
+            ) : (
+              <TileGrid testId="accounts-card-tile-grid">
+                {cards.map((card) => (
+                  <CardDueTile
                     key={card.id}
                     card={card}
                     referenceDate={new Date()}
                     onEdit={openEditCard}
                     onDelete={setDeleteCardTarget}
                   />
-                ))
-              )}
-            </div>
+                ))}
+              </TileGrid>
+            )}
           </div>
           <div className="flex flex-col gap-3">
             <div className="flex items-center justify-between">
@@ -110,21 +111,21 @@ export default function AccountsPage() {
                 Add Income
               </Button>
             </div>
-            <div className="flex flex-col gap-2">
-              {incomeSources.length === 0 ? (
-                <EmptyState message="No income sources yet." />
-              ) : (
-                incomeSources.map((source) => (
-                  <IncomeRow
+            {incomeSources.length === 0 ? (
+              <EmptyState message="No income sources yet." />
+            ) : (
+              <TileGrid testId="accounts-income-tile-grid">
+                {incomeSources.map((source) => (
+                  <IncomeTile
                     key={source.id}
                     source={source}
                     referenceDate={new Date()}
                     onEdit={openEditIncome}
                     onDelete={setDeleteIncomeTarget}
                   />
-                ))
-              )}
-            </div>
+                ))}
+              </TileGrid>
+            )}
           </div>
         </>
       )}
