@@ -1,23 +1,40 @@
-import { describe, expect, it, vi, afterEach } from 'vitest';
+import { describe, expect, it, vi, afterEach, beforeEach } from 'vitest';
 import { renderHook, waitFor, act } from '@testing-library/react';
 
-const { listCategoriesMock, createCategoryMock, archiveCategoryMock, reorderCategoriesMock } = vi.hoisted(() => ({
+const {
+  listCategoriesMock,
+  createCategoryMock,
+  updateCategoryMock,
+  archiveCategoryMock,
+  unarchiveCategoryMock,
+  deleteCategoryMock,
+  mergeCategoriesMock,
+  reorderCategoriesMock,
+  logActivityMock,
+} = vi.hoisted(() => ({
   listCategoriesMock: vi.fn(),
   createCategoryMock: vi.fn(),
+  updateCategoryMock: vi.fn(),
   archiveCategoryMock: vi.fn(),
+  unarchiveCategoryMock: vi.fn(),
+  deleteCategoryMock: vi.fn(),
+  mergeCategoriesMock: vi.fn(),
   reorderCategoriesMock: vi.fn(),
+  logActivityMock: vi.fn(),
 }));
 
 vi.mock('./categories-repository', () => ({
   listCategories: listCategoriesMock,
   createCategory: createCategoryMock,
-  updateCategory: vi.fn(),
+  updateCategory: updateCategoryMock,
   archiveCategory: archiveCategoryMock,
-  unarchiveCategory: vi.fn(),
-  deleteCategory: vi.fn(),
-  mergeCategories: vi.fn(),
+  unarchiveCategory: unarchiveCategoryMock,
+  deleteCategory: deleteCategoryMock,
+  mergeCategories: mergeCategoriesMock,
   reorderCategories: reorderCategoriesMock,
 }));
+
+vi.mock('./audit-log-repository', () => ({ logActivity: logActivityMock }));
 
 import { useCategories } from './use-categories';
 
@@ -42,6 +59,10 @@ const archivedCategory = {
 
 afterEach(() => {
   vi.clearAllMocks();
+});
+
+beforeEach(() => {
+  logActivityMock.mockResolvedValue(undefined);
 });
 
 describe('useCategories', () => {
@@ -77,6 +98,124 @@ describe('useCategories', () => {
 
     expect(createCategoryMock).toHaveBeenCalledWith({ name: 'Housing', icon: 'building-2', colorSlot: 1 });
     expect(result.current.categories).toEqual([activeCategory]);
+  });
+
+  it('create() logs a create activity', async () => {
+    listCategoriesMock.mockResolvedValueOnce([]).mockResolvedValueOnce([activeCategory]);
+    createCategoryMock.mockResolvedValue(activeCategory);
+    const { result } = renderHook(() => useCategories());
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    await act(async () => {
+      await result.current.create({ name: 'Housing', icon: 'building-2', colorSlot: 1 });
+    });
+
+    expect(logActivityMock).toHaveBeenCalledWith(
+      expect.objectContaining({ action: 'create', entityType: 'category', entityId: 'cat-1', entityLabel: 'Housing' })
+    );
+  });
+
+  it('update() logs an update activity with before and after snapshots', async () => {
+    listCategoriesMock.mockResolvedValue([activeCategory]);
+    updateCategoryMock.mockResolvedValue(undefined);
+    const { result } = renderHook(() => useCategories());
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    await act(async () => {
+      await result.current.update('cat-1', { colorSlot: 3 });
+    });
+
+    expect(logActivityMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: 'update',
+        entityType: 'category',
+        entityId: 'cat-1',
+        entityLabel: 'Housing',
+        beforeValue: expect.objectContaining({ colorSlot: 1 }),
+        afterValue: expect.objectContaining({ colorSlot: 3 }),
+      })
+    );
+  });
+
+  it('archive() logs an archive activity', async () => {
+    listCategoriesMock.mockResolvedValue([activeCategory]);
+    archiveCategoryMock.mockResolvedValue(undefined);
+    const { result } = renderHook(() => useCategories());
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    await act(async () => {
+      await result.current.archive('cat-1');
+    });
+
+    expect(logActivityMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: 'archive',
+        entityType: 'category',
+        entityId: 'cat-1',
+        entityLabel: 'Housing',
+        beforeValue: { archived: false },
+        afterValue: { archived: true },
+      })
+    );
+  });
+
+  it('unarchive() logs an unarchive activity', async () => {
+    listCategoriesMock.mockResolvedValue([archivedCategory]);
+    unarchiveCategoryMock.mockResolvedValue(undefined);
+    const { result } = renderHook(() => useCategories());
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    await act(async () => {
+      await result.current.unarchive('cat-2');
+    });
+
+    expect(logActivityMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: 'unarchive',
+        entityType: 'category',
+        entityId: 'cat-2',
+        entityLabel: 'Old',
+        beforeValue: { archived: true },
+        afterValue: { archived: false },
+      })
+    );
+  });
+
+  it('remove() logs a delete activity', async () => {
+    listCategoriesMock.mockResolvedValue([activeCategory]);
+    deleteCategoryMock.mockResolvedValue(undefined);
+    const { result } = renderHook(() => useCategories());
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    await act(async () => {
+      await result.current.remove('cat-1');
+    });
+
+    expect(logActivityMock).toHaveBeenCalledWith(
+      expect.objectContaining({ action: 'delete', entityType: 'category', entityId: 'cat-1', entityLabel: 'Housing' })
+    );
+  });
+
+  it('merge() logs a merge activity naming both categories', async () => {
+    listCategoriesMock.mockResolvedValue([activeCategory, archivedCategory]);
+    mergeCategoriesMock.mockResolvedValue(undefined);
+    const { result } = renderHook(() => useCategories());
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    await act(async () => {
+      await result.current.merge('cat-1', 'cat-2');
+    });
+
+    expect(logActivityMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: 'merge',
+        entityType: 'category',
+        entityId: 'cat-1',
+        entityLabel: 'Housing',
+        beforeValue: { name: 'Housing' },
+        afterValue: { mergedInto: 'Old' },
+      })
+    );
   });
 
   it('surfaces a mutation error without crashing', async () => {
