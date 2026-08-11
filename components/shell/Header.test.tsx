@@ -18,4 +18,9 @@ describe('Header', () => {
     render(<Header />);
     expect(screen.getByText('KB')).toBeInTheDocument();
   });
+
+  it('renders a link to the Activity Log', () => {
+    render(<Header />);
+    expect(screen.getByRole('link', { name: /activity log/i })).toHaveAttribute('href', '/activity');
+  });
 });

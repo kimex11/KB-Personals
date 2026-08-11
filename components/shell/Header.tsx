@@ -1,5 +1,7 @@
 'use client';
 
+import Link from 'next/link';
+import { History } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import { TAB_ITEMS } from './tab-config';
 import { LogoutButton } from '@/components/auth/LogoutButton';
@@ -16,6 +18,9 @@ export function Header() {
       </span>
       <h1 className="font-serif text-xl text-neutral-900">{title}</h1>
       <div className="ml-auto flex items-center gap-2">
+        <Link href="/activity" aria-label="Activity Log" className="text-neutral-500">
+          <History className="h-5 w-5" />
+        </Link>
         <InstallPrompt />
         <LogoutButton />
       </div>
