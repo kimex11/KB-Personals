@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import type { CreditCardDue, DueStatus } from '@/lib/accounts-types';
 import { getDueStatus } from '@/lib/accounts-selectors';
 import { CardDueStatusBadge } from './CardDueStatusBadge';
@@ -50,6 +51,13 @@ export function CardDueTile({ card, referenceDate = new Date(), onEdit, onDelete
         </div>
         <CardDueStatusBadge status={status} />
       </div>
+      <Link
+        href={`/accounts/cards/${card.id}`}
+        data-testid="card-view-history-link"
+        className="flex min-h-11 items-center justify-center rounded-full border border-neutral-200 text-xs font-medium text-neutral-600"
+      >
+        View history
+      </Link>
     </div>
   );
 }

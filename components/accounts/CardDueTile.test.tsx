@@ -69,4 +69,9 @@ describe('CardDueTile', () => {
     await user.click(await screen.findByRole('menuitem', { name: /delete/i }));
     expect(onDelete).toHaveBeenCalledWith(card);
   });
+
+  it('links to the card detail page', () => {
+    render(<CardDueTile card={card} referenceDate={referenceDate} />);
+    expect(screen.getByTestId('card-view-history-link')).toHaveAttribute('href', '/accounts/cards/1');
+  });
 });
