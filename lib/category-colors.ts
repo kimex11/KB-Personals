@@ -64,3 +64,18 @@ export const ICON_TEXT_COLOR_CLASS: Record<number, string> = {
   11: 'text-budget-11',
   12: 'text-budget-12',
 };
+
+export const CARD_TINT_COLOR_CLASS: Record<number, string> = {
+  1: 'bg-budget-1/8',
+  2: 'bg-budget-2/8',
+  3: 'bg-budget-3/8',
+  4: 'bg-budget-4/8',
+  5: 'bg-budget-5/8',
+  6: 'bg-budget-6/8',
+  7: 'bg-budget-7/8',
+  8: 'bg-budget-8/8',
+  9: 'bg-budget-9/8',
+  10: 'bg-budget-10/8',
+  11: 'bg-budget-11/8',
+  12: 'bg-budget-12/8',
+};

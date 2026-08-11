@@ -5,6 +5,7 @@ import {
   BAR_COLOR_CLASS,
   ICON_BG_COLOR_CLASS,
   ICON_TEXT_COLOR_CLASS,
+  CARD_TINT_COLOR_CLASS,
   CATEGORY_COLOR_SLOTS,
 } from './category-colors';
 
@@ -20,6 +21,7 @@ describe('category-colors', () => {
       expect(BAR_COLOR_CLASS[slot]).toMatch(/^bg-budget-\d+$/);
       expect(ICON_BG_COLOR_CLASS[slot]).toMatch(/^bg-budget-\d+\/15$/);
       expect(ICON_TEXT_COLOR_CLASS[slot]).toMatch(/^text-budget-\d+$/);
+      expect(CARD_TINT_COLOR_CLASS[slot]).toMatch(/^bg-budget-\d+\/8$/);
     });
   });
 

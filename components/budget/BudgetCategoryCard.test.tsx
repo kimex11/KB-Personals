@@ -51,4 +51,9 @@ describe('BudgetCategoryCard', () => {
     render(<BudgetCategoryCard category={untouched} />);
     expect(screen.getByTestId('progress-bar-fill')).toHaveStyle({ width: '0%' });
   });
+
+  it('tints the card background to match its color slot', () => {
+    render(<BudgetCategoryCard category={underBudget} />);
+    expect(screen.getByTestId('budget-category-card')).toHaveClass('bg-budget-2/8');
+  });
 });
