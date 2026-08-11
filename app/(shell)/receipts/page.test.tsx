@@ -30,6 +30,9 @@ vi.mock('@/lib/receipt-ocr', () => ({
   extractTextFromImage: vi.fn().mockResolvedValue('Corner Cafe\nTotal $12.50\n2026-08-15'),
 }));
 
+const logActivityMock = vi.fn().mockResolvedValue(undefined);
+vi.mock('@/lib/audit-log-repository', () => ({ logActivity: (input: unknown) => logActivityMock(input) }));
+
 const compressReceiptImageMock = vi.fn(async (file: File) => file);
 
 vi.mock('@/lib/receipt-image-compression', () => ({
@@ -114,6 +117,38 @@ describe('ReceiptsPage', () => {
     expect(uploadReceiptMock).toHaveBeenCalled();
   });
 
+  it('logs an upload activity when a file is uploaded', async () => {
+    listReceiptsMock.mockResolvedValue([]);
+    const newReceipt: StoredReceipt = {
+      id: 'receipt-2',
+      fileName: 'new.jpg',
+      fileType: 'image/jpeg',
+      fileSize: 2000,
+      previewUrl: 'https://signed.example/new.jpg',
+      storagePath: 'user-1/new.jpg',
+      merchant: null,
+      receiptDate: null,
+      amount: null,
+      linkedBillId: null,
+      description: null,
+      uploadedAt: '2026-08-15T11:00:00.000Z',
+    };
+    uploadReceiptMock.mockResolvedValue(newReceipt);
+
+    render(<ReceiptsPage />);
+    await waitFor(() => expect(screen.getByTestId('empty-state')).toBeInTheDocument());
+
+    fireEvent.change(screen.getByTestId('receipt-file-input'), {
+      target: { files: [makeFile('new.jpg', 'image/jpeg')] },
+    });
+
+    await waitFor(() =>
+      expect(logActivityMock).toHaveBeenCalledWith(
+        expect.objectContaining({ action: 'upload', entityType: 'receipt', entityId: 'receipt-2', entityLabel: 'new.jpg' })
+      )
+    );
+  });
+
   it('shows previously-persisted OCR fields for a receipt loaded from Supabase, without waiting on new OCR', async () => {
     const receiptWithFields: StoredReceipt = {
       ...existingReceipt,
@@ -189,6 +224,22 @@ describe('ReceiptsPage', () => {
     expect(deleteReceiptMock).toHaveBeenCalledWith('receipt-1', 'user-1/existing.jpg');
   });
 
+  it('logs a delete activity when a receipt is removed', async () => {
+    listReceiptsMock.mockResolvedValue([existingReceipt]);
+    deleteReceiptMock.mockResolvedValue(undefined);
+
+    render(<ReceiptsPage />);
+    await waitFor(() => expect(screen.getByTestId('receipt-card')).toBeInTheDocument());
+
+    fireEvent.click(screen.getByTestId('receipt-remove-button'));
+
+    await waitFor(() =>
+      expect(logActivityMock).toHaveBeenCalledWith(
+        expect.objectContaining({ action: 'delete', entityType: 'receipt', entityId: 'receipt-1', entityLabel: 'existing.jpg' })
+      )
+    );
+  });
+
   it('links a receipt to a bill via the bill-link picker', async () => {
     listReceiptsMock.mockResolvedValue([existingReceipt]);
 
@@ -199,6 +250,21 @@ describe('ReceiptsPage', () => {
 
     await waitFor(() => expect(linkReceiptToBillMock).toHaveBeenCalledWith('receipt-1', 'bill-1'));
     expect(screen.getByTestId('receipt-bill-link-select')).toHaveValue('bill-1');
+  });
+
+  it('logs a link activity when a receipt is linked to a bill', async () => {
+    listReceiptsMock.mockResolvedValue([existingReceipt]);
+
+    render(<ReceiptsPage />);
+    await waitFor(() => expect(screen.getByTestId('receipt-card')).toBeInTheDocument());
+
+    fireEvent.change(screen.getByTestId('receipt-bill-link-select'), { target: { value: 'bill-1' } });
+
+    await waitFor(() =>
+      expect(logActivityMock).toHaveBeenCalledWith(
+        expect.objectContaining({ action: 'link', entityType: 'receipt', entityId: 'receipt-1', entityLabel: 'existing.jpg', afterValue: { linkedBillId: 'bill-1' } })
+      )
+    );
   });
 
   it('restores the receipt and shows an error when delete fails', async () => {
@@ -270,6 +336,29 @@ describe('ReceiptsPage', () => {
     expect(screen.getByTestId('receipt-card')).toHaveTextContent('renamed.jpg');
   });
 
+  it('logs an update activity when a receipt is renamed', async () => {
+    listReceiptsMock.mockResolvedValue([existingReceipt]);
+    render(<ReceiptsPage />);
+    await waitFor(() => expect(screen.getByTestId('receipt-card')).toBeInTheDocument());
+
+    fireEvent.click(screen.getByTestId('receipt-rename-button'));
+    fireEvent.change(screen.getByTestId('receipt-name-input'), { target: { value: 'renamed.jpg' } });
+    fireEvent.click(screen.getByTestId('receipt-name-save'));
+
+    await waitFor(() =>
+      expect(logActivityMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          action: 'update',
+          entityType: 'receipt',
+          entityId: 'receipt-1',
+          entityLabel: 'renamed.jpg',
+          beforeValue: { fileName: 'existing.jpg' },
+          afterValue: { fileName: 'renamed.jpg' },
+        })
+      )
+    );
+  });
+
   it('reverts the name and shows an error when rename fails', async () => {
     listReceiptsMock.mockResolvedValue([existingReceipt]);
     renameReceiptMock.mockRejectedValueOnce(new Error('network error'));
@@ -294,5 +383,28 @@ describe('ReceiptsPage', () => {
     fireEvent.blur(input);
 
     await waitFor(() => expect(updateReceiptDescriptionMock).toHaveBeenCalledWith('receipt-1', 'Weekly grocery run'));
+  });
+
+  it('logs an update activity when a description is saved', async () => {
+    listReceiptsMock.mockResolvedValue([existingReceipt]);
+    render(<ReceiptsPage />);
+    await waitFor(() => expect(screen.getByTestId('receipt-card')).toBeInTheDocument());
+
+    const input = screen.getByTestId('receipt-description-input');
+    fireEvent.change(input, { target: { value: 'Weekly grocery run' } });
+    fireEvent.blur(input);
+
+    await waitFor(() =>
+      expect(logActivityMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          action: 'update',
+          entityType: 'receipt',
+          entityId: 'receipt-1',
+          entityLabel: 'existing.jpg',
+          beforeValue: { description: null },
+          afterValue: { description: 'Weekly grocery run' },
+        })
+      )
+    );
   });
 });

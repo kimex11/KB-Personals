@@ -15,6 +15,7 @@ import {
   updateReceiptDescription,
 } from '@/lib/receipts-repository';
 import { compressReceiptImage } from '@/lib/receipt-image-compression';
+import { logActivity } from '@/lib/audit-log-repository';
 import { useBills } from '@/lib/use-bills';
 import type { StoredReceipt } from '@/lib/receipts-types';
 import type { ExtractedReceiptFields, OcrStatus } from '@/lib/receipt-ocr-types';
@@ -53,6 +54,13 @@ export default function ReceiptsPage() {
         const receipt = await uploadReceipt(compressed);
         setReceipts((prev) => [receipt, ...prev]);
         processReceipt(receipt.id, compressed);
+        logActivity({
+          action: 'upload',
+          entityType: 'receipt',
+          entityId: receipt.id,
+          entityLabel: receipt.fileName,
+          afterValue: { fileName: receipt.fileName, fileSize: receipt.fileSize },
+        }).catch(() => {});
       } catch {
         setError('Could not upload receipt.');
       }
@@ -76,10 +84,19 @@ export default function ReceiptsPage() {
   const mergedStatusById = { ...persistedStatusById, ...statusById };
 
   async function handleLinkBill(receiptId: string, billId: string | null) {
-    const previous = receipts.find((r) => r.id === receiptId)?.linkedBillId ?? null;
+    const target = receipts.find((r) => r.id === receiptId);
+    const previous = target?.linkedBillId ?? null;
     setReceipts((prev) => prev.map((r) => (r.id === receiptId ? { ...r, linkedBillId: billId } : r)));
     try {
       await linkReceiptToBill(receiptId, billId);
+      logActivity({
+        action: billId ? 'link' : 'unlink',
+        entityType: 'receipt',
+        entityId: receiptId,
+        entityLabel: target?.fileName ?? 'Receipt',
+        beforeValue: { linkedBillId: previous },
+        afterValue: { linkedBillId: billId },
+      }).catch(() => {});
     } catch {
       setError('Could not link receipt to bill.');
       setReceipts((prev) => prev.map((r) => (r.id === receiptId ? { ...r, linkedBillId: previous } : r)));
@@ -92,6 +109,14 @@ export default function ReceiptsPage() {
     setViewerReceipt((prev) => (prev && prev.id === id ? { ...prev, fileName } : prev));
     try {
       await renameReceipt(id, fileName);
+      logActivity({
+        action: 'update',
+        entityType: 'receipt',
+        entityId: id,
+        entityLabel: fileName,
+        beforeValue: previous !== undefined ? { fileName: previous } : null,
+        afterValue: { fileName },
+      }).catch(() => {});
     } catch {
       setError('Could not rename receipt.');
       if (previous !== undefined) {
@@ -102,11 +127,20 @@ export default function ReceiptsPage() {
   }
 
   async function handleUpdateDescription(id: string, description: string | null) {
-    const previous = receipts.find((r) => r.id === id)?.description ?? null;
+    const target = receipts.find((r) => r.id === id);
+    const previous = target?.description ?? null;
     setReceipts((prev) => prev.map((r) => (r.id === id ? { ...r, description } : r)));
     setViewerReceipt((prev) => (prev && prev.id === id ? { ...prev, description } : prev));
     try {
       await updateReceiptDescription(id, description);
+      logActivity({
+        action: 'update',
+        entityType: 'receipt',
+        entityId: id,
+        entityLabel: target?.fileName ?? 'Receipt',
+        beforeValue: { description: previous },
+        afterValue: { description },
+      }).catch(() => {});
     } catch {
       setError('Could not update description.');
       setReceipts((prev) => prev.map((r) => (r.id === id ? { ...r, description: previous } : r)));
@@ -121,6 +155,13 @@ export default function ReceiptsPage() {
     setReceipts((prev) => prev.filter((receipt) => receipt.id !== id));
     try {
       await deleteReceipt(id, target.storagePath);
+      logActivity({
+        action: 'delete',
+        entityType: 'receipt',
+        entityId: id,
+        entityLabel: target.fileName,
+        beforeValue: { fileName: target.fileName, fileSize: target.fileSize },
+      }).catch(() => {});
     } catch {
       setError('Could not delete receipt.');
       setReceipts((prev) => [target, ...prev]);
