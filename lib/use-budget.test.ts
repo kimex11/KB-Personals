@@ -22,7 +22,7 @@ vi.mock('./use-categories', () => ({
 import { useBudget } from './use-budget';
 
 describe('useBudget', () => {
-  it('joins live categories with mock limit/spent by name', () => {
+  it('joins live categories with limit/spent, defaulting to 0 with no real budgets backend yet', () => {
     useCategoriesMock.mockReturnValue({
       activeCategories: [activeCategory({ id: 'cat-1', name: 'Housing', colorSlot: 1 })],
       loading: false,
@@ -30,11 +30,11 @@ describe('useBudget', () => {
     });
     const { result } = renderHook(() => useBudget());
     expect(result.current.categories).toEqual([
-      expect.objectContaining({ id: 'cat-1', name: 'Housing', colorSlot: 1, limit: 1450, spent: 1450 }),
+      expect.objectContaining({ id: 'cat-1', name: 'Housing', colorSlot: 1, limit: 0, spent: 0 }),
     ]);
   });
 
-  it('defaults limit/spent to 0 for a category not in the mock seed', () => {
+  it('defaults limit/spent to 0 for any category', () => {
     useCategoriesMock.mockReturnValue({
       activeCategories: [activeCategory({ id: 'cat-9', name: 'Pet Care', colorSlot: 9 })],
       loading: false,
@@ -54,7 +54,7 @@ describe('useBudget', () => {
       error: null,
     });
     const { result } = renderHook(() => useBudget());
-    expect(result.current.totals).toEqual({ budgeted: 1950, spent: 1918, remaining: 32 });
+    expect(result.current.totals).toEqual({ budgeted: 0, spent: 0, remaining: 0 });
   });
 
   it('passes through loading and error from useCategories', () => {
