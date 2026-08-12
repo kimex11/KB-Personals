@@ -8,10 +8,11 @@ vi.mock('next/navigation', () => ({
 import { TabBar } from './TabBar';
 
 describe('TabBar', () => {
-  it('renders all six tabs', () => {
+  it('renders all seven tabs', () => {
     render(<TabBar />);
     expect(screen.getByTestId('tab-home')).toBeInTheDocument();
     expect(screen.getByTestId('tab-expenses')).toBeInTheDocument();
+    expect(screen.getByTestId('tab-plans')).toBeInTheDocument();
     expect(screen.getByTestId('tab-bills')).toBeInTheDocument();
     expect(screen.getByTestId('tab-accounts')).toBeInTheDocument();
     expect(screen.getByTestId('tab-reminders')).toBeInTheDocument();

@@ -1,8 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Link from 'next/link';
-import { ArrowLeft, Plus } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { usePaymentPlans } from '@/lib/use-payment-plans';
 import { useCategories } from '@/lib/use-categories';
 import { listAllPlanPayments, type PaymentPlanPayment } from '@/lib/payment-plan-payments-repository';
@@ -31,14 +30,7 @@ export default function PaymentPlansPage() {
 
   return (
     <div data-testid="payment-plans-page" className="flex flex-col gap-4 px-4 pb-24 pt-4">
-      <div className="flex items-center gap-2">
-        <Link href="/budget" aria-label="Back to Expenses">
-          <Button variant="ghost" size="icon-sm" className="min-h-11 min-w-11">
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-        </Link>
-        <h1 className="text-lg font-medium text-neutral-900">Payment Plans</h1>
-      </div>
+      <h1 className="text-lg font-medium text-neutral-900">Payment Plans</h1>
 
       <Button size="lg" className="min-h-14 w-full text-base" onClick={() => setFormOpen(true)}>
         <Plus className="h-5 w-5" />
