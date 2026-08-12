@@ -33,4 +33,15 @@ describe('PaymentPlanTile', () => {
     render(<PaymentPlanTile plan={plan} payments={payments} />);
     expect(screen.getByRole('link')).toHaveAttribute('href', '/budget/plans/plan-1');
   });
+
+  it('shows a Fully Paid badge once payments cover the full total', () => {
+    const allPaid = Array.from({ length: 12 }, (_, i) => ({ ...payments[0], id: `pp-${i}`, installmentNumber: i + 1 }));
+    render(<PaymentPlanTile plan={plan} payments={allPaid} />);
+    expect(screen.getByTestId('plan-fully-paid-badge')).toBeInTheDocument();
+  });
+
+  it('omits the Fully Paid badge while a balance remains', () => {
+    render(<PaymentPlanTile plan={plan} payments={payments} />);
+    expect(screen.queryByTestId('plan-fully-paid-badge')).not.toBeInTheDocument();
+  });
 });

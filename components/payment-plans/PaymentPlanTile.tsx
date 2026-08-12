@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { CARD_TINT_COLOR_CLASS } from '@/lib/category-colors';
 import { formatCurrency } from '@/lib/format-currency';
-import { monthsPaid, remainingBalance } from '@/lib/payment-plan-selectors';
+import { monthsPaid, remainingBalance, isPlanFullyPaid } from '@/lib/payment-plan-selectors';
 import type { PaymentPlan } from '@/lib/payment-plans-repository';
 import type { PaymentPlanPayment } from '@/lib/payment-plan-payments-repository';
 
@@ -19,7 +19,14 @@ export function PaymentPlanTile({ plan, payments }: PaymentPlanTileProps) {
     >
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-sm font-medium text-neutral-900">{plan.name}</p>
+          <div className="flex items-center gap-2">
+            <p className="text-sm font-medium text-neutral-900">{plan.name}</p>
+            {isPlanFullyPaid(plan, payments) && (
+              <span data-testid="plan-fully-paid-badge" className="rounded-full bg-status-success/10 px-2 py-0.5 text-[10px] font-medium text-status-success">
+                Fully Paid
+              </span>
+            )}
+          </div>
           <p className="text-xs text-neutral-500">
             {plan.category} · {monthsPaid(payments)} of {plan.installmentCount} paid
           </p>

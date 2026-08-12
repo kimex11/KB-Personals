@@ -5,14 +5,22 @@ const selectOrderMock = vi.fn();
 const insertSelectSingleMock = vi.fn();
 const insertMock = vi.fn(() => ({ select: () => ({ single: insertSelectSingleMock }) }));
 const planSingleMock = vi.fn();
+const updateEqMock = vi.fn();
+const deleteEqMock = vi.fn();
+const fetchBalanceSingleMock = vi.fn();
 
 vi.mock('./supabase/client', () => ({
   createClient: () => ({
     from: (table: string) => {
       if (table === 'payment_plan_payments') {
         return {
-          select: () => ({ eq: () => ({ order: selectEqOrderMock }), order: selectOrderMock }),
+          select: (columns?: string) => {
+            if (columns === 'balance_before') return { eq: () => ({ single: fetchBalanceSingleMock }) };
+            return { eq: () => ({ order: selectEqOrderMock }), order: selectOrderMock };
+          },
           insert: insertMock,
+          update: () => ({ eq: updateEqMock }),
+          delete: () => ({ eq: deleteEqMock }),
         };
       }
       if (table === 'payment_plans') {
@@ -25,7 +33,14 @@ vi.mock('./supabase/client', () => ({
   }),
 }));
 
-import { listPaymentsForPlan, listAllPlanPayments, recordPlanPayment } from './payment-plan-payments-repository';
+import {
+  listPaymentsForPlan,
+  listAllPlanPayments,
+  recordPlanPayment,
+  updatePlanPayment,
+  deletePlanPayment,
+  DuplicatePlanPaymentError,
+} from './payment-plan-payments-repository';
 
 afterEach(() => {
   vi.clearAllMocks();
@@ -105,5 +120,39 @@ describe('recordPlanPayment', () => {
     });
     expect(result.installmentNumber).toBe(2);
     expect(result.balanceAfter).toBe(30000);
+  });
+
+  it('rejects a payment with the same amount and paid-at timestamp as an existing one', async () => {
+    planSingleMock.mockResolvedValue({ data: { name: 'iPhone 15', total_amount: 36000 }, error: null });
+    selectEqOrderMock.mockResolvedValue({ data: [paymentRow], error: null });
+
+    await expect(recordPlanPayment('plan-1', { amount: 3000, paidAt: '2026-01-01T10:00:00.000Z' })).rejects.toThrow(DuplicatePlanPaymentError);
+    expect(insertSelectSingleMock).not.toHaveBeenCalled();
+  });
+});
+
+describe('updatePlanPayment', () => {
+  it('recomputes balance_after from the stored balance_before when the amount changes', async () => {
+    fetchBalanceSingleMock.mockResolvedValue({ data: { balance_before: 36000 }, error: null });
+    updateEqMock.mockResolvedValue({ error: null });
+
+    await updatePlanPayment('pp-1', { amount: 2500 });
+
+    expect(updateEqMock).toHaveBeenCalledWith('id', 'pp-1');
+  });
+
+  it('updates the paid-at date without touching balances when the amount is unchanged', async () => {
+    updateEqMock.mockResolvedValue({ error: null });
+    await updatePlanPayment('pp-1', { paidAt: '2026-02-02T10:00:00.000Z' });
+    expect(fetchBalanceSingleMock).not.toHaveBeenCalled();
+    expect(updateEqMock).toHaveBeenCalledWith('id', 'pp-1');
+  });
+});
+
+describe('deletePlanPayment', () => {
+  it('deletes the payment row by id', async () => {
+    deleteEqMock.mockResolvedValue({ error: null });
+    await deletePlanPayment('pp-1');
+    expect(deleteEqMock).toHaveBeenCalledWith('id', 'pp-1');
   });
 });

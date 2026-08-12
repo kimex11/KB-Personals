@@ -7,12 +7,13 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { CurrencyInput } from '@/components/shared/CurrencyInput';
-import type { RecordPlanPaymentInput } from '@/lib/payment-plan-payments-repository';
+import type { PaymentPlanPayment, RecordPlanPaymentInput } from '@/lib/payment-plan-payments-repository';
 
 interface PlanPaymentFormProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   defaultAmount: number;
+  initialPayment?: PaymentPlanPayment;
   onSubmit: (input: RecordPlanPaymentInput) => Promise<void>;
 }
 
@@ -20,9 +21,13 @@ function nowLocalDatetimeValue(): string {
   return format(new Date(), "yyyy-MM-dd'T'HH:mm");
 }
 
-export function PlanPaymentForm({ open, onOpenChange, defaultAmount, onSubmit }: PlanPaymentFormProps) {
-  const [amount, setAmount] = useState(defaultAmount.toString());
-  const [paidAtLocal, setPaidAtLocal] = useState(nowLocalDatetimeValue);
+function toLocalDatetimeValue(isoDate: string): string {
+  return format(new Date(isoDate), "yyyy-MM-dd'T'HH:mm");
+}
+
+export function PlanPaymentForm({ open, onOpenChange, defaultAmount, initialPayment, onSubmit }: PlanPaymentFormProps) {
+  const [amount, setAmount] = useState((initialPayment?.amount ?? defaultAmount).toString());
+  const [paidAtLocal, setPaidAtLocal] = useState(initialPayment ? toLocalDatetimeValue(initialPayment.paidAt) : nowLocalDatetimeValue());
   const [submitting, setSubmitting] = useState(false);
 
   const isValid = amount !== '' && !Number.isNaN(Number(amount)) && Number(amount) > 0 && paidAtLocal !== '';
@@ -34,8 +39,6 @@ export function PlanPaymentForm({ open, onOpenChange, defaultAmount, onSubmit }:
         amount: Number(amount),
         paidAt: new Date(paidAtLocal).toISOString(),
       });
-      setAmount(defaultAmount.toString());
-      setPaidAtLocal(nowLocalDatetimeValue());
       onOpenChange(false);
     } finally {
       setSubmitting(false);
@@ -46,7 +49,7 @@ export function PlanPaymentForm({ open, onOpenChange, defaultAmount, onSubmit }:
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="bottom">
         <SheetHeader>
-          <SheetTitle>Record payment</SheetTitle>
+          <SheetTitle>{initialPayment ? 'Edit payment' : 'Record payment'}</SheetTitle>
         </SheetHeader>
         <div className="flex flex-col gap-4 px-4">
           <div className="flex flex-col gap-1.5">
@@ -60,7 +63,7 @@ export function PlanPaymentForm({ open, onOpenChange, defaultAmount, onSubmit }:
         </div>
         <SheetFooter>
           <Button onClick={handleSubmit} disabled={!isValid || submitting}>
-            {submitting ? 'Saving…' : 'Record payment'}
+            {submitting ? 'Saving…' : initialPayment ? 'Save changes' : 'Record payment'}
           </Button>
         </SheetFooter>
       </SheetContent>

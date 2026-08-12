@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { totalPaidForPlan, remainingBalance, monthsPaid, monthsLeft, lastPlanPaymentDate } from './payment-plan-selectors';
+import { totalPaidForPlan, remainingBalance, monthsPaid, monthsLeft, lastPlanPaymentDate, isPlanFullyPaid } from './payment-plan-selectors';
 import type { PaymentPlan } from './payment-plans-repository';
 import type { PaymentPlanPayment } from './payment-plan-payments-repository';
 
@@ -60,5 +60,21 @@ describe('lastPlanPaymentDate', () => {
 
   it('returns null when there are no payments', () => {
     expect(lastPlanPaymentDate([])).toBeNull();
+  });
+});
+
+describe('isPlanFullyPaid', () => {
+  it('returns false while a balance remains', () => {
+    expect(isPlanFullyPaid(plan, payments)).toBe(false);
+  });
+
+  it('returns true once payments cover the full plan total', () => {
+    const allPaid = Array.from({ length: 12 }, (_, i) => ({ ...payments[0], id: `pp-${i}`, installmentNumber: i + 1 }));
+    expect(isPlanFullyPaid(plan, allPaid)).toBe(true);
+  });
+
+  it('returns true if payments overshoot the total', () => {
+    const overpaid = Array.from({ length: 13 }, (_, i) => ({ ...payments[0], id: `pp-${i}`, installmentNumber: i + 1 }));
+    expect(isPlanFullyPaid(plan, overpaid)).toBe(true);
   });
 });

@@ -25,4 +25,24 @@ describe('PlanProgressSummary', () => {
     render(<PlanProgressSummary totalAmount={36000} remainingBalance={36000} totalPaid={0} monthsPaid={0} installmentCount={12} lastPaymentDate={null} />);
     expect(screen.getByTestId('summary-last-payment')).toHaveTextContent('No payments yet');
   });
+
+  it('shows a Fully Paid badge when the plan is fully paid', () => {
+    render(
+      <PlanProgressSummary
+        totalAmount={36000}
+        remainingBalance={0}
+        totalPaid={36000}
+        monthsPaid={12}
+        installmentCount={12}
+        lastPaymentDate="2026-12-01T10:00:00.000Z"
+        fullyPaid
+      />
+    );
+    expect(screen.getByTestId('plan-fully-paid-badge')).toBeInTheDocument();
+  });
+
+  it('omits the Fully Paid badge while a balance remains', () => {
+    render(<PlanProgressSummary totalAmount={36000} remainingBalance={30000} totalPaid={6000} monthsPaid={2} installmentCount={12} lastPaymentDate={null} />);
+    expect(screen.queryByTestId('plan-fully-paid-badge')).not.toBeInTheDocument();
+  });
 });

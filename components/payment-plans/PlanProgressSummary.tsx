@@ -8,6 +8,7 @@ interface PlanProgressSummaryProps {
   monthsPaid: number;
   installmentCount: number;
   lastPaymentDate: string | null;
+  fullyPaid?: boolean;
 }
 
 export function PlanProgressSummary({
@@ -17,11 +18,20 @@ export function PlanProgressSummary({
   monthsPaid,
   installmentCount,
   lastPaymentDate,
+  fullyPaid = false,
 }: PlanProgressSummaryProps) {
   const monthsLeft = Math.max(installmentCount - monthsPaid, 0);
 
   return (
     <div data-testid="plan-progress-summary" className="flex flex-col gap-2 rounded-2xl border border-neutral-200 bg-white p-4">
+      {fullyPaid && (
+        <span
+          data-testid="plan-fully-paid-badge"
+          className="w-fit rounded-full bg-status-success/10 px-2 py-0.5 text-xs font-medium text-status-success"
+        >
+          Fully Paid
+        </span>
+      )}
       <div className="flex items-center justify-between">
         <span className="text-xs text-neutral-500">Total Amount</span>
         <span data-testid="summary-total-amount" className="font-serif text-sm text-neutral-900">

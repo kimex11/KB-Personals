@@ -56,6 +56,13 @@ export interface RecordPlanPaymentInput {
   paidAt: string;
 }
 
+export class DuplicatePlanPaymentError extends Error {
+  constructor() {
+    super('This payment has already been recorded for this plan.');
+    this.name = 'DuplicatePlanPaymentError';
+  }
+}
+
 export async function recordPlanPayment(planId: string, input: RecordPlanPaymentInput): Promise<PaymentPlanPayment> {
   const supabase = createClient();
 
@@ -68,6 +75,9 @@ export async function recordPlanPayment(planId: string, input: RecordPlanPayment
   const planRow = planData as { name: string; total_amount: number };
 
   const existingPayments = await listPaymentsForPlan(planId);
+  const isDuplicate = existingPayments.some((payment) => payment.amount === input.amount && payment.paidAt === input.paidAt);
+  if (isDuplicate) throw new DuplicatePlanPaymentError();
+
   const totalPaidSoFar = existingPayments.reduce((sum, payment) => sum + payment.amount, 0);
   const balanceBefore = planRow.total_amount - totalPaidSoFar;
   const balanceAfter = balanceBefore - input.amount;
@@ -97,4 +107,36 @@ export async function recordPlanPayment(planId: string, input: RecordPlanPayment
   }).catch(() => {});
 
   return rowToPayment(paymentData as PaymentPlanPaymentRow);
+}
+
+export interface UpdatePlanPaymentInput {
+  amount?: number;
+  paidAt?: string;
+}
+
+export async function updatePlanPayment(id: string, patch: UpdatePlanPaymentInput): Promise<void> {
+  const supabase = createClient();
+  const payload: Record<string, unknown> = {};
+  if (patch.amount !== undefined) payload.amount = patch.amount;
+  if (patch.paidAt !== undefined) payload.paid_at = patch.paidAt;
+
+  // balance_after is a point-in-time snapshot for the trail display; keep it
+  // self-consistent with a changed amount. The plan's actual remaining
+  // balance is always computed live from every payment's amount, so no
+  // other row needs to change.
+  if (patch.amount !== undefined) {
+    const { data, error: fetchError } = await supabase.from('payment_plan_payments').select('balance_before').eq('id', id).single();
+    if (fetchError) throw fetchError;
+    const row = data as { balance_before: number };
+    payload.balance_after = row.balance_before - patch.amount;
+  }
+
+  const { error } = await supabase.from('payment_plan_payments').update(payload).eq('id', id);
+  if (error) throw error;
+}
+
+export async function deletePlanPayment(id: string): Promise<void> {
+  const supabase = createClient();
+  const { error } = await supabase.from('payment_plan_payments').delete().eq('id', id);
+  if (error) throw error;
 }

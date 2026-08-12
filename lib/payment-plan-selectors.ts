@@ -20,3 +20,7 @@ export function monthsLeft(plan: PaymentPlan, payments: PaymentPlanPayment[]): n
 export function lastPlanPaymentDate(payments: PaymentPlanPayment[]): string | null {
   return payments[0]?.paidAt ?? null;
 }
+
+export function isPlanFullyPaid(plan: PaymentPlan, payments: PaymentPlanPayment[]): boolean {
+  return remainingBalance(plan, payments) <= 0;
+}

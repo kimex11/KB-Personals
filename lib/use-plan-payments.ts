@@ -1,7 +1,15 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { listPaymentsForPlan, recordPlanPayment, type PaymentPlanPayment, type RecordPlanPaymentInput } from './payment-plan-payments-repository';
+import {
+  listPaymentsForPlan,
+  recordPlanPayment,
+  updatePlanPayment,
+  deletePlanPayment,
+  type PaymentPlanPayment,
+  type RecordPlanPaymentInput,
+  type UpdatePlanPaymentInput,
+} from './payment-plan-payments-repository';
 
 export interface UsePlanPaymentsResult {
   payments: PaymentPlanPayment[];
@@ -9,6 +17,8 @@ export interface UsePlanPaymentsResult {
   error: string | null;
   refresh: () => Promise<void>;
   recordPayment: (input: RecordPlanPaymentInput) => Promise<void>;
+  updatePayment: (id: string, patch: UpdatePlanPaymentInput) => Promise<void>;
+  deletePayment: (id: string) => Promise<void>;
 }
 
 export function usePlanPayments(planId: string): UsePlanPaymentsResult {
@@ -59,5 +69,7 @@ export function usePlanPayments(planId: string): UsePlanPaymentsResult {
     error,
     refresh,
     recordPayment: (input) => runMutation(() => recordPlanPayment(planId, input)),
+    updatePayment: (id, patch) => runMutation(() => updatePlanPayment(id, patch)),
+    deletePayment: (id) => runMutation(() => deletePlanPayment(id)),
   };
 }
