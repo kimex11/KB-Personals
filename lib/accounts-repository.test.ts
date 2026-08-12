@@ -184,6 +184,29 @@ describe('removeCardImage', () => {
     expect(removeStorageMock).toHaveBeenCalledWith(['card-1/123-visa.png']);
     expect(result.imageUrl).toBeNull();
   });
+
+  it('clears the DB reference before deleting the file, so a failed file delete never leaves a dangling reference', async () => {
+    const callOrder: string[] = [];
+    updateSelectSingleMock.mockImplementation(async () => {
+      callOrder.push('db-update');
+      return { data: cardRow, error: null };
+    });
+    removeStorageMock.mockImplementation(async () => {
+      callOrder.push('storage-remove');
+      return { error: null };
+    });
+
+    await removeCardImage('card-1', 'card-1/123-visa.png');
+
+    expect(callOrder).toEqual(['db-update', 'storage-remove']);
+  });
+
+  it('throws when clearing the DB reference fails, without attempting to delete the file', async () => {
+    updateSelectSingleMock.mockResolvedValue({ data: null, error: new Error('update failed') });
+
+    await expect(removeCardImage('card-1', 'card-1/123-visa.png')).rejects.toThrow('update failed');
+    expect(removeStorageMock).not.toHaveBeenCalled();
+  });
 });
 
 const incomeRow = {

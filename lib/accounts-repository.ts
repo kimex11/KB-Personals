@@ -124,9 +124,10 @@ export async function uploadCardImage(cardId: string, file: File): Promise<Credi
 export async function removeCardImage(cardId: string, storagePath: string): Promise<CreditCardDue> {
   const supabase = createClient();
 
-  const { error: storageError } = await supabase.storage.from(CARD_IMAGES_BUCKET).remove([storagePath]);
-  if (storageError) throw storageError;
-
+  // Clear the DB reference before deleting the file, not after: if the file
+  // delete were to fail once the reference is already gone, we'd just have
+  // an orphaned (unreferenced) file in storage — harmless. The reverse order
+  // risks a card pointing at a file that's already been deleted.
   const { data, error: updateError } = await supabase
     .from('credit_card_dues')
     .update({ image_storage_path: null })
@@ -134,6 +135,9 @@ export async function removeCardImage(cardId: string, storagePath: string): Prom
     .select()
     .single();
   if (updateError) throw updateError;
+
+  const { error: storageError } = await supabase.storage.from(CARD_IMAGES_BUCKET).remove([storagePath]);
+  if (storageError) throw storageError;
 
   return rowToCard(data as CardRow, supabase);
 }
