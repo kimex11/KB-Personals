@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { format } from 'date-fns';
 import { IncomeForm } from './IncomeForm';
 import type { IncomeSource } from '@/lib/accounts-types';
 
@@ -12,9 +13,10 @@ const existingIncome: IncomeSource = {
 };
 
 describe('IncomeForm', () => {
-  it('renders empty fields for a new income source', () => {
+  it('renders empty fields for a new income source, defaulting the date to today', () => {
     render(<IncomeForm open onOpenChange={() => {}} onSubmit={vi.fn()} />);
     expect(screen.getByLabelText(/^name$/i)).toHaveValue('');
+    expect(screen.getByLabelText(/^date$/i)).toHaveValue(format(new Date(), 'yyyy-MM-dd'));
     expect(screen.queryByLabelText(/frequency/i)).not.toBeInTheDocument();
     expect(screen.getByRole('heading', { name: /add income/i })).toBeInTheDocument();
   });
@@ -27,13 +29,12 @@ describe('IncomeForm', () => {
     expect(screen.getByRole('heading', { name: /edit income/i })).toBeInTheDocument();
   });
 
-  it('disables save until required fields are filled', async () => {
+  it('disables save until name and amount are filled, given the date defaults to today', async () => {
     const user = userEvent.setup();
     render(<IncomeForm open onOpenChange={() => {}} onSubmit={vi.fn()} />);
     expect(screen.getByRole('button', { name: /save/i })).toBeDisabled();
     await user.type(screen.getByLabelText(/^name$/i), 'Salary');
     await user.type(screen.getByLabelText(/amount/i), '3200');
-    await user.type(screen.getByLabelText(/^date$/i), '2026-08-20');
     expect(screen.getByRole('button', { name: /save/i })).not.toBeDisabled();
   });
 
@@ -44,9 +45,8 @@ describe('IncomeForm', () => {
 
     await user.type(screen.getByLabelText(/^name$/i), 'Salary');
     await user.type(screen.getByLabelText(/amount/i), '3200');
-    await user.type(screen.getByLabelText(/^date$/i), '2026-08-20');
     await user.click(screen.getByRole('button', { name: /save/i }));
 
-    expect(onSubmit).toHaveBeenCalledWith({ name: 'Salary', amount: 3200, date: '2026-08-20' });
+    expect(onSubmit).toHaveBeenCalledWith({ name: 'Salary', amount: 3200, date: format(new Date(), 'yyyy-MM-dd') });
   });
 });

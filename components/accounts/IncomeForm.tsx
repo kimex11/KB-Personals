@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { format } from 'date-fns';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from '@/components/ui/sheet';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -24,7 +25,7 @@ interface IncomeFormProps {
 export function IncomeForm({ open, onOpenChange, initialIncome, onSubmit }: IncomeFormProps) {
   const [name, setName] = useState(initialIncome?.name ?? '');
   const [amount, setAmount] = useState(initialIncome?.amount?.toString() ?? '');
-  const [date, setDate] = useState(initialIncome?.date ?? '');
+  const [date, setDate] = useState(initialIncome?.date ?? format(new Date(), 'yyyy-MM-dd'));
   const [submitting, setSubmitting] = useState(false);
 
   const isValid = name.trim() !== '' && amount !== '' && !Number.isNaN(Number(amount)) && date !== '';

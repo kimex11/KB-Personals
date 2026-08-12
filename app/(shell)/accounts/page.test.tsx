@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 const card = { id: 'card-1', cardName: 'Visa Platinum', last4: '4821', statementBalance: 842.5, minimumPayment: 45, dueDate: '2026-08-16', balanceAnchorAt: '2026-08-01T00:00:00.000Z' };
@@ -153,7 +153,7 @@ describe('AccountsPage', () => {
 
     await user.type(screen.getByLabelText(/^name$/i), 'Bonus');
     await user.type(screen.getByLabelText(/amount/i), '500');
-    await user.type(screen.getByLabelText(/^date$/i), '2026-09-01');
+    fireEvent.change(screen.getByLabelText(/^date$/i), { target: { value: '2026-09-01' } });
     await user.click(screen.getByRole('button', { name: /^save$/i }));
 
     expect(createIncomeMock).toHaveBeenCalledWith({ name: 'Bonus', amount: 500, date: '2026-09-01' });
