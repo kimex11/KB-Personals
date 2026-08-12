@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useCalendarEvents } from '@/lib/use-calendar-events';
-import { useBudget } from '@/lib/use-budget';
 import { useExpenses } from '@/lib/use-expenses';
 import { totalExpenses } from '@/lib/expenses-selectors';
 import { useBills } from '@/lib/use-bills';
@@ -24,12 +23,11 @@ import { AlertsBanner } from '@/components/dashboard/AlertsBanner';
 import { NotificationSettings, type NotificationPermissionState } from '@/components/dashboard/NotificationSettings';
 import { DashboardCalendarCard } from '@/components/dashboard/DashboardCalendarCard';
 import { WeeklyBillsPanel } from '@/components/dashboard/WeeklyBillsPanel';
-import { SpendingSnapshot } from '@/components/dashboard/SpendingSnapshot';
+import { ExpenseTrackerSummary } from '@/components/dashboard/ExpenseTrackerSummary';
 import { RemindersPanel } from '@/components/dashboard/RemindersPanel';
 import { LauncherTiles, type LauncherTileData } from '@/components/dashboard/LauncherTiles';
 
 export default function HomePage() {
-  const { totals, error: budgetError } = useBudget();
   const { expenses } = useExpenses();
   const { bills, error: billsError, togglePaid } = useBills();
   const { reminders, error: remindersError } = useReminders();
@@ -191,7 +189,7 @@ export default function HomePage() {
     upsertPreferences(next);
   }
 
-  const error = budgetError ?? billsError ?? remindersError;
+  const error = billsError ?? remindersError;
 
   return (
     <div data-testid="home-page" className="flex flex-col gap-6 px-4 pb-24 pt-4">
@@ -221,7 +219,7 @@ export default function HomePage() {
             onSelectDate={setSelectedDate}
           />
           <WeeklyBillsPanel bills={weeklyBills} referenceDate={now} onMarkPaid={togglePaid} />
-          <SpendingSnapshot budgeted={totals.budgeted} spent={totals.spent} remaining={totals.remaining} />
+          <ExpenseTrackerSummary total={totalExpenses(expenses)} count={expenses.length} />
           <RemindersPanel reminders={upcomingReminders} referenceDate={now} />
           <LauncherTiles tiles={launcherTiles} />
         </>

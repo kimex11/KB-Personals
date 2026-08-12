@@ -50,15 +50,6 @@ vi.mock('@/lib/use-calendar-events', () => ({
   useCalendarEvents: () => ({ events: mockEvents, getEventsForDate: () => [] }),
 }));
 
-vi.mock('@/lib/use-budget', () => ({
-  useBudget: () => ({
-    categories: [],
-    totals: { budgeted: 3000, spent: 1800, remaining: 1200 },
-    loading: false,
-    error: null,
-  }),
-}));
-
 vi.mock('@/lib/use-expenses', () => ({
   useExpenses: () => ({
     expenses: [],
@@ -134,10 +125,10 @@ describe('HomePage', () => {
     expect(screen.getByTestId('alerts-banner')).toBeInTheDocument();
   });
 
-  it('renders the weekly bills panel, spending snapshot, reminders, and launcher tiles', () => {
+  it('renders the weekly bills panel, expense tracker summary, reminders, and launcher tiles', () => {
     render(<HomePage />);
     expect(screen.getByTestId('weekly-bills-panel')).toBeInTheDocument();
-    expect(screen.getByTestId('spending-snapshot')).toBeInTheDocument();
+    expect(screen.getByTestId('expense-tracker-summary')).toBeInTheDocument();
     expect(screen.getByTestId('reminders-panel')).toBeInTheDocument();
     expect(screen.getByTestId('launcher-tiles')).toBeInTheDocument();
   });
