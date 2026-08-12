@@ -1,5 +1,16 @@
 export const CATEGORY_COLOR_SLOTS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
 
+// Deterministic per-id color, for entities with no category of their own
+// (credit cards, income sources) that still benefit from a stable visual
+// identity distinguishing one row from another.
+export function colorSlotForId(id: string): number {
+  let hash = 0;
+  for (let i = 0; i < id.length; i++) {
+    hash = (hash * 31 + id.charCodeAt(i)) >>> 0;
+  }
+  return (hash % CATEGORY_COLOR_SLOTS.length) + 1;
+}
+
 // Written as literal class names (not built via template literals) so
 // Tailwind's content scanner can find every candidate at build time --
 // dynamically-assembled class strings aren't reliably picked up.
@@ -63,6 +74,21 @@ export const ICON_TEXT_COLOR_CLASS: Record<number, string> = {
   10: 'text-budget-10',
   11: 'text-budget-11',
   12: 'text-budget-12',
+};
+
+export const BORDER_COLOR_CLASS: Record<number, string> = {
+  1: 'border-budget-1',
+  2: 'border-budget-2',
+  3: 'border-budget-3',
+  4: 'border-budget-4',
+  5: 'border-budget-5',
+  6: 'border-budget-6',
+  7: 'border-budget-7',
+  8: 'border-budget-8',
+  9: 'border-budget-9',
+  10: 'border-budget-10',
+  11: 'border-budget-11',
+  12: 'border-budget-12',
 };
 
 export const CARD_TINT_COLOR_CLASS: Record<number, string> = {

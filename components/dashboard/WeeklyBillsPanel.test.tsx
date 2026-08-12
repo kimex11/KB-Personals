@@ -29,4 +29,24 @@ describe('WeeklyBillsPanel', () => {
     fireEvent.click(screen.getByTestId('mark-paid-button'));
     expect(onMarkPaid).toHaveBeenCalledWith('1');
   });
+
+  it('shows the total for the bills shown this week', () => {
+    const bills: CalendarEvent[] = [
+      { id: '1', type: 'bill', title: 'Internet Bill', date: '2026-08-15', amount: 59.99 },
+      { id: '2', type: 'bill', title: 'Rent', date: '2026-08-18', amount: 1450 },
+    ];
+    render(<WeeklyBillsPanel bills={bills} referenceDate={referenceDate} onMarkPaid={vi.fn()} />);
+    expect(screen.getByTestId('weekly-bills-totals')).toHaveTextContent('Week: ₱1,510');
+  });
+
+  it('shows the monthly total when given', () => {
+    const bills: CalendarEvent[] = [{ id: '1', type: 'bill', title: 'Internet Bill', date: '2026-08-15', amount: 59.99 }];
+    render(<WeeklyBillsPanel bills={bills} monthlyTotal={3200} referenceDate={referenceDate} onMarkPaid={vi.fn()} />);
+    expect(screen.getByTestId('weekly-bills-totals')).toHaveTextContent('Month: ₱3,200');
+  });
+
+  it('omits totals that are zero or not given', () => {
+    render(<WeeklyBillsPanel bills={[]} referenceDate={referenceDate} onMarkPaid={vi.fn()} />);
+    expect(screen.getByTestId('weekly-bills-totals')).toHaveTextContent('');
+  });
 });

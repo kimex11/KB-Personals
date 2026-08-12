@@ -2,6 +2,7 @@ import { format, parseISO } from 'date-fns';
 import type { IncomeSource } from '@/lib/accounts-types';
 import { RowActionsMenu } from '@/components/shared/RowActionsMenu';
 import { formatCurrency } from '@/lib/format-currency';
+import { colorSlotForId, BORDER_COLOR_CLASS } from '@/lib/category-colors';
 
 interface IncomeTileProps {
   source: IncomeSource;
@@ -11,8 +12,13 @@ interface IncomeTileProps {
 }
 
 export function IncomeTile({ source, onEdit, onDelete }: IncomeTileProps) {
+  const accentColorSlot = colorSlotForId(source.id);
+
   return (
-    <div data-testid="income-row" className="flex flex-col gap-2 rounded-2xl bg-status-success/10 p-4">
+    <div
+      data-testid="income-row"
+      className={`flex flex-col gap-2 rounded-2xl border-l-4 bg-status-success/10 p-4 ${BORDER_COLOR_CLASS[accentColorSlot]}`}
+    >
       <div className="flex items-center justify-end">
         <RowActionsMenu
           label={source.name}

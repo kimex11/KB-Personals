@@ -2,6 +2,7 @@ import Link from 'next/link';
 import type { CreditCardDue, DueStatus } from '@/lib/accounts-types';
 import { getDueStatus } from '@/lib/accounts-selectors';
 import { remainingCardBalance } from '@/lib/credit-card-payment-selectors';
+import { colorSlotForId, BORDER_COLOR_CLASS } from '@/lib/category-colors';
 import { CardDueStatusBadge } from './CardDueStatusBadge';
 import { RowActionsMenu } from '@/components/shared/RowActionsMenu';
 import { formatRelativeDate } from '@/lib/date-utils';
@@ -31,9 +32,13 @@ interface CardDueTileProps {
 export function CardDueTile({ card, payments = [], referenceDate = new Date(), onEdit, onDelete }: CardDueTileProps) {
   const status = getDueStatus(card, referenceDate);
   const balance = remainingCardBalance(card, payments);
+  const accentColorSlot = colorSlotForId(card.id);
 
   return (
-    <div data-testid="card-due-row" className={`flex flex-col gap-2 rounded-2xl p-4 ${STATUS_TINT[status]}`}>
+    <div
+      data-testid="card-due-row"
+      className={`flex flex-col gap-2 rounded-2xl border-l-4 p-4 ${BORDER_COLOR_CLASS[accentColorSlot]} ${STATUS_TINT[status]}`}
+    >
       <div className="flex items-center justify-end">
         <RowActionsMenu
           label={card.cardName}

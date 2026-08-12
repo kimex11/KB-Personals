@@ -88,4 +88,10 @@ describe('CardDueTile', () => {
     render(<CardDueTile card={card} referenceDate={referenceDate} />);
     expect(screen.queryByAltText(/artwork/i)).not.toBeInTheDocument();
   });
+
+  it('gives the card a color accent border derived from its id', () => {
+    render(<CardDueTile card={card} referenceDate={referenceDate} />);
+    const row = screen.getByTestId('card-due-row');
+    expect([...row.classList].some((c) => c.startsWith('border-budget-'))).toBe(true);
+  });
 });

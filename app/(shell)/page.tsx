@@ -13,7 +13,7 @@ import { usePaymentPlans } from '@/lib/use-payment-plans';
 import { listAllCreditCardPayments, type CreditCardPayment } from '@/lib/credit-card-payments-repository';
 import { listAllPlanPayments, type PaymentPlanPayment } from '@/lib/payment-plan-payments-repository';
 import { useIsMounted } from '@/lib/use-is-mounted';
-import { getOverdueBills, getBillsDueWithinDays, getUpcomingReminders } from '@/lib/dashboard-selectors';
+import { getOverdueBills, getBillsDueWithinDays, getBillsDueInMonth, totalBillAmount, getUpcomingReminders } from '@/lib/dashboard-selectors';
 import { toISODateString } from '@/lib/date-utils';
 import { formatCurrency } from '@/lib/format-currency';
 import { isNotificationSupported, requestNotificationPermission } from '@/lib/notifications';
@@ -76,6 +76,7 @@ export default function HomePage() {
   const actionableEvents = events.filter((event) => event.type !== 'bill' || !paidBillIds.has(event.id));
   const overdueBills = getOverdueBills(actionableEvents, now);
   const weeklyBills = getBillsDueWithinDays(actionableEvents, 7, now);
+  const monthlyBillsTotal = totalBillAmount(getBillsDueInMonth(actionableEvents, now));
   const upcomingReminders = getUpcomingReminders(events, 3, now);
 
   // Memoized on [bills, events] rather than rebuilt every render: this feeds
@@ -241,7 +242,7 @@ export default function HomePage() {
             selectedDate={selectedDate}
             onSelectDate={setSelectedDate}
           />
-          <WeeklyBillsPanel bills={weeklyBills} referenceDate={now} onMarkPaid={togglePaid} />
+          <WeeklyBillsPanel bills={weeklyBills} monthlyTotal={monthlyBillsTotal} referenceDate={now} onMarkPaid={togglePaid} />
           <ExpenseTrackerSummary total={totalExpenses(expenses)} count={expenses.length} />
           <RemindersPanel reminders={upcomingReminders} referenceDate={now} />
           <LauncherTiles tiles={launcherTiles} />

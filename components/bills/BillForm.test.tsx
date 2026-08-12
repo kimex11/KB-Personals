@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { BillForm } from './BillForm';
 import type { Category } from '@/lib/categories-types';
@@ -17,6 +17,13 @@ describe('BillForm', () => {
     expect(screen.getByLabelText(/title/i)).toHaveValue('');
     expect(screen.getByLabelText(/^category$/i)).toHaveValue('cat-1');
     expect(screen.getByRole('heading', { name: /add bill/i })).toBeInTheDocument();
+  });
+
+  it('colors the category select swatch to match the selected category', () => {
+    render(<BillForm open onOpenChange={() => {}} categories={categories} onSubmit={vi.fn()} />);
+    expect(screen.getByTestId('bill-category-select-swatch')).toHaveClass('bg-budget-1');
+    fireEvent.change(screen.getByLabelText(/^category$/i), { target: { value: 'cat-2' } });
+    expect(screen.getByTestId('bill-category-select-swatch')).toHaveClass('bg-budget-5');
   });
 
   it('pre-fills fields when editing an existing bill', () => {

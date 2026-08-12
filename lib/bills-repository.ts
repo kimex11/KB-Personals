@@ -13,7 +13,7 @@ interface BillRow {
   recurrence: string | null;
   paid: boolean;
   created_at: string;
-  categories: { name: string } | null;
+  categories: { name: string; color_slot: number } | null;
   series_id: string | null;
   cycle_number: number | null;
   skipped: boolean;
@@ -28,6 +28,7 @@ function rowToBill(row: BillRow): BillWithCategoryId {
     id: row.id,
     title: row.title,
     category: row.categories?.name ?? '',
+    categoryColorSlot: row.categories?.color_slot,
     categoryId: row.category_id,
     amount: row.amount,
     dueDate: row.due_date,
@@ -43,7 +44,7 @@ export async function listBills(): Promise<BillWithCategoryId[]> {
   const supabase = createClient();
   const { data, error } = await supabase
     .from('bills')
-    .select('*, categories(name)')
+    .select('*, categories(name, color_slot)')
     .order('due_date', { ascending: true });
   if (error) throw error;
   return ((data ?? []) as BillRow[]).map(rowToBill);
@@ -66,7 +67,7 @@ export async function createBill(input: {
       due_date: input.dueDate,
       recurrence: input.recurrence,
     })
-    .select('*, categories(name)')
+    .select('*, categories(name, color_slot)')
     .single();
   if (error) throw error;
   return rowToBill(data as BillRow);
@@ -89,7 +90,7 @@ export async function createRecurringBill(
       series_id: series.id,
       cycle_number: 1,
     })
-    .select('*, categories(name)')
+    .select('*, categories(name, color_slot)')
     .single();
   if (error) throw error;
   return rowToBill(data as BillRow);
@@ -114,7 +115,7 @@ export async function updateBill(
 
 export async function closeBillCycle(id: string, action: 'paid' | 'skipped'): Promise<void> {
   const supabase = createClient();
-  const { data: currentRow, error: fetchError } = await supabase.from('bills').select('*, categories(name)').eq('id', id).single();
+  const { data: currentRow, error: fetchError } = await supabase.from('bills').select('*, categories(name, color_slot)').eq('id', id).single();
   if (fetchError) throw fetchError;
   const current = rowToBill(currentRow as BillRow);
 

@@ -4,6 +4,7 @@ import { BillStatusBadge } from './BillStatusBadge';
 import { RowActionsMenu } from '@/components/shared/RowActionsMenu';
 import { formatRelativeDate } from '@/lib/date-utils';
 import { formatCurrency } from '@/lib/format-currency';
+import { DOT_COLOR_CLASS } from '@/lib/category-colors';
 
 const RECURRENCE_LABEL: Record<NonNullable<Bill['recurrence']>, string> = {
   weekly: 'Weekly',
@@ -75,7 +76,10 @@ export function BillTile({ bill, onTogglePaid, referenceDate = new Date(), isDup
             </span>
           )}
         </div>
-        <p className="text-xs text-neutral-500">
+        <p className="flex items-center gap-1.5 text-xs text-neutral-500">
+          {bill.categoryColorSlot && (
+            <span className={`h-2 w-2 shrink-0 rounded-full ${DOT_COLOR_CLASS[bill.categoryColorSlot]}`} aria-hidden="true" />
+          )}
           {bill.category} · {formatRelativeDate(bill.dueDate, referenceDate)}
         </p>
       </div>

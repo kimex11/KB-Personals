@@ -5,14 +5,23 @@ import { formatCurrency } from '@/lib/format-currency';
 
 interface WeeklyBillsPanelProps {
   bills: CalendarEvent[];
+  monthlyTotal?: number;
   referenceDate?: Date;
   onMarkPaid: (id: string) => void;
 }
 
-export function WeeklyBillsPanel({ bills, referenceDate = new Date(), onMarkPaid }: WeeklyBillsPanelProps) {
+export function WeeklyBillsPanel({ bills, monthlyTotal, referenceDate = new Date(), onMarkPaid }: WeeklyBillsPanelProps) {
+  const weeklyTotal = bills.reduce((sum, bill) => sum + (bill.amount ?? 0), 0);
+
   return (
     <div data-testid="weekly-bills-panel" className="flex flex-col gap-3">
-      <h2 className="font-serif text-lg text-neutral-900">This Week&apos;s Bills</h2>
+      <div className="flex items-center justify-between">
+        <h2 className="font-serif text-lg text-neutral-900">This Week&apos;s Bills</h2>
+        <div data-testid="weekly-bills-totals" className="flex flex-col items-end text-xs text-neutral-500">
+          {weeklyTotal > 0 && <span>Week: ₱{formatCurrency(weeklyTotal, 0)}</span>}
+          {monthlyTotal !== undefined && monthlyTotal > 0 && <span>Month: ₱{formatCurrency(monthlyTotal, 0)}</span>}
+        </div>
+      </div>
       {bills.length === 0 ? (
         <EmptyState message="No bills due this week." />
       ) : (

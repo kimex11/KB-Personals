@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { CurrencyInput } from '@/components/shared/CurrencyInput';
+import { DOT_COLOR_CLASS } from '@/lib/category-colors';
 import type { RecurrenceInterval } from '@/lib/bills-types';
 import type { Category } from '@/lib/categories-types';
 import type { Frequency, CustomIntervalUnit, AmountMode, CreateSeriesInput } from '@/lib/recurring-types';
@@ -49,6 +50,7 @@ const FREQUENCY_OPTIONS: { value: Frequency; label: string }[] = [
 export function BillForm({ open, onOpenChange, categories, initialBill, onSubmit }: BillFormProps) {
   const [title, setTitle] = useState(initialBill?.title ?? '');
   const [categoryId, setCategoryId] = useState(initialBill?.categoryId ?? categories[0]?.id ?? '');
+  const selectedCategoryColorSlot = categories.find((c) => c.id === categoryId)?.colorSlot;
   const [amount, setAmount] = useState(initialBill?.amount?.toString() ?? '');
   const [dueDate, setDueDate] = useState(initialBill?.dueDate ?? '');
   const [recurrence, setRecurrence] = useState<RecurrenceInterval>(initialBill?.recurrence ?? null);
@@ -106,18 +108,27 @@ export function BillForm({ open, onOpenChange, categories, initialBill, onSubmit
           </div>
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="bill-category">Category</Label>
-            <select
-              id="bill-category"
-              value={categoryId}
-              onChange={(e) => setCategoryId(e.target.value)}
-              className="h-8 rounded-lg border border-neutral-200 px-2 text-sm"
-            >
-              {categories.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name}
-                </option>
-              ))}
-            </select>
+            <div className="relative">
+              <span
+                data-testid="bill-category-select-swatch"
+                aria-hidden="true"
+                className={`pointer-events-none absolute left-2 top-1/2 h-2.5 w-2.5 -translate-y-1/2 rounded-full ${
+                  selectedCategoryColorSlot ? DOT_COLOR_CLASS[selectedCategoryColorSlot] : 'bg-neutral-300'
+                }`}
+              />
+              <select
+                id="bill-category"
+                value={categoryId}
+                onChange={(e) => setCategoryId(e.target.value)}
+                className="h-8 w-full rounded-lg border border-neutral-200 pl-6 pr-2 text-sm"
+              >
+                {categories.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="bill-amount">Amount</Label>

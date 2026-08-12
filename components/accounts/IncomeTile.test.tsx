@@ -41,4 +41,10 @@ describe('IncomeTile', () => {
     await user.click(await screen.findByRole('menuitem', { name: /delete/i }));
     expect(onDelete).toHaveBeenCalledWith(source);
   });
+
+  it('gives the income source a color accent border derived from its id', () => {
+    render(<IncomeTile source={source} referenceDate={referenceDate} />);
+    const row = screen.getByTestId('income-row');
+    expect([...row.classList].some((c) => c.startsWith('border-budget-'))).toBe(true);
+  });
 });

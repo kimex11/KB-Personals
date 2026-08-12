@@ -4,6 +4,7 @@ export interface Bill {
   id: string;
   title: string;
   category: string;
+  categoryColorSlot?: number;
   amount: number;
   dueDate: string; // ISO 'yyyy-MM-dd'
   recurrence: RecurrenceInterval;

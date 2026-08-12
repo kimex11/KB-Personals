@@ -10,6 +10,7 @@ const bill: Bill = {
   id: '1',
   title: 'Internet Bill',
   category: 'Utilities',
+  categoryColorSlot: 5,
   amount: 59.99,
   dueDate: '2026-08-15',
   recurrence: 'monthly',
@@ -27,6 +28,17 @@ describe('BillTile', () => {
     expect(tile).toHaveTextContent('Utilities');
     expect(tile).toHaveTextContent('₱59.99');
     expect(tile).toHaveTextContent('Monthly');
+  });
+
+  it("shows a dot in the bill's category color", () => {
+    const { container } = render(<BillTile bill={bill} onTogglePaid={vi.fn()} referenceDate={referenceDate} />);
+    expect(container.querySelector('.bg-budget-5')).toBeInTheDocument();
+  });
+
+  it('omits the category dot when the bill has no category color', () => {
+    const noColor: Bill = { ...bill, categoryColorSlot: undefined };
+    const { container } = render(<BillTile bill={noColor} onTogglePaid={vi.fn()} referenceDate={referenceDate} />);
+    expect(container.querySelector('[class*="bg-budget-"]')).not.toBeInTheDocument();
   });
 
   it('does not show a recurrence badge for a non-recurring bill', () => {
