@@ -9,7 +9,7 @@ import { EmptyState } from '@/components/shared/EmptyState';
 
 interface ExpensesListProps {
   expenses: Expense[];
-  categories: { id: string; name: string }[];
+  categories: { id: string; name: string; colorSlot?: number }[];
   onEdit?: (expense: Expense) => void;
   onDelete?: (expense: Expense) => void;
 }

@@ -7,12 +7,13 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { CurrencyInput } from '@/components/shared/CurrencyInput';
+import { DOT_COLOR_CLASS } from '@/lib/category-colors';
 import type { CreateExpenseInput, Expense } from '@/lib/expenses-repository';
 
 interface ExpenseFormProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  categories: { id: string; name: string }[];
+  categories: { id: string; name: string; colorSlot?: number }[];
   initialExpense?: Expense;
   onSubmit: (input: CreateExpenseInput) => Promise<void>;
 }
@@ -24,6 +25,8 @@ export function ExpenseForm({ open, onOpenChange, categories, initialExpense, on
   const [description, setDescription] = useState(initialExpense?.description ?? '');
   const [paymentMethod, setPaymentMethod] = useState(initialExpense?.paymentMethod ?? '');
   const [submitting, setSubmitting] = useState(false);
+
+  const selectedCategoryColorSlot = categories.find((category) => category.id === categoryId)?.colorSlot;
 
   const isValid = categoryId !== '' && amount !== '' && !Number.isNaN(Number(amount)) && Number(amount) > 0 && date !== '';
 
@@ -52,18 +55,27 @@ export function ExpenseForm({ open, onOpenChange, categories, initialExpense, on
         <div className="flex flex-col gap-4 px-4">
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="expense-category">Category</Label>
-            <select
-              id="expense-category"
-              value={categoryId}
-              onChange={(e) => setCategoryId(e.target.value)}
-              className="min-h-11 rounded-lg border border-neutral-200 px-2 text-sm text-neutral-900"
-            >
-              {categories.map((category) => (
-                <option key={category.id} value={category.id}>
-                  {category.name}
-                </option>
-              ))}
-            </select>
+            <div className="relative">
+              <span
+                data-testid="expense-category-select-swatch"
+                aria-hidden="true"
+                className={`pointer-events-none absolute left-2.5 top-1/2 h-2.5 w-2.5 -translate-y-1/2 rounded-full ${
+                  selectedCategoryColorSlot ? DOT_COLOR_CLASS[selectedCategoryColorSlot] : 'bg-neutral-300'
+                }`}
+              />
+              <select
+                id="expense-category"
+                value={categoryId}
+                onChange={(e) => setCategoryId(e.target.value)}
+                className="min-h-11 w-full rounded-lg border border-neutral-200 pl-7 pr-2 text-sm text-neutral-900"
+              >
+                {categories.map((category) => (
+                  <option key={category.id} value={category.id}>
+                    {category.name}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="expense-amount">Amount</Label>

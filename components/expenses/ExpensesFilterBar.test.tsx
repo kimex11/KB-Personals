@@ -4,8 +4,8 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { ExpensesFilterBar } from './ExpensesFilterBar';
 
 const categories = [
-  { id: 'cat-1', name: 'Groceries' },
-  { id: 'cat-2', name: 'Transport' },
+  { id: 'cat-1', name: 'Groceries', colorSlot: 2 },
+  { id: 'cat-2', name: 'Transport', colorSlot: 3 },
 ];
 
 const noop = () => {};
@@ -31,5 +31,15 @@ describe('ExpensesFilterBar', () => {
     render(<ExpensesFilterBar query="" onQueryChange={noop} categoryFilter="all" onCategoryFilterChange={onCategoryFilterChange} categories={categories} />);
     fireEvent.change(screen.getByTestId('expenses-category-select'), { target: { value: 'cat-2' } });
     expect(onCategoryFilterChange).toHaveBeenCalledWith('cat-2');
+  });
+
+  it('colors the select swatch to match the selected category', () => {
+    render(<ExpensesFilterBar query="" onQueryChange={noop} categoryFilter="cat-2" onCategoryFilterChange={noop} categories={categories} />);
+    expect(screen.getByTestId('expenses-category-select-swatch')).toHaveClass('bg-budget-3');
+  });
+
+  it('shows a neutral swatch when "All categories" is selected', () => {
+    render(<ExpensesFilterBar query="" onQueryChange={noop} categoryFilter="all" onCategoryFilterChange={noop} categories={categories} />);
+    expect(screen.getByTestId('expenses-category-select-swatch')).toHaveClass('bg-neutral-300');
   });
 });

@@ -5,8 +5,8 @@ import { ExpenseForm } from './ExpenseForm';
 import type { Expense } from '@/lib/expenses-repository';
 
 const categories = [
-  { id: 'cat-1', name: 'Groceries' },
-  { id: 'cat-2', name: 'Transport' },
+  { id: 'cat-1', name: 'Groceries', colorSlot: 2 },
+  { id: 'cat-2', name: 'Transport', colorSlot: 3 },
 ];
 
 const existingExpense: Expense = {
@@ -26,6 +26,13 @@ describe('ExpenseForm', () => {
     expect(screen.getByLabelText(/amount/i)).toHaveValue('');
     expect(screen.getByLabelText(/description/i)).toHaveValue('');
     expect(screen.getByRole('heading', { name: /add expense/i })).toBeInTheDocument();
+  });
+
+  it('colors the category select swatch to match the selected category', () => {
+    render(<ExpenseForm open onOpenChange={() => {}} categories={categories} onSubmit={vi.fn()} />);
+    expect(screen.getByTestId('expense-category-select-swatch')).toHaveClass('bg-budget-2');
+    fireEvent.change(screen.getByLabelText(/category/i), { target: { value: 'cat-2' } });
+    expect(screen.getByTestId('expense-category-select-swatch')).toHaveClass('bg-budget-3');
   });
 
   it('pre-fills fields when editing an existing expense', () => {
