@@ -4,6 +4,8 @@ import {
   createCreditCardDue,
   updateCreditCardDue,
   deleteCreditCardDue,
+  uploadCardImage,
+  removeCardImage,
   listIncomeSources,
   createIncomeSource,
   updateIncomeSource,
@@ -14,9 +16,19 @@ const selectOrderMock = vi.fn();
 const insertSelectSingleMock = vi.fn();
 const insertMock = vi.fn(() => ({ select: () => ({ single: insertSelectSingleMock }) }));
 const updateEqMock = vi.fn();
-const updateMock = vi.fn(() => ({ eq: updateEqMock }));
+const updateSelectSingleMock = vi.fn();
+const updateMock = vi.fn(() => ({
+  eq: (...args: unknown[]) => ({
+    then: (resolve: (value: unknown) => unknown, reject: (reason: unknown) => unknown) =>
+      updateEqMock(...args).then(resolve, reject),
+    select: () => ({ single: updateSelectSingleMock }),
+  }),
+}));
 const deleteEqMock = vi.fn();
 const deleteMock = vi.fn(() => ({ eq: deleteEqMock }));
+const uploadStorageMock = vi.fn();
+const removeStorageMock = vi.fn();
+const getPublicUrlMock = vi.fn((path: string) => ({ data: { publicUrl: `https://storage.example/card-images/${path}` } }));
 
 vi.mock('./supabase/client', () => ({
   createClient: () => ({
@@ -28,6 +40,13 @@ vi.mock('./supabase/client', () => ({
         update: updateMock,
         delete: deleteMock,
       };
+    },
+    storage: {
+      from: () => ({
+        getPublicUrl: getPublicUrlMock,
+        upload: uploadStorageMock,
+        remove: removeStorageMock,
+      }),
     },
   }),
 }));
@@ -44,6 +63,7 @@ const cardRow = {
   minimum_payment: 45,
   due_date: '2026-08-16',
   balance_anchor_at: '2026-08-01T00:00:00.000Z',
+  image_storage_path: null,
   created_at: '2026-08-15T10:00:00.000Z',
 };
 
@@ -60,6 +80,8 @@ describe('listCreditCardDues', () => {
         minimumPayment: 45,
         dueDate: '2026-08-16',
         balanceAnchorAt: '2026-08-01T00:00:00.000Z',
+        imageUrl: null,
+        imageStoragePath: null,
       },
     ]);
     expect(selectOrderMock).toHaveBeenCalledWith('due_date', { ascending: true });
@@ -96,6 +118,8 @@ describe('createCreditCardDue', () => {
       minimumPayment: 45,
       dueDate: '2026-08-16',
       balanceAnchorAt: '2026-08-01T00:00:00.000Z',
+      imageUrl: null,
+      imageStoragePath: null,
     });
   });
 });
@@ -127,6 +151,38 @@ describe('deleteCreditCardDue', () => {
     deleteEqMock.mockResolvedValue({ error: null });
     await deleteCreditCardDue('card-1');
     expect(deleteEqMock).toHaveBeenCalledWith('id', 'card-1');
+  });
+});
+
+describe('uploadCardImage', () => {
+  it('uploads the file, stores its path, and returns the card with a public image URL', async () => {
+    uploadStorageMock.mockResolvedValue({ error: null });
+    updateSelectSingleMock.mockResolvedValue({ data: { ...cardRow, image_storage_path: 'card-1/123-visa.png' }, error: null });
+
+    const file = new File(['fake'], 'visa.png', { type: 'image/png' });
+    const result = await uploadCardImage('card-1', file);
+
+    expect(uploadStorageMock).toHaveBeenCalledWith(expect.stringMatching(/^card-1\/\d+-visa\.png$/), file);
+    expect(result.imageUrl).toBe('https://storage.example/card-images/card-1/123-visa.png');
+  });
+
+  it('throws when the storage upload fails, without updating the card', async () => {
+    uploadStorageMock.mockResolvedValue({ error: new Error('upload failed') });
+    const file = new File(['fake'], 'visa.png', { type: 'image/png' });
+    await expect(uploadCardImage('card-1', file)).rejects.toThrow('upload failed');
+    expect(updateSelectSingleMock).not.toHaveBeenCalled();
+  });
+});
+
+describe('removeCardImage', () => {
+  it('removes the stored file and clears the card image path', async () => {
+    removeStorageMock.mockResolvedValue({ error: null });
+    updateSelectSingleMock.mockResolvedValue({ data: cardRow, error: null });
+
+    const result = await removeCardImage('card-1', 'card-1/123-visa.png');
+
+    expect(removeStorageMock).toHaveBeenCalledWith(['card-1/123-visa.png']);
+    expect(result.imageUrl).toBeNull();
   });
 });
 

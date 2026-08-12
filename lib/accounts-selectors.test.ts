@@ -5,9 +5,9 @@ import type { CreditCardDue, IncomeSource } from './accounts-types';
 const referenceDate = new Date(2026, 7, 15); // 2026-08-15
 
 const cards: CreditCardDue[] = [
-  { id: '1', cardName: 'Overdue Card', last4: '1111', statementBalance: 500, minimumPayment: 25, dueDate: '2026-08-10', balanceAnchorAt: '2026-07-01T00:00:00.000Z' },
-  { id: '2', cardName: 'Due Soon Card', last4: '2222', statementBalance: 300, minimumPayment: 15, dueDate: '2026-08-16', balanceAnchorAt: '2026-07-01T00:00:00.000Z' },
-  { id: '3', cardName: 'Upcoming Card', last4: '3333', statementBalance: 200, minimumPayment: 10, dueDate: '2026-08-25', balanceAnchorAt: '2026-07-01T00:00:00.000Z' },
+  { id: '1', cardName: 'Overdue Card', last4: '1111', statementBalance: 500, minimumPayment: 25, dueDate: '2026-08-10', balanceAnchorAt: '2026-07-01T00:00:00.000Z', imageUrl: null, imageStoragePath: null },
+  { id: '2', cardName: 'Due Soon Card', last4: '2222', statementBalance: 300, minimumPayment: 15, dueDate: '2026-08-16', balanceAnchorAt: '2026-07-01T00:00:00.000Z', imageUrl: null, imageStoragePath: null },
+  { id: '3', cardName: 'Upcoming Card', last4: '3333', statementBalance: 200, minimumPayment: 10, dueDate: '2026-08-25', balanceAnchorAt: '2026-07-01T00:00:00.000Z', imageUrl: null, imageStoragePath: null },
 ];
 
 describe('getDueStatus', () => {

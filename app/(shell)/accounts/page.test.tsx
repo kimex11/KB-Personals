@@ -8,6 +8,8 @@ const income = { id: 'income-1', name: 'Salary', amount: 3200, date: '2026-08-20
 const createCardMock = vi.fn().mockResolvedValue(undefined);
 const updateCardMock = vi.fn().mockResolvedValue(undefined);
 const deleteCardMock = vi.fn().mockResolvedValue(undefined);
+const uploadCardImageMock = vi.fn().mockResolvedValue(undefined);
+const removeCardImageMock = vi.fn().mockResolvedValue(undefined);
 const createIncomeMock = vi.fn().mockResolvedValue(undefined);
 const updateIncomeMock = vi.fn().mockResolvedValue(undefined);
 const deleteIncomeMock = vi.fn().mockResolvedValue(undefined);
@@ -37,6 +39,8 @@ beforeEach(() => {
     createCard: createCardMock,
     updateCard: updateCardMock,
     deleteCard: deleteCardMock,
+    uploadCardImage: uploadCardImageMock,
+    removeCardImage: removeCardImageMock,
     createIncome: createIncomeMock,
     updateIncome: updateIncomeMock,
     deleteIncome: deleteIncomeMock,
@@ -54,6 +58,8 @@ describe('AccountsPage', () => {
       createCard: createCardMock,
       updateCard: updateCardMock,
       deleteCard: deleteCardMock,
+      uploadCardImage: uploadCardImageMock,
+      removeCardImage: removeCardImageMock,
       createIncome: createIncomeMock,
       updateIncome: updateIncomeMock,
       deleteIncome: deleteIncomeMock,
@@ -115,6 +121,18 @@ describe('AccountsPage', () => {
     await user.click(await screen.findByRole('menuitem', { name: /edit/i }));
     expect(screen.getByRole('heading', { name: /edit credit card/i })).toBeInTheDocument();
     expect(screen.getByLabelText(/card name/i)).toHaveValue('Visa Platinum');
+  });
+
+  it('uploads a card image from the Edit form', async () => {
+    const user = userEvent.setup();
+    render(<AccountsPage />);
+    await user.click(screen.getByRole('button', { name: /actions for visa platinum/i }));
+    await user.click(await screen.findByRole('menuitem', { name: /edit/i }));
+
+    const file = new File(['fake'], 'visa.png', { type: 'image/png' });
+    await user.upload(screen.getByLabelText(/upload photo/i), file);
+
+    expect(uploadCardImageMock).toHaveBeenCalledWith('card-1', file);
   });
 
   it('deletes a card after confirming', async () => {

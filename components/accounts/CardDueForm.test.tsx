@@ -12,6 +12,8 @@ const existingCard: CreditCardDue = {
   minimumPayment: 45,
   dueDate: '2026-08-16',
   balanceAnchorAt: '2026-08-01T00:00:00.000Z',
+  imageUrl: null,
+  imageStoragePath: null,
 };
 
 describe('CardDueForm', () => {
@@ -62,5 +64,35 @@ describe('CardDueForm', () => {
       minimumPayment: 45,
       dueDate: '2026-08-16',
     });
+  });
+
+  it('uploads a card image when a file is chosen', async () => {
+    const onUploadImage = vi.fn().mockResolvedValue(undefined);
+    const user = userEvent.setup();
+    render(<CardDueForm open onOpenChange={() => {}} initialCard={existingCard} onSubmit={vi.fn()} onUploadImage={onUploadImage} />);
+
+    const file = new File(['fake'], 'visa.png', { type: 'image/png' });
+    const input = screen.getByLabelText(/upload photo/i);
+    await user.upload(input, file);
+
+    expect(onUploadImage).toHaveBeenCalledWith(file);
+  });
+
+  it('shows the current image and a remove button when the card already has one', async () => {
+    const onRemoveImage = vi.fn().mockResolvedValue(undefined);
+    const user = userEvent.setup();
+    const cardWithImage = { ...existingCard, imageUrl: 'https://storage.example/card-images/card-1/visa.png' };
+    render(
+      <CardDueForm open onOpenChange={() => {}} initialCard={cardWithImage} onSubmit={vi.fn()} onUploadImage={vi.fn()} onRemoveImage={onRemoveImage} />
+    );
+
+    expect(screen.getByAltText(/visa platinum artwork/i)).toHaveAttribute('src', cardWithImage.imageUrl);
+    await user.click(screen.getByRole('button', { name: /remove card image/i }));
+    expect(onRemoveImage).toHaveBeenCalled();
+  });
+
+  it('omits the image section for a brand-new card', () => {
+    render(<CardDueForm open onOpenChange={() => {}} onSubmit={vi.fn()} onUploadImage={vi.fn()} />);
+    expect(screen.queryByText(/card image/i)).not.toBeInTheDocument();
   });
 });

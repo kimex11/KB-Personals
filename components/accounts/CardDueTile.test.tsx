@@ -14,6 +14,8 @@ const card: CreditCardDue = {
   minimumPayment: 45,
   dueDate: '2026-08-16',
   balanceAnchorAt: '2026-08-01T00:00:00.000Z',
+  imageUrl: null,
+  imageStoragePath: null,
 };
 
 describe('CardDueTile', () => {
@@ -74,5 +76,16 @@ describe('CardDueTile', () => {
   it('links to the card detail page', () => {
     render(<CardDueTile card={card} referenceDate={referenceDate} />);
     expect(screen.getByTestId('card-view-history-link')).toHaveAttribute('href', '/accounts/cards/1');
+  });
+
+  it('shows the card artwork thumbnail when the card has an image', () => {
+    const cardWithImage = { ...card, imageUrl: 'https://storage.example/card-images/1/visa.png' };
+    render(<CardDueTile card={cardWithImage} referenceDate={referenceDate} />);
+    expect(screen.getByAltText(/visa platinum artwork/i)).toHaveAttribute('src', cardWithImage.imageUrl);
+  });
+
+  it('omits the thumbnail when the card has no image', () => {
+    render(<CardDueTile card={card} referenceDate={referenceDate} />);
+    expect(screen.queryByAltText(/artwork/i)).not.toBeInTheDocument();
   });
 });

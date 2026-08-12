@@ -36,6 +36,8 @@ const card: CreditCardDue = {
   minimumPayment: 45,
   dueDate: '2026-09-01',
   balanceAnchorAt: '2026-08-01T00:00:00.000Z',
+  imageUrl: null,
+  imageStoragePath: null,
 };
 
 describe('paymentsSinceAnchor', () => {

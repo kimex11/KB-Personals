@@ -20,11 +20,24 @@ import type { CreditCardDue, IncomeSource } from '@/lib/accounts-types';
 
 export default function AccountsPage() {
   const isMounted = useIsMounted();
-  const { cards, incomeSources, loading, error, createCard, updateCard, deleteCard, createIncome, updateIncome, deleteIncome } =
-    useAccounts();
+  const {
+    cards,
+    incomeSources,
+    loading,
+    error,
+    createCard,
+    updateCard,
+    deleteCard,
+    uploadCardImage,
+    removeCardImage,
+    createIncome,
+    updateIncome,
+    deleteIncome,
+  } = useAccounts();
 
   const [cardFormOpen, setCardFormOpen] = useState(false);
-  const [editingCard, setEditingCard] = useState<CreditCardDue | undefined>(undefined);
+  const [editingCardId, setEditingCardId] = useState<string | undefined>(undefined);
+  const editingCard = cards.find((c) => c.id === editingCardId);
   const [deleteCardTarget, setDeleteCardTarget] = useState<CreditCardDue | null>(null);
 
   const [incomeFormOpen, setIncomeFormOpen] = useState(false);
@@ -44,12 +57,12 @@ export default function AccountsPage() {
   const income = totalIncome(incomeSources);
 
   function openAddCard() {
-    setEditingCard(undefined);
+    setEditingCardId(undefined);
     setCardFormOpen(true);
   }
 
   function openEditCard(card: CreditCardDue) {
-    setEditingCard(card);
+    setEditingCardId(card.id);
     setCardFormOpen(true);
   }
 
@@ -143,11 +156,15 @@ export default function AccountsPage() {
       )}
 
       <CardDueForm
-        key={`card-${editingCard?.id ?? 'new'}-${cardFormOpen}`}
+        key={`card-${editingCardId ?? 'new'}-${cardFormOpen}`}
         open={cardFormOpen}
         onOpenChange={setCardFormOpen}
         initialCard={editingCard}
         onSubmit={handleCardSubmit}
+        onUploadImage={editingCardId ? (file) => uploadCardImage(editingCardId, file) : undefined}
+        onRemoveImage={
+          editingCardId && editingCard?.imageStoragePath ? () => removeCardImage(editingCardId, editingCard.imageStoragePath!) : undefined
+        }
       />
       {deleteCardTarget && (
         <ConfirmDeleteDialog

@@ -6,6 +6,8 @@ import {
   createCreditCardDue,
   updateCreditCardDue,
   deleteCreditCardDue,
+  uploadCardImage,
+  removeCardImage,
   listIncomeSources,
   createIncomeSource,
   updateIncomeSource,
@@ -23,6 +25,8 @@ export interface UseAccountsResult {
   createCard: (input: { cardName: string; last4: string; statementBalance: number; minimumPayment: number; dueDate: string }) => Promise<void>;
   updateCard: (id: string, patch: Partial<Pick<CreditCardDue, 'cardName' | 'last4' | 'statementBalance' | 'minimumPayment' | 'dueDate'>>) => Promise<void>;
   deleteCard: (id: string) => Promise<void>;
+  uploadCardImage: (cardId: string, file: File) => Promise<void>;
+  removeCardImage: (cardId: string, storagePath: string) => Promise<void>;
   createIncome: (input: { name: string; amount: number; date: string }) => Promise<void>;
   updateIncome: (id: string, patch: Partial<Pick<IncomeSource, 'name' | 'amount' | 'date'>>) => Promise<void>;
   deleteIncome: (id: string) => Promise<void>;
@@ -117,6 +121,34 @@ export function useAccounts(): UseAccountsResult {
             entityId: id,
             entityLabel: before?.cardName ?? 'Card',
             beforeValue: before ? { cardName: before.cardName, last4: before.last4, statementBalance: before.statementBalance, dueDate: before.dueDate } : null,
+          }).catch(() => {});
+        })
+      );
+    },
+    uploadCardImage: (cardId, file) => {
+      const before = cards.find((c) => c.id === cardId);
+      return runMutation(() =>
+        uploadCardImage(cardId, file).then(() => {
+          logActivity({
+            action: 'update',
+            entityType: 'credit_card_due',
+            entityId: cardId,
+            entityLabel: before?.cardName ?? 'Card',
+            afterValue: { imageUpdated: true },
+          }).catch(() => {});
+        })
+      );
+    },
+    removeCardImage: (cardId, storagePath) => {
+      const before = cards.find((c) => c.id === cardId);
+      return runMutation(() =>
+        removeCardImage(cardId, storagePath).then(() => {
+          logActivity({
+            action: 'update',
+            entityType: 'credit_card_due',
+            entityId: cardId,
+            entityLabel: before?.cardName ?? 'Card',
+            afterValue: { imageRemoved: true },
           }).catch(() => {});
         })
       );

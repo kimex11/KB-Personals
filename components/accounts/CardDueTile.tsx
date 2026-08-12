@@ -41,11 +41,17 @@ export function CardDueTile({ card, payments = [], referenceDate = new Date(), o
           onDelete={onDelete ? () => onDelete(card) : undefined}
         />
       </div>
-      <div>
-        <p className="text-sm font-medium text-neutral-900">{card.cardName}</p>
-        <p className="text-xs text-neutral-500">
-          ••{card.last4} · {formatRelativeDate(card.dueDate, referenceDate)}
-        </p>
+      <div className="flex items-center gap-3">
+        {card.imageUrl && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={card.imageUrl} alt={`${card.cardName} artwork`} className="h-10 w-14 shrink-0 rounded-lg object-cover" />
+        )}
+        <div>
+          <p className="text-sm font-medium text-neutral-900">{card.cardName}</p>
+          <p className="text-xs text-neutral-500">
+            ••{card.last4} · {formatRelativeDate(card.dueDate, referenceDate)}
+          </p>
+        </div>
       </div>
       <div className="flex items-center justify-between">
         <div className="flex flex-col">

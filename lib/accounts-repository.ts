@@ -1,6 +1,8 @@
 import { createClient } from './supabase/client';
 import type { CreditCardDue, IncomeSource } from './accounts-types';
 
+const CARD_IMAGES_BUCKET = 'card-images';
+
 interface CardRow {
   id: string;
   card_name: string;
@@ -9,6 +11,7 @@ interface CardRow {
   minimum_payment: number;
   due_date: string;
   balance_anchor_at: string;
+  image_storage_path: string | null;
   created_at: string;
 }
 
@@ -20,7 +23,7 @@ interface IncomeRow {
   created_at: string;
 }
 
-function rowToCard(row: CardRow): CreditCardDue {
+function rowToCard(row: CardRow, supabase: ReturnType<typeof createClient>): CreditCardDue {
   return {
     id: row.id,
     cardName: row.card_name,
@@ -29,6 +32,10 @@ function rowToCard(row: CardRow): CreditCardDue {
     minimumPayment: row.minimum_payment,
     dueDate: row.due_date,
     balanceAnchorAt: row.balance_anchor_at,
+    imageUrl: row.image_storage_path
+      ? supabase.storage.from(CARD_IMAGES_BUCKET).getPublicUrl(row.image_storage_path).data.publicUrl
+      : null,
+    imageStoragePath: row.image_storage_path,
   };
 }
 
@@ -45,7 +52,7 @@ export async function listCreditCardDues(): Promise<CreditCardDue[]> {
   const supabase = createClient();
   const { data, error } = await supabase.from('credit_card_dues').select('*').order('due_date', { ascending: true });
   if (error) throw error;
-  return ((data ?? []) as CardRow[]).map(rowToCard);
+  return ((data ?? []) as CardRow[]).map((row) => rowToCard(row, supabase));
 }
 
 export async function createCreditCardDue(input: {
@@ -68,7 +75,7 @@ export async function createCreditCardDue(input: {
     .select()
     .single();
   if (error) throw error;
-  return rowToCard(data as CardRow);
+  return rowToCard(data as CardRow, supabase);
 }
 
 export async function updateCreditCardDue(
@@ -94,6 +101,41 @@ export async function deleteCreditCardDue(id: string): Promise<void> {
   const supabase = createClient();
   const { error } = await supabase.from('credit_card_dues').delete().eq('id', id);
   if (error) throw error;
+}
+
+export async function uploadCardImage(cardId: string, file: File): Promise<CreditCardDue> {
+  const supabase = createClient();
+  const storagePath = `${cardId}/${Date.now()}-${file.name}`;
+
+  const { error: uploadError } = await supabase.storage.from(CARD_IMAGES_BUCKET).upload(storagePath, file);
+  if (uploadError) throw uploadError;
+
+  const { data, error: updateError } = await supabase
+    .from('credit_card_dues')
+    .update({ image_storage_path: storagePath })
+    .eq('id', cardId)
+    .select()
+    .single();
+  if (updateError) throw updateError;
+
+  return rowToCard(data as CardRow, supabase);
+}
+
+export async function removeCardImage(cardId: string, storagePath: string): Promise<CreditCardDue> {
+  const supabase = createClient();
+
+  const { error: storageError } = await supabase.storage.from(CARD_IMAGES_BUCKET).remove([storagePath]);
+  if (storageError) throw storageError;
+
+  const { data, error: updateError } = await supabase
+    .from('credit_card_dues')
+    .update({ image_storage_path: null })
+    .eq('id', cardId)
+    .select()
+    .single();
+  if (updateError) throw updateError;
+
+  return rowToCard(data as CardRow, supabase);
 }
 
 export async function listIncomeSources(): Promise<IncomeSource[]> {
