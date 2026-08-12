@@ -1,4 +1,4 @@
-export type EventType = 'bill' | 'reminder' | 'task';
+export type EventType = 'bill' | 'reminder' | 'task' | 'expense' | 'payment';
 
 export interface CalendarEvent {
   id: string;

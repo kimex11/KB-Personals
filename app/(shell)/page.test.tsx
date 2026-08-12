@@ -85,6 +85,18 @@ vi.mock('@/lib/use-reminders', () => ({
   }),
 }));
 
+vi.mock('@/lib/use-payment-plans', () => ({
+  usePaymentPlans: () => ({ plans: [], loading: false, error: null, refresh: vi.fn(), create: vi.fn(), remove: vi.fn() }),
+}));
+
+vi.mock('@/lib/credit-card-payments-repository', () => ({
+  listAllCreditCardPayments: vi.fn().mockResolvedValue([]),
+}));
+
+vi.mock('@/lib/payment-plan-payments-repository', () => ({
+  listAllPlanPayments: vi.fn().mockResolvedValue([]),
+}));
+
 vi.mock('@/lib/use-accounts', () => ({
   useAccounts: () => ({
     cards: [{ id: 'card-1', cardName: 'Visa', last4: '1234', statementBalance: 100, minimumPayment: 10, dueDate: '2026-09-01' }],

@@ -3,7 +3,7 @@ import { DayDetailPanel } from '@/components/calendar/DayDetailPanel';
 import { TYPE_LABEL, TYPE_DOT_CLASS } from '@/lib/event-style';
 import type { CalendarEvent, EventType } from '@/lib/types';
 
-const LEGEND_TYPES: EventType[] = ['bill', 'reminder', 'task'];
+const LEGEND_TYPES: EventType[] = ['bill', 'reminder', 'expense', 'payment'];
 
 interface DashboardCalendarCardProps {
   getEventsForDate: (date: Date) => CalendarEvent[];

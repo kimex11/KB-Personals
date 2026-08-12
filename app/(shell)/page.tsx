@@ -8,6 +8,9 @@ import { totalExpenses } from '@/lib/expenses-selectors';
 import { useBills } from '@/lib/use-bills';
 import { useReminders } from '@/lib/use-reminders';
 import { useAccounts } from '@/lib/use-accounts';
+import { usePaymentPlans } from '@/lib/use-payment-plans';
+import { listAllCreditCardPayments, type CreditCardPayment } from '@/lib/credit-card-payments-repository';
+import { listAllPlanPayments, type PaymentPlanPayment } from '@/lib/payment-plan-payments-repository';
 import { useIsMounted } from '@/lib/use-is-mounted';
 import { getOverdueBills, getBillsDueWithinDays, getUpcomingReminders } from '@/lib/dashboard-selectors';
 import { toISODateString } from '@/lib/date-utils';
@@ -31,7 +34,10 @@ export default function HomePage() {
   const { bills, error: billsError, togglePaid } = useBills();
   const { reminders, error: remindersError } = useReminders();
   const { cards } = useAccounts();
-  const { events, getEventsForDate } = useCalendarEvents(bills, reminders);
+  const { plans } = usePaymentPlans();
+  const [cardPayments, setCardPayments] = useState<CreditCardPayment[]>([]);
+  const [planPayments, setPlanPayments] = useState<PaymentPlanPayment[]>([]);
+  const { events, getEventsForDate } = useCalendarEvents(bills, reminders, { expenses, cardPayments, cards, planPayments, plans });
   const [selectedDate, setSelectedDate] = useState(() => new Date());
   const [requestedPermission, setRequestedPermission] = useState<NotificationPermission | null>(null);
   const [pushSubscriptionError, setPushSubscriptionError] = useState<string | null>(null);
@@ -47,6 +53,11 @@ export default function HomePage() {
     if (!isMounted) return;
     getPreferences().then(setPreferences);
   }, [isMounted]);
+
+  useEffect(() => {
+    listAllCreditCardPayments().then(setCardPayments).catch(() => {});
+    listAllPlanPayments().then(setPlanPayments).catch(() => {});
+  }, []);
 
   // Falls back to 'default' on the server and on the client's first
   // (hydration) render, same as the calendar's isMounted guard — reading

@@ -21,7 +21,8 @@ describe('DashboardCalendarCard', () => {
     const legend = screen.getByTestId('calendar-legend');
     expect(legend).toHaveTextContent('Bill');
     expect(legend).toHaveTextContent('Reminder');
-    expect(legend).toHaveTextContent('Task');
+    expect(legend).toHaveTextContent('Expense');
+    expect(legend).toHaveTextContent('Payment');
   });
 
   it('shows a heading above the calendar', () => {
