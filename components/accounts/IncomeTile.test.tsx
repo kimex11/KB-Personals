@@ -15,12 +15,13 @@ const source: IncomeSource = {
 };
 
 describe('IncomeTile', () => {
-  it('shows name, amount, frequency, and next date', () => {
+  it('shows name, amount, and a plain date', () => {
     render(<IncomeTile source={source} referenceDate={referenceDate} />);
     const tile = screen.getByTestId('income-row');
     expect(tile).toHaveTextContent('Salary');
     expect(tile).toHaveTextContent('₱3200.00');
-    expect(tile).toHaveTextContent('Biweekly');
+    expect(tile).toHaveTextContent('Aug 20, 2026');
+    expect(tile).not.toHaveTextContent('Biweekly');
   });
 
   it('tints the card background success-green', () => {

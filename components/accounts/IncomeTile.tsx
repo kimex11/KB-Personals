@@ -1,12 +1,6 @@
+import { format, parseISO } from 'date-fns';
 import type { IncomeSource } from '@/lib/accounts-types';
 import { RowActionsMenu } from '@/components/shared/RowActionsMenu';
-import { formatRelativeDate } from '@/lib/date-utils';
-
-const FREQUENCY_LABEL: Record<IncomeSource['frequency'], string> = {
-  weekly: 'Weekly',
-  biweekly: 'Biweekly',
-  monthly: 'Monthly',
-};
 
 interface IncomeTileProps {
   source: IncomeSource;
@@ -15,7 +9,7 @@ interface IncomeTileProps {
   onDelete?: (source: IncomeSource) => void;
 }
 
-export function IncomeTile({ source, referenceDate = new Date(), onEdit, onDelete }: IncomeTileProps) {
+export function IncomeTile({ source, onEdit, onDelete }: IncomeTileProps) {
   return (
     <div data-testid="income-row" className="flex flex-col gap-2 rounded-2xl bg-status-success/10 p-4">
       <div className="flex items-center justify-end">
@@ -27,9 +21,7 @@ export function IncomeTile({ source, referenceDate = new Date(), onEdit, onDelet
       </div>
       <div>
         <p className="text-sm font-medium text-neutral-900">{source.name}</p>
-        <p className="text-xs text-neutral-500">
-          {FREQUENCY_LABEL[source.frequency]} · Next {formatRelativeDate(source.nextDate, referenceDate)}
-        </p>
+        <p className="text-xs text-neutral-500">{format(parseISO(source.nextDate), 'MMM d, yyyy')}</p>
       </div>
       <span className="font-serif text-sm text-status-success">₱{source.amount.toFixed(2)}</span>
     </div>
