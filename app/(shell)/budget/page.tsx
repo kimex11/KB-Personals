@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Plus, Settings } from 'lucide-react';
+import { CalendarClock, Plus, Settings } from 'lucide-react';
 import { useExpenses } from '@/lib/use-expenses';
 import { useCategories } from '@/lib/use-categories';
 import { useBills } from '@/lib/use-bills';
@@ -60,6 +60,9 @@ export default function BudgetPage() {
       <div className="flex items-center justify-between">
         <h1 className="font-serif text-xl text-neutral-900">Expenses</h1>
         <div className="flex items-center gap-2">
+          <Link href="/budget/plans" aria-label="Payment Plans" className="text-neutral-500">
+            <CalendarClock className="h-5 w-5" />
+          </Link>
           <Link href="/budget/categories" aria-label="Manage Categories" className="text-neutral-500">
             <Settings className="h-5 w-5" />
           </Link>
