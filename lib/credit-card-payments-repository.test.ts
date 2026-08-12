@@ -1,10 +1,11 @@
 import { describe, expect, it, vi, afterEach } from 'vitest';
 
-const { selectSingleMock, updateEqMock, insertSelectSingleMock, listOrderMock, logActivityMock } = vi.hoisted(() => ({
+const { selectSingleMock, updateEqMock, insertSelectSingleMock, listOrderMock, listAllOrderMock, logActivityMock } = vi.hoisted(() => ({
   selectSingleMock: vi.fn(),
   updateEqMock: vi.fn(),
   insertSelectSingleMock: vi.fn(),
   listOrderMock: vi.fn(),
+  listAllOrderMock: vi.fn(),
   logActivityMock: vi.fn().mockResolvedValue(undefined),
 }));
 
@@ -19,7 +20,7 @@ vi.mock('./supabase/client', () => ({
       }
       if (table === 'credit_card_payments') {
         return {
-          select: () => ({ eq: () => ({ order: listOrderMock }) }),
+          select: () => ({ eq: () => ({ order: listOrderMock }), order: listAllOrderMock }),
           insert: () => ({ select: () => ({ single: insertSelectSingleMock }) }),
         };
       }
@@ -30,7 +31,7 @@ vi.mock('./supabase/client', () => ({
 
 vi.mock('./audit-log-repository', () => ({ logActivity: logActivityMock }));
 
-import { listPaymentsForCard, recordCardPayment } from './credit-card-payments-repository';
+import { listPaymentsForCard, recordCardPayment, listAllCreditCardPayments } from './credit-card-payments-repository';
 
 afterEach(() => {
   vi.clearAllMocks();
@@ -101,5 +102,23 @@ describe('recordCardPayment', () => {
 
     await expect(recordCardPayment('card-1', { amount: 300, paidAt: '2026-08-10T10:00:00.000Z' })).rejects.toThrow('update failed');
     expect(insertSelectSingleMock).toHaveBeenCalled();
+  });
+});
+
+describe('listAllCreditCardPayments', () => {
+  it('returns payments across every card, newest first', async () => {
+    listAllOrderMock.mockResolvedValue({ data: [paymentRow], error: null });
+
+    const result = await listAllCreditCardPayments();
+
+    expect(result).toEqual([
+      { id: 'pay-1', cardId: 'card-1', amount: 300, balanceBefore: 842.5, balanceAfter: 542.5, paidAt: '2026-08-10T10:00:00.000Z', method: 'Bank transfer', notes: null },
+    ]);
+    expect(listAllOrderMock).toHaveBeenCalledWith('paid_at', { ascending: false });
+  });
+
+  it('throws on error', async () => {
+    listAllOrderMock.mockResolvedValue({ data: null, error: new Error('boom') });
+    await expect(listAllCreditCardPayments()).rejects.toThrow('boom');
   });
 });

@@ -74,3 +74,7 @@ export function findDuplicateBillIds(bills: Bill[]): Set<string> {
 
   return duplicateIds;
 }
+
+export function totalPaidBills(bills: Bill[]): number {
+  return bills.filter((bill) => bill.paid).reduce((sum, bill) => sum + bill.amount, 0);
+}

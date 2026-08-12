@@ -47,6 +47,13 @@ export async function listPaymentsForCard(cardId: string): Promise<CreditCardPay
   return ((data ?? []) as CreditCardPaymentRow[]).map(rowToPayment);
 }
 
+export async function listAllCreditCardPayments(): Promise<CreditCardPayment[]> {
+  const supabase = createClient();
+  const { data, error } = await supabase.from('credit_card_payments').select('*').order('paid_at', { ascending: false });
+  if (error) throw error;
+  return ((data ?? []) as CreditCardPaymentRow[]).map(rowToPayment);
+}
+
 export interface RecordCardPaymentInput {
   amount: number;
   paidAt: string;

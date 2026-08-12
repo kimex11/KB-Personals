@@ -6,6 +6,7 @@ import {
   sortBills,
   monthlyBillTotal,
   findDuplicateBillIds,
+  totalPaidBills,
 } from './bills-selectors';
 import type { Bill } from './bills-types';
 
@@ -145,5 +146,15 @@ describe('findDuplicateBillIds', () => {
 
   it('returns an empty set when there are no duplicates', () => {
     expect(findDuplicateBillIds(bills).size).toBe(0);
+  });
+});
+
+describe('totalPaidBills', () => {
+  it('sums only the paid bills', () => {
+    expect(totalPaidBills(bills)).toBe(1450);
+  });
+
+  it('returns 0 when nothing is paid', () => {
+    expect(totalPaidBills(bills.map((b) => ({ ...b, paid: false })))).toBe(0);
   });
 });
