@@ -48,6 +48,7 @@ describe('BudgetPage (Expenses tracker)', () => {
     expect(screen.getByTestId('expenses-summary')).toBeInTheDocument();
     await waitFor(() => expect(screen.getByTestId('payments-repayments-summary')).toHaveTextContent('1,450.00'));
     expect(screen.getByTestId('expense-row')).toBeInTheDocument();
+    expect(screen.getByTestId('expenses-donut-chart')).toBeInTheDocument();
   });
 
   it('links to the Manage Categories screen', () => {

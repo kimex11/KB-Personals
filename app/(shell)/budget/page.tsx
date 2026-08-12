@@ -12,6 +12,7 @@ import { totalPaidBills } from '@/lib/bills-selectors';
 import { totalPaid as totalRepayments } from '@/lib/credit-card-payment-selectors';
 import { ExpensesSummary } from '@/components/expenses/ExpensesSummary';
 import { PaymentsRepaymentsSummary } from '@/components/expenses/PaymentsRepaymentsSummary';
+import { ExpensesDonutChart } from '@/components/expenses/ExpensesDonutChart';
 import { ExpensesList } from '@/components/expenses/ExpensesList';
 import { ExpenseForm } from '@/components/expenses/ExpenseForm';
 import { ConfirmDeleteDialog } from '@/components/shared/ConfirmDeleteDialog';
@@ -83,6 +84,7 @@ export default function BudgetPage() {
             repaymentsTotal={totalRepayments(cardPayments)}
             repaymentsCount={cardPayments.length}
           />
+          <ExpensesDonutChart expenses={expenses} />
           <ExpensesList expenses={expenses} categories={activeCategories} onEdit={openEditForm} onDelete={setDeleteTarget} />
         </>
       )}
