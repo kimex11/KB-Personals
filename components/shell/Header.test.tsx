@@ -11,7 +11,7 @@ import { Header } from './Header';
 describe('Header', () => {
   it('shows the title matching the current route', () => {
     render(<Header />);
-    expect(screen.getByText('Budget')).toBeInTheDocument();
+    expect(screen.getByText('Expenses')).toBeInTheDocument();
   });
 
   it('renders the KB monogram chip', () => {

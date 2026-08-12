@@ -3,6 +3,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useCalendarEvents } from '@/lib/use-calendar-events';
 import { useBudget } from '@/lib/use-budget';
+import { useExpenses } from '@/lib/use-expenses';
+import { totalExpenses } from '@/lib/expenses-selectors';
 import { useBills } from '@/lib/use-bills';
 import { useReminders } from '@/lib/use-reminders';
 import { useAccounts } from '@/lib/use-accounts';
@@ -25,6 +27,7 @@ import { LauncherTiles, type LauncherTileData } from '@/components/dashboard/Lau
 
 export default function HomePage() {
   const { totals, error: budgetError } = useBudget();
+  const { expenses } = useExpenses();
   const { bills, error: billsError, togglePaid } = useBills();
   const { reminders, error: remindersError } = useReminders();
   const { cards } = useAccounts();
@@ -124,8 +127,8 @@ export default function HomePage() {
     },
     {
       id: 'budget',
-      label: 'Budget',
-      stat: `₱${formatCurrency(totals.spent, 0)} of ₱${formatCurrency(totals.budgeted, 0)}`,
+      label: 'Expenses',
+      stat: expenses.length > 0 ? `₱${formatCurrency(totalExpenses(expenses), 0)} · ${expenses.length} logged` : 'No expenses yet',
       href: '/budget',
     },
     {

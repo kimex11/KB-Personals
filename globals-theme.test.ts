@@ -10,7 +10,7 @@ describe('design tokens in app/globals.css', () => {
     expect(css).toMatch(/--color-ink:\s*#0B0B0C;/);
   });
 
-  it('maps a serif font family token backed by the next/font CSS variable', () => {
-    expect(css).toMatch(/--font-serif:\s*var\(--font-serif\);/);
+  it('aliases the serif font family token to the sans (Inter) CSS variable', () => {
+    expect(css).toMatch(/--font-serif:\s*var\(--font-sans\);/);
   });
 });

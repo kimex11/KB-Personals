@@ -11,7 +11,7 @@ describe('TabBar', () => {
   it('renders all six tabs', () => {
     render(<TabBar />);
     expect(screen.getByTestId('tab-home')).toBeInTheDocument();
-    expect(screen.getByTestId('tab-budget')).toBeInTheDocument();
+    expect(screen.getByTestId('tab-expenses')).toBeInTheDocument();
     expect(screen.getByTestId('tab-bills')).toBeInTheDocument();
     expect(screen.getByTestId('tab-accounts')).toBeInTheDocument();
     expect(screen.getByTestId('tab-reminders')).toBeInTheDocument();
@@ -21,7 +21,7 @@ describe('TabBar', () => {
   it('marks the current route as active', () => {
     render(<TabBar />);
     expect(screen.getByTestId('tab-home')).toHaveAttribute('aria-current', 'page');
-    expect(screen.getByTestId('tab-budget')).not.toHaveAttribute('aria-current');
+    expect(screen.getByTestId('tab-expenses')).not.toHaveAttribute('aria-current');
   });
 
   it('renders an animated indicator under the active tab', () => {
@@ -33,6 +33,6 @@ describe('TabBar', () => {
   it('gives the active tab a tinted background pill that inactive tabs do not have', () => {
     render(<TabBar />);
     expect(screen.getByTestId('tab-home')).toHaveClass('bg-gold/10');
-    expect(screen.getByTestId('tab-budget')).not.toHaveClass('bg-gold/10');
+    expect(screen.getByTestId('tab-expenses')).not.toHaveClass('bg-gold/10');
   });
 });

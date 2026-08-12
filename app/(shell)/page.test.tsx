@@ -59,6 +59,18 @@ vi.mock('@/lib/use-budget', () => ({
   }),
 }));
 
+vi.mock('@/lib/use-expenses', () => ({
+  useExpenses: () => ({
+    expenses: [],
+    loading: false,
+    error: null,
+    refresh: vi.fn(),
+    create: vi.fn(),
+    update: vi.fn(),
+    remove: vi.fn(),
+  }),
+}));
+
 vi.mock('@/lib/use-reminders', () => ({
   useReminders: () => ({
     reminders: [],
