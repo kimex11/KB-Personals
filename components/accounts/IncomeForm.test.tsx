@@ -22,7 +22,7 @@ describe('IncomeForm', () => {
   it('pre-fills fields when editing an existing income source', () => {
     render(<IncomeForm open onOpenChange={() => {}} initialIncome={existingIncome} onSubmit={vi.fn()} />);
     expect(screen.getByLabelText(/^name$/i)).toHaveValue('Salary');
-    expect(screen.getByLabelText(/amount/i)).toHaveValue(3200);
+    expect(screen.getByLabelText(/amount/i)).toHaveValue('3,200');
     expect(screen.getByLabelText(/frequency/i)).toHaveValue('biweekly');
     expect(screen.getByLabelText(/next date/i)).toHaveValue('2026-08-20');
     expect(screen.getByRole('heading', { name: /edit income/i })).toBeInTheDocument();

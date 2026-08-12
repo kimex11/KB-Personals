@@ -24,8 +24,8 @@ describe('CardDueForm', () => {
     render(<CardDueForm open onOpenChange={() => {}} initialCard={existingCard} onSubmit={vi.fn()} />);
     expect(screen.getByLabelText(/card name/i)).toHaveValue('Visa Platinum');
     expect(screen.getByLabelText(/last 4 digits/i)).toHaveValue('4821');
-    expect(screen.getByLabelText(/statement balance/i)).toHaveValue(842.5);
-    expect(screen.getByLabelText(/minimum payment/i)).toHaveValue(45);
+    expect(screen.getByLabelText(/statement balance/i)).toHaveValue('842.5');
+    expect(screen.getByLabelText(/minimum payment/i)).toHaveValue('45');
     expect(screen.getByLabelText(/due date/i)).toHaveValue('2026-08-16');
     expect(screen.getByRole('heading', { name: /edit credit card/i })).toBeInTheDocument();
   });

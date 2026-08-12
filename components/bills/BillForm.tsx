@@ -5,6 +5,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
+import { CurrencyInput } from '@/components/shared/CurrencyInput';
 import type { RecurrenceInterval } from '@/lib/bills-types';
 import type { Category } from '@/lib/categories-types';
 import type { Frequency, CustomIntervalUnit, AmountMode, CreateSeriesInput } from '@/lib/recurring-types';
@@ -120,7 +121,7 @@ export function BillForm({ open, onOpenChange, categories, initialBill, onSubmit
           </div>
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="bill-amount">Amount</Label>
-            <Input id="bill-amount" type="number" step="0.01" value={amount} onChange={(e) => setAmount(e.target.value)} />
+            <CurrencyInput id="bill-amount" value={amount} onChange={setAmount} />
           </div>
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="bill-due-date">Due date</Label>

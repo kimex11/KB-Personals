@@ -5,6 +5,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
+import { CurrencyInput } from '@/components/shared/CurrencyInput';
 import type { CreditCardDue } from '@/lib/accounts-types';
 
 export interface CardDueFormInput {
@@ -72,23 +73,11 @@ export function CardDueForm({ open, onOpenChange, initialCard, onSubmit }: CardD
           </div>
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="card-statement-balance">Statement balance</Label>
-            <Input
-              id="card-statement-balance"
-              type="number"
-              step="0.01"
-              value={statementBalance}
-              onChange={(e) => setStatementBalance(e.target.value)}
-            />
+            <CurrencyInput id="card-statement-balance" value={statementBalance} onChange={setStatementBalance} />
           </div>
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="card-minimum-payment">Minimum payment</Label>
-            <Input
-              id="card-minimum-payment"
-              type="number"
-              step="0.01"
-              value={minimumPayment}
-              onChange={(e) => setMinimumPayment(e.target.value)}
-            />
+            <CurrencyInput id="card-minimum-payment" value={minimumPayment} onChange={setMinimumPayment} />
           </div>
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="card-due-date">Due date</Label>

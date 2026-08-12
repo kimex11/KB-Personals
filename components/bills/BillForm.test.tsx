@@ -23,7 +23,7 @@ describe('BillForm', () => {
     render(<BillForm open onOpenChange={() => {}} categories={categories} initialBill={existingBill} onSubmit={vi.fn()} />);
     expect(screen.getByLabelText(/title/i)).toHaveValue('Rent');
     expect(screen.getByLabelText(/^category$/i)).toHaveValue('cat-1');
-    expect(screen.getByLabelText(/amount/i)).toHaveValue(1450);
+    expect(screen.getByLabelText(/amount/i)).toHaveValue('1,450');
     expect(screen.getByLabelText(/due date/i)).toHaveValue('2026-08-16');
     expect(screen.getByLabelText(/recurrence/i)).toHaveValue('monthly');
     expect(screen.getByRole('heading', { name: /edit bill/i })).toBeInTheDocument();

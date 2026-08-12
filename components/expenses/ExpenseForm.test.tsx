@@ -23,14 +23,14 @@ const existingExpense: Expense = {
 describe('ExpenseForm', () => {
   it('renders empty fields for a new expense, defaulting to today', () => {
     render(<ExpenseForm open onOpenChange={() => {}} categories={categories} onSubmit={vi.fn()} />);
-    expect(screen.getByLabelText(/amount/i)).toHaveValue(null);
+    expect(screen.getByLabelText(/amount/i)).toHaveValue('');
     expect(screen.getByLabelText(/description/i)).toHaveValue('');
     expect(screen.getByRole('heading', { name: /add expense/i })).toBeInTheDocument();
   });
 
   it('pre-fills fields when editing an existing expense', () => {
     render(<ExpenseForm open onOpenChange={() => {}} categories={categories} initialExpense={existingExpense} onSubmit={vi.fn()} />);
-    expect(screen.getByLabelText(/amount/i)).toHaveValue(600);
+    expect(screen.getByLabelText(/amount/i)).toHaveValue('600');
     expect(screen.getByLabelText(/date/i)).toHaveValue('2026-08-11');
     expect(screen.getByLabelText(/description/i)).toHaveValue('Gas');
     expect(screen.getByLabelText(/payment method/i)).toHaveValue('Debit card');

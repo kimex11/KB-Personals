@@ -6,6 +6,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
+import { CurrencyInput } from '@/components/shared/CurrencyInput';
 import type { RecordCardPaymentInput } from '@/lib/credit-card-payments-repository';
 
 interface RecordPaymentFormProps {
@@ -55,7 +56,7 @@ export function RecordPaymentForm({ open, onOpenChange, onSubmit }: RecordPaymen
         <div className="flex flex-col gap-4 px-4">
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="payment-amount">Amount</Label>
-            <Input id="payment-amount" type="number" step="0.01" value={amount} onChange={(e) => setAmount(e.target.value)} />
+            <CurrencyInput id="payment-amount" value={amount} onChange={setAmount} />
           </div>
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="payment-paid-at">Paid on</Label>

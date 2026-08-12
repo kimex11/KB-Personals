@@ -6,7 +6,7 @@ import { RecordPaymentForm } from './RecordPaymentForm';
 describe('RecordPaymentForm', () => {
   it('renders empty amount/method/notes fields and a heading', () => {
     render(<RecordPaymentForm open onOpenChange={() => {}} onSubmit={vi.fn()} />);
-    expect(screen.getByLabelText(/amount/i)).toHaveValue(null);
+    expect(screen.getByLabelText(/amount/i)).toHaveValue('');
     expect(screen.getByLabelText(/payment method/i)).toHaveValue('');
     expect(screen.getByLabelText(/notes/i)).toHaveValue('');
     expect(screen.getByRole('heading', { name: /record payment/i })).toBeInTheDocument();

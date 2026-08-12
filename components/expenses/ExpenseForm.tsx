@@ -6,6 +6,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
+import { CurrencyInput } from '@/components/shared/CurrencyInput';
 import type { CreateExpenseInput, Expense } from '@/lib/expenses-repository';
 
 interface ExpenseFormProps {
@@ -66,7 +67,7 @@ export function ExpenseForm({ open, onOpenChange, categories, initialExpense, on
           </div>
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="expense-amount">Amount</Label>
-            <Input id="expense-amount" type="number" step="0.01" value={amount} onChange={(e) => setAmount(e.target.value)} />
+            <CurrencyInput id="expense-amount" value={amount} onChange={setAmount} />
           </div>
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="expense-date">Date</Label>
