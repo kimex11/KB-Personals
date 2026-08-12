@@ -109,26 +109,25 @@ const incomeRow = {
   id: 'income-1',
   name: 'Salary',
   amount: 3200,
-  frequency: 'biweekly',
-  next_date: '2026-08-20',
+  date: '2026-08-20',
   created_at: '2026-08-15T10:00:00.000Z',
 };
 
 describe('listIncomeSources', () => {
-  it('returns income sources ordered by next date', async () => {
+  it('returns income sources ordered by date', async () => {
     selectOrderMock.mockResolvedValue({ data: [incomeRow], error: null });
     const result = await listIncomeSources();
-    expect(result).toEqual([{ id: 'income-1', name: 'Salary', amount: 3200, frequency: 'biweekly', nextDate: '2026-08-20' }]);
-    expect(selectOrderMock).toHaveBeenCalledWith('next_date', { ascending: true });
+    expect(result).toEqual([{ id: 'income-1', name: 'Salary', amount: 3200, date: '2026-08-20' }]);
+    expect(selectOrderMock).toHaveBeenCalledWith('date', { ascending: true });
   });
 });
 
 describe('createIncomeSource', () => {
   it('inserts a new income row', async () => {
     insertSelectSingleMock.mockResolvedValue({ data: incomeRow, error: null });
-    const result = await createIncomeSource({ name: 'Salary', amount: 3200, frequency: 'biweekly', nextDate: '2026-08-20' });
-    expect(insertMock).toHaveBeenCalledWith({ name: 'Salary', amount: 3200, frequency: 'biweekly', next_date: '2026-08-20' });
-    expect(result).toEqual({ id: 'income-1', name: 'Salary', amount: 3200, frequency: 'biweekly', nextDate: '2026-08-20' });
+    const result = await createIncomeSource({ name: 'Salary', amount: 3200, date: '2026-08-20' });
+    expect(insertMock).toHaveBeenCalledWith({ name: 'Salary', amount: 3200, date: '2026-08-20' });
+    expect(result).toEqual({ id: 'income-1', name: 'Salary', amount: 3200, date: '2026-08-20' });
   });
 });
 

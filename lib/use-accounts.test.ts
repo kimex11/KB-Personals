@@ -39,7 +39,7 @@ vi.mock('./audit-log-repository', () => ({ logActivity: logActivityMock }));
 import { useAccounts } from './use-accounts';
 
 const card = { id: 'card-1', cardName: 'Visa Platinum', last4: '4821', statementBalance: 842.5, minimumPayment: 45, dueDate: '2026-08-16' };
-const income = { id: 'income-1', name: 'Salary', amount: 3200, frequency: 'biweekly' as const, nextDate: '2026-08-20' };
+const income = { id: 'income-1', name: 'Salary', amount: 3200, date: '2026-08-20' };
 
 afterEach(() => {
   vi.clearAllMocks();
@@ -163,7 +163,7 @@ describe('useAccounts', () => {
     await waitFor(() => expect(result.current.loading).toBe(false));
 
     await act(async () => {
-      await result.current.createIncome({ name: 'Salary', amount: 3200, frequency: 'biweekly', nextDate: '2026-08-20' });
+      await result.current.createIncome({ name: 'Salary', amount: 3200, date: '2026-08-20' });
     });
 
     expect(createIncomeSourceMock).toHaveBeenCalled();
@@ -178,7 +178,7 @@ describe('useAccounts', () => {
     await waitFor(() => expect(result.current.loading).toBe(false));
 
     await act(async () => {
-      await result.current.createIncome({ name: 'Salary', amount: 3200, frequency: 'biweekly', nextDate: '2026-08-20' });
+      await result.current.createIncome({ name: 'Salary', amount: 3200, date: '2026-08-20' });
     });
 
     expect(logActivityMock).toHaveBeenCalledWith(

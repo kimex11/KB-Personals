@@ -11,7 +11,7 @@ import {
   updateIncomeSource,
   deleteIncomeSource,
 } from './accounts-repository';
-import type { CreditCardDue, IncomeSource, IncomeFrequency } from './accounts-types';
+import type { CreditCardDue, IncomeSource } from './accounts-types';
 import { logActivity } from './audit-log-repository';
 
 export interface UseAccountsResult {
@@ -23,8 +23,8 @@ export interface UseAccountsResult {
   createCard: (input: { cardName: string; last4: string; statementBalance: number; minimumPayment: number; dueDate: string }) => Promise<void>;
   updateCard: (id: string, patch: Partial<Pick<CreditCardDue, 'cardName' | 'last4' | 'statementBalance' | 'minimumPayment' | 'dueDate'>>) => Promise<void>;
   deleteCard: (id: string) => Promise<void>;
-  createIncome: (input: { name: string; amount: number; frequency: IncomeFrequency; nextDate: string }) => Promise<void>;
-  updateIncome: (id: string, patch: Partial<Pick<IncomeSource, 'name' | 'amount' | 'frequency' | 'nextDate'>>) => Promise<void>;
+  createIncome: (input: { name: string; amount: number; date: string }) => Promise<void>;
+  updateIncome: (id: string, patch: Partial<Pick<IncomeSource, 'name' | 'amount' | 'date'>>) => Promise<void>;
   deleteIncome: (id: string) => Promise<void>;
 }
 
@@ -129,7 +129,7 @@ export function useAccounts(): UseAccountsResult {
             entityType: 'income_source',
             entityId: created.id,
             entityLabel: created.name,
-            afterValue: { name: created.name, amount: created.amount, frequency: created.frequency, nextDate: created.nextDate },
+            afterValue: { name: created.name, amount: created.amount, date: created.date },
           }).catch(() => {});
         })
       ),
@@ -142,7 +142,7 @@ export function useAccounts(): UseAccountsResult {
             entityType: 'income_source',
             entityId: id,
             entityLabel: patch.name ?? before?.name ?? 'Income',
-            beforeValue: before ? { name: before.name, amount: before.amount, frequency: before.frequency, nextDate: before.nextDate } : null,
+            beforeValue: before ? { name: before.name, amount: before.amount, date: before.date } : null,
             afterValue: { ...before, ...patch },
           }).catch(() => {});
         })
@@ -157,7 +157,7 @@ export function useAccounts(): UseAccountsResult {
             entityType: 'income_source',
             entityId: id,
             entityLabel: before?.name ?? 'Income',
-            beforeValue: before ? { name: before.name, amount: before.amount, frequency: before.frequency, nextDate: before.nextDate } : null,
+            beforeValue: before ? { name: before.name, amount: before.amount, date: before.date } : null,
           }).catch(() => {});
         })
       );

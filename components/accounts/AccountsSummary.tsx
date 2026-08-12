@@ -2,11 +2,11 @@ import { formatCurrency } from '@/lib/format-currency';
 
 interface AccountsSummaryProps {
   totalDue: number;
-  totalMonthlyIncome: number;
+  totalIncome: number;
 }
 
-export function AccountsSummary({ totalDue, totalMonthlyIncome }: AccountsSummaryProps) {
-  const net = totalMonthlyIncome - totalDue;
+export function AccountsSummary({ totalDue, totalIncome }: AccountsSummaryProps) {
+  const net = totalIncome - totalDue;
   const isNegative = net < 0;
 
   return (
@@ -17,7 +17,7 @@ export function AccountsSummary({ totalDue, totalMonthlyIncome }: AccountsSummar
       </div>
       <div className="flex flex-col items-center gap-1 rounded-2xl border border-status-success/30 bg-status-success/5 px-2 py-3">
         <span className="text-xs text-status-success">Income</span>
-        <span className="font-serif text-lg text-status-success">₱{formatCurrency(totalMonthlyIncome, 0)}</span>
+        <span className="font-serif text-lg text-status-success">₱{formatCurrency(totalIncome, 0)}</span>
       </div>
       <div
         className={`flex flex-col items-center gap-1 rounded-2xl border px-2 py-3 ${

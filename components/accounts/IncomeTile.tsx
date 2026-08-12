@@ -22,7 +22,7 @@ export function IncomeTile({ source, onEdit, onDelete }: IncomeTileProps) {
       </div>
       <div>
         <p className="text-sm font-medium text-neutral-900">{source.name}</p>
-        <p className="text-xs text-neutral-500">{format(parseISO(source.nextDate), 'MMM d, yyyy')}</p>
+        <p className="text-xs text-neutral-500">{format(parseISO(source.date), 'MMM d, yyyy')}</p>
       </div>
       <span className="font-serif text-sm text-status-success">₱{formatCurrency(source.amount)}</span>
     </div>

@@ -10,8 +10,7 @@ const source: IncomeSource = {
   id: '1',
   name: 'Salary',
   amount: 3200,
-  frequency: 'biweekly',
-  nextDate: '2026-08-20',
+  date: '2026-08-20',
 };
 
 describe('IncomeTile', () => {
@@ -21,7 +20,6 @@ describe('IncomeTile', () => {
     expect(tile).toHaveTextContent('Salary');
     expect(tile).toHaveTextContent('₱3,200.00');
     expect(tile).toHaveTextContent('Aug 20, 2026');
-    expect(tile).not.toHaveTextContent('Biweekly');
   });
 
   it('tints the card background success-green', () => {

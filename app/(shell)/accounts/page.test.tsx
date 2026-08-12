@@ -3,7 +3,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 const card = { id: 'card-1', cardName: 'Visa Platinum', last4: '4821', statementBalance: 842.5, minimumPayment: 45, dueDate: '2026-08-16' };
-const income = { id: 'income-1', name: 'Salary', amount: 3200, frequency: 'biweekly' as const, nextDate: '2026-08-20' };
+const income = { id: 'income-1', name: 'Salary', amount: 3200, date: '2026-08-20' };
 
 const createCardMock = vi.fn().mockResolvedValue(undefined);
 const updateCardMock = vi.fn().mockResolvedValue(undefined);
@@ -128,10 +128,10 @@ describe('AccountsPage', () => {
 
     await user.type(screen.getByLabelText(/^name$/i), 'Bonus');
     await user.type(screen.getByLabelText(/amount/i), '500');
-    await user.type(screen.getByLabelText(/next date/i), '2026-09-01');
+    await user.type(screen.getByLabelText(/^date$/i), '2026-09-01');
     await user.click(screen.getByRole('button', { name: /^save$/i }));
 
-    expect(createIncomeMock).toHaveBeenCalledWith({ name: 'Bonus', amount: 500, frequency: 'monthly', nextDate: '2026-09-01' });
+    expect(createIncomeMock).toHaveBeenCalledWith({ name: 'Bonus', amount: 500, date: '2026-09-01' });
   });
 
   it('deletes an income source after confirming', async () => {

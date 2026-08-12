@@ -7,14 +7,11 @@ export interface CreditCardDue {
   dueDate: string; // ISO 'yyyy-MM-dd'
 }
 
-export type IncomeFrequency = 'weekly' | 'biweekly' | 'monthly';
-
 export interface IncomeSource {
   id: string;
   name: string;
   amount: number;
-  frequency: IncomeFrequency;
-  nextDate: string; // ISO 'yyyy-MM-dd'
+  date: string; // ISO 'yyyy-MM-dd' — the exact date this income was received or is expected
 }
 
 export type DueStatus = 'overdue' | 'due-soon' | 'upcoming';

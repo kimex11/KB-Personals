@@ -6,13 +6,12 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { CurrencyInput } from '@/components/shared/CurrencyInput';
-import type { IncomeFrequency, IncomeSource } from '@/lib/accounts-types';
+import type { IncomeSource } from '@/lib/accounts-types';
 
 export interface IncomeFormInput {
   name: string;
   amount: number;
-  frequency: IncomeFrequency;
-  nextDate: string;
+  date: string;
 }
 
 interface IncomeFormProps {
@@ -25,16 +24,15 @@ interface IncomeFormProps {
 export function IncomeForm({ open, onOpenChange, initialIncome, onSubmit }: IncomeFormProps) {
   const [name, setName] = useState(initialIncome?.name ?? '');
   const [amount, setAmount] = useState(initialIncome?.amount?.toString() ?? '');
-  const [frequency, setFrequency] = useState<IncomeFrequency>(initialIncome?.frequency ?? 'monthly');
-  const [nextDate, setNextDate] = useState(initialIncome?.nextDate ?? '');
+  const [date, setDate] = useState(initialIncome?.date ?? '');
   const [submitting, setSubmitting] = useState(false);
 
-  const isValid = name.trim() !== '' && amount !== '' && !Number.isNaN(Number(amount)) && nextDate !== '';
+  const isValid = name.trim() !== '' && amount !== '' && !Number.isNaN(Number(amount)) && date !== '';
 
   async function handleSubmit() {
     setSubmitting(true);
     try {
-      await onSubmit({ name: name.trim(), amount: Number(amount), frequency, nextDate });
+      await onSubmit({ name: name.trim(), amount: Number(amount), date });
       onOpenChange(false);
     } finally {
       setSubmitting(false);
@@ -57,21 +55,8 @@ export function IncomeForm({ open, onOpenChange, initialIncome, onSubmit }: Inco
             <CurrencyInput id="income-amount" value={amount} onChange={setAmount} />
           </div>
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="income-frequency">Frequency</Label>
-            <select
-              id="income-frequency"
-              value={frequency}
-              onChange={(e) => setFrequency(e.target.value as IncomeFrequency)}
-              className="h-8 rounded-lg border border-neutral-200 px-2 text-sm"
-            >
-              <option value="weekly">Weekly</option>
-              <option value="biweekly">Biweekly</option>
-              <option value="monthly">Monthly</option>
-            </select>
-          </div>
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor="income-next-date">Next date</Label>
-            <Input id="income-next-date" type="date" value={nextDate} onChange={(e) => setNextDate(e.target.value)} />
+            <Label htmlFor="income-date">Date</Label>
+            <Input id="income-date" type="date" value={date} onChange={(e) => setDate(e.target.value)} />
           </div>
         </div>
         <SheetFooter>

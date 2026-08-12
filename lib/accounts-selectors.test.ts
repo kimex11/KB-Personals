@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { getDueStatus, totalStatementBalance, monthlyEquivalentIncome, totalMonthlyIncome } from './accounts-selectors';
+import { getDueStatus, totalStatementBalance, totalIncome } from './accounts-selectors';
 import type { CreditCardDue, IncomeSource } from './accounts-types';
 
 const referenceDate = new Date(2026, 7, 15); // 2026-08-15
@@ -30,30 +30,12 @@ describe('totalStatementBalance', () => {
   });
 });
 
-describe('monthlyEquivalentIncome', () => {
-  const weekly: IncomeSource = { id: 'w', name: 'Freelance', amount: 100, frequency: 'weekly', nextDate: '2026-08-20' };
-  const biweekly: IncomeSource = { id: 'b', name: 'Salary', amount: 1000, frequency: 'biweekly', nextDate: '2026-08-20' };
-  const monthly: IncomeSource = { id: 'm', name: 'Rental', amount: 500, frequency: 'monthly', nextDate: '2026-08-20' };
-
-  it('multiplies weekly income by ~4.33', () => {
-    expect(monthlyEquivalentIncome(weekly)).toBeCloseTo(433, 0);
-  });
-
-  it('multiplies biweekly income by ~2.166', () => {
-    expect(monthlyEquivalentIncome(biweekly)).toBeCloseTo(2166, 0);
-  });
-
-  it('leaves monthly income unchanged', () => {
-    expect(monthlyEquivalentIncome(monthly)).toBe(500);
-  });
-});
-
-describe('totalMonthlyIncome', () => {
-  it('sums the monthly-equivalent amounts of all sources', () => {
+describe('totalIncome', () => {
+  it('sums the amounts of all income sources', () => {
     const sources: IncomeSource[] = [
-      { id: 'm1', name: 'Salary', amount: 3000, frequency: 'monthly', nextDate: '2026-08-20' },
-      { id: 'm2', name: 'Side Gig', amount: 200, frequency: 'monthly', nextDate: '2026-08-20' },
+      { id: 'm1', name: 'Salary', amount: 3000, date: '2026-08-20' },
+      { id: 'm2', name: 'Side Gig', amount: 200, date: '2026-08-20' },
     ];
-    expect(totalMonthlyIncome(sources)).toBe(3200);
+    expect(totalIncome(sources)).toBe(3200);
   });
 });

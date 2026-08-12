@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { Plus } from 'lucide-react';
 import { useAccounts } from '@/lib/use-accounts';
-import { totalStatementBalance, totalMonthlyIncome } from '@/lib/accounts-selectors';
+import { totalStatementBalance, totalIncome } from '@/lib/accounts-selectors';
 import { AccountsSummary } from '@/components/accounts/AccountsSummary';
 import { CardDueTile } from '@/components/accounts/CardDueTile';
 import { IncomeTile } from '@/components/accounts/IncomeTile';
@@ -30,7 +30,7 @@ export default function AccountsPage() {
   const [deleteIncomeTarget, setDeleteIncomeTarget] = useState<IncomeSource | null>(null);
 
   const totalDue = totalStatementBalance(cards);
-  const monthlyIncome = totalMonthlyIncome(incomeSources);
+  const income = totalIncome(incomeSources);
 
   function openAddCard() {
     setEditingCard(undefined);
@@ -60,7 +60,7 @@ export default function AccountsPage() {
     setIncomeFormOpen(true);
   }
 
-  async function handleIncomeSubmit(input: { name: string; amount: number; frequency: IncomeSource['frequency']; nextDate: string }) {
+  async function handleIncomeSubmit(input: { name: string; amount: number; date: string }) {
     if (editingIncome) {
       await updateIncome(editingIncome.id, input);
     } else {
@@ -78,7 +78,7 @@ export default function AccountsPage() {
       {isMounted && !loading && (
         <>
           {error && <p className="text-sm text-status-critical">{error}</p>}
-          <AccountsSummary totalDue={totalDue} totalMonthlyIncome={monthlyIncome} />
+          <AccountsSummary totalDue={totalDue} totalIncome={income} />
           <div className="flex flex-col gap-3">
             <div className="flex items-center justify-between">
               <h2 className="font-serif text-lg text-neutral-900">Credit Card Dues</h2>

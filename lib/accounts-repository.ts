@@ -1,5 +1,5 @@
 import { createClient } from './supabase/client';
-import type { CreditCardDue, IncomeSource, IncomeFrequency } from './accounts-types';
+import type { CreditCardDue, IncomeSource } from './accounts-types';
 
 interface CardRow {
   id: string;
@@ -15,8 +15,7 @@ interface IncomeRow {
   id: string;
   name: string;
   amount: number;
-  frequency: string;
-  next_date: string;
+  date: string;
   created_at: string;
 }
 
@@ -36,8 +35,7 @@ function rowToIncome(row: IncomeRow): IncomeSource {
     id: row.id,
     name: row.name,
     amount: row.amount,
-    frequency: row.frequency as IncomeFrequency,
-    nextDate: row.next_date,
+    date: row.date,
   };
 }
 
@@ -95,37 +93,28 @@ export async function deleteCreditCardDue(id: string): Promise<void> {
 
 export async function listIncomeSources(): Promise<IncomeSource[]> {
   const supabase = createClient();
-  const { data, error } = await supabase.from('income_sources').select('*').order('next_date', { ascending: true });
+  const { data, error } = await supabase.from('income_sources').select('*').order('date', { ascending: true });
   if (error) throw error;
   return ((data ?? []) as IncomeRow[]).map(rowToIncome);
 }
 
-export async function createIncomeSource(input: {
-  name: string;
-  amount: number;
-  frequency: IncomeFrequency;
-  nextDate: string;
-}): Promise<IncomeSource> {
+export async function createIncomeSource(input: { name: string; amount: number; date: string }): Promise<IncomeSource> {
   const supabase = createClient();
   const { data, error } = await supabase
     .from('income_sources')
-    .insert({ name: input.name, amount: input.amount, frequency: input.frequency, next_date: input.nextDate })
+    .insert({ name: input.name, amount: input.amount, date: input.date })
     .select()
     .single();
   if (error) throw error;
   return rowToIncome(data as IncomeRow);
 }
 
-export async function updateIncomeSource(
-  id: string,
-  patch: Partial<Pick<IncomeSource, 'name' | 'amount' | 'frequency' | 'nextDate'>>
-): Promise<void> {
+export async function updateIncomeSource(id: string, patch: Partial<Pick<IncomeSource, 'name' | 'amount' | 'date'>>): Promise<void> {
   const supabase = createClient();
   const payload: Record<string, unknown> = {};
   if (patch.name !== undefined) payload.name = patch.name;
   if (patch.amount !== undefined) payload.amount = patch.amount;
-  if (patch.frequency !== undefined) payload.frequency = patch.frequency;
-  if (patch.nextDate !== undefined) payload.next_date = patch.nextDate;
+  if (patch.date !== undefined) payload.date = patch.date;
 
   const { error } = await supabase.from('income_sources').update(payload).eq('id', id);
   if (error) throw error;
