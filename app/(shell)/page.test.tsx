@@ -151,8 +151,13 @@ describe('HomePage', () => {
     expect(alertsBanner.compareDocumentPosition(calendarCard) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 
-  it('renders notification settings', () => {
+  it('keeps notification settings tucked away behind a trigger until opened', async () => {
+    const user = userEvent.setup();
     render(<HomePage />);
+    expect(screen.queryByTestId('notification-settings')).not.toBeInTheDocument();
+
+    await user.click(screen.getByTestId('notification-settings-trigger'));
+
     expect(screen.getByTestId('notification-settings')).toBeInTheDocument();
   });
 
@@ -181,6 +186,7 @@ describe('HomePage', () => {
     const user = userEvent.setup();
     render(<HomePage />);
 
+    await user.click(screen.getByTestId('notification-settings-trigger'));
     await user.click(screen.getByTestId('enable-notifications-button'));
 
     expect(await screen.findByTestId('push-subscription-error')).toHaveTextContent(/couldn't register/i);

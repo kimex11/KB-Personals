@@ -1,6 +1,8 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import { Bell, BellOff } from 'lucide-react';
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { useCalendarEvents } from '@/lib/use-calendar-events';
 import { useExpenses } from '@/lib/use-expenses';
 import { totalExpenses } from '@/lib/expenses-selectors';
@@ -45,6 +47,7 @@ export default function HomePage() {
     soundEnabled: true,
     enabledPriorities: ['critical', 'urgent', 'reminder'],
   });
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
   const isMounted = useIsMounted();
 
   useEffect(() => {
@@ -195,24 +198,44 @@ export default function HomePage() {
     <div data-testid="home-page" className="flex flex-col gap-6 px-4 pb-24 pt-4">
       {isMounted && (
         <>
-          {error && <p className="text-sm text-status-critical">{error}</p>}
+          <div className="flex items-center justify-between">
+            {error ? <p className="text-sm text-status-critical">{error}</p> : <span />}
+            <button
+              type="button"
+              data-testid="notification-settings-trigger"
+              aria-label="Notification settings"
+              onClick={() => setNotificationsOpen(true)}
+              className="flex min-h-11 min-w-11 items-center justify-center rounded-full text-neutral-400"
+            >
+              {permission === 'granted' ? <Bell className="h-5 w-5 text-gold" /> : <BellOff className="h-5 w-5" />}
+            </button>
+          </div>
           <AlertsBanner overdueBills={overdueBills} referenceDate={now} />
           {pushSubscriptionError && (
             <p data-testid="push-subscription-error" className="text-sm text-status-warning">
               {pushSubscriptionError}
             </p>
           )}
-          <NotificationSettings
-            permission={permission}
-            onRequestPermission={handleRequestPermission}
-            soundEnabled={preferences.soundEnabled}
-            onToggleSound={handleToggleSound}
-            quietHoursStart={preferences.quietHoursStart}
-            quietHoursEnd={preferences.quietHoursEnd}
-            onQuietHoursChange={handleQuietHoursChange}
-            enabledPriorities={preferences.enabledPriorities}
-            onTogglePriority={handleTogglePriority}
-          />
+          <Sheet open={notificationsOpen} onOpenChange={setNotificationsOpen}>
+            <SheetContent side="bottom">
+              <SheetHeader>
+                <SheetTitle>Notification Settings</SheetTitle>
+              </SheetHeader>
+              <div className="px-4 pb-4">
+                <NotificationSettings
+                  permission={permission}
+                  onRequestPermission={handleRequestPermission}
+                  soundEnabled={preferences.soundEnabled}
+                  onToggleSound={handleToggleSound}
+                  quietHoursStart={preferences.quietHoursStart}
+                  quietHoursEnd={preferences.quietHoursEnd}
+                  onQuietHoursChange={handleQuietHoursChange}
+                  enabledPriorities={preferences.enabledPriorities}
+                  onTogglePriority={handleTogglePriority}
+                />
+              </div>
+            </SheetContent>
+          </Sheet>
           <DashboardCalendarCard
             getEventsForDate={getEventsForDate}
             selectedDate={selectedDate}
