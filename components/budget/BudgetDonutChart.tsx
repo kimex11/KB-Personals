@@ -1,5 +1,6 @@
 import type { BudgetCategory } from '@/lib/budget-types';
 import { STROKE_COLOR_CLASS, DOT_COLOR_CLASS } from '@/lib/category-colors';
+import { formatCurrency } from '@/lib/format-currency';
 
 interface BudgetDonutChartProps {
   categories: BudgetCategory[];
@@ -59,7 +60,7 @@ export function BudgetDonutChart({ categories }: BudgetDonutChartProps) {
               />
               <span className="text-neutral-900">{category.name}</span>
             </span>
-            <span className="text-neutral-500">₱{category.spent.toFixed(0)}</span>
+            <span className="text-neutral-500">₱{formatCurrency(category.spent, 0)}</span>
           </li>
         ))}
       </ul>

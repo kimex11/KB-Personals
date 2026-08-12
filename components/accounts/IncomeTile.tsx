@@ -1,6 +1,7 @@
 import { format, parseISO } from 'date-fns';
 import type { IncomeSource } from '@/lib/accounts-types';
 import { RowActionsMenu } from '@/components/shared/RowActionsMenu';
+import { formatCurrency } from '@/lib/format-currency';
 
 interface IncomeTileProps {
   source: IncomeSource;
@@ -23,7 +24,7 @@ export function IncomeTile({ source, onEdit, onDelete }: IncomeTileProps) {
         <p className="text-sm font-medium text-neutral-900">{source.name}</p>
         <p className="text-xs text-neutral-500">{format(parseISO(source.nextDate), 'MMM d, yyyy')}</p>
       </div>
-      <span className="font-serif text-sm text-status-success">₱{source.amount.toFixed(2)}</span>
+      <span className="font-serif text-sm text-status-success">₱{formatCurrency(source.amount)}</span>
     </div>
   );
 }

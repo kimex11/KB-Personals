@@ -4,6 +4,7 @@ import { getDueStatus } from '@/lib/accounts-selectors';
 import { CardDueStatusBadge } from './CardDueStatusBadge';
 import { RowActionsMenu } from '@/components/shared/RowActionsMenu';
 import { formatRelativeDate } from '@/lib/date-utils';
+import { formatCurrency } from '@/lib/format-currency';
 
 const STATUS_TINT: Record<DueStatus, string> = {
   overdue: 'bg-status-critical/10',
@@ -45,9 +46,9 @@ export function CardDueTile({ card, referenceDate = new Date(), onEdit, onDelete
       <div className="flex items-center justify-between">
         <div className="flex flex-col">
           <span data-testid="card-due-balance" className={`font-serif text-sm ${STATUS_BALANCE_COLOR[status]}`}>
-            ₱{card.statementBalance.toFixed(2)}
+            ₱{formatCurrency(card.statementBalance)}
           </span>
-          <span className="text-[10px] text-neutral-400">Min ₱{card.minimumPayment.toFixed(2)}</span>
+          <span className="text-[10px] text-neutral-400">Min ₱{formatCurrency(card.minimumPayment)}</span>
         </div>
         <CardDueStatusBadge status={status} />
       </div>

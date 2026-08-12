@@ -5,7 +5,7 @@ import { BudgetSummary } from './BudgetSummary';
 describe('BudgetSummary', () => {
   it('renders the three totals', () => {
     render(<BudgetSummary budgeted={1000} spent={800} remaining={200} />);
-    expect(screen.getByText('₱1000')).toBeInTheDocument();
+    expect(screen.getByText('₱1,000')).toBeInTheDocument();
     expect(screen.getByText('₱800')).toBeInTheDocument();
     expect(screen.getByText('₱200')).toBeInTheDocument();
   });

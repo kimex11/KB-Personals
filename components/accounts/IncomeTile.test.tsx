@@ -19,7 +19,7 @@ describe('IncomeTile', () => {
     render(<IncomeTile source={source} referenceDate={referenceDate} />);
     const tile = screen.getByTestId('income-row');
     expect(tile).toHaveTextContent('Salary');
-    expect(tile).toHaveTextContent('₱3200.00');
+    expect(tile).toHaveTextContent('₱3,200.00');
     expect(tile).toHaveTextContent('Aug 20, 2026');
     expect(tile).not.toHaveTextContent('Biweekly');
   });

@@ -1,4 +1,5 @@
 import { format, parseISO } from 'date-fns';
+import { formatCurrency } from '@/lib/format-currency';
 
 interface CardPaymentSummaryProps {
   remainingBalance: number;
@@ -14,13 +15,13 @@ export function CardPaymentSummary({ remainingBalance, totalPaid, paymentsMade, 
       <div className="flex items-center justify-between">
         <span className="text-xs text-neutral-500">Remaining Balance</span>
         <span data-testid="summary-remaining-balance" className="font-serif text-sm text-neutral-900">
-          ₱{remainingBalance.toFixed(2)}
+          ₱{formatCurrency(remainingBalance)}
         </span>
       </div>
       <div className="flex items-center justify-between">
         <span className="text-xs text-neutral-500">Total Paid</span>
         <span data-testid="summary-total-paid" className="font-serif text-sm text-status-success">
-          ₱{totalPaid.toFixed(2)}
+          ₱{formatCurrency(totalPaid)}
         </span>
       </div>
       <div className="flex items-center justify-between">

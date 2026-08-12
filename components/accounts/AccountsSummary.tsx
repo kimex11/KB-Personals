@@ -1,3 +1,5 @@
+import { formatCurrency } from '@/lib/format-currency';
+
 interface AccountsSummaryProps {
   totalDue: number;
   totalMonthlyIncome: number;
@@ -11,11 +13,11 @@ export function AccountsSummary({ totalDue, totalMonthlyIncome }: AccountsSummar
     <div data-testid="accounts-summary" className="grid grid-cols-3 gap-2">
       <div className="flex flex-col items-center gap-1 rounded-2xl border border-status-critical/30 bg-status-critical/5 px-2 py-3">
         <span className="text-xs text-status-critical">Card Dues</span>
-        <span className="font-serif text-lg text-status-critical">₱{totalDue.toFixed(2)}</span>
+        <span className="font-serif text-lg text-status-critical">₱{formatCurrency(totalDue)}</span>
       </div>
       <div className="flex flex-col items-center gap-1 rounded-2xl border border-status-success/30 bg-status-success/5 px-2 py-3">
         <span className="text-xs text-status-success">Income</span>
-        <span className="font-serif text-lg text-status-success">₱{totalMonthlyIncome.toFixed(0)}</span>
+        <span className="font-serif text-lg text-status-success">₱{formatCurrency(totalMonthlyIncome, 0)}</span>
       </div>
       <div
         className={`flex flex-col items-center gap-1 rounded-2xl border px-2 py-3 ${
@@ -27,7 +29,7 @@ export function AccountsSummary({ totalDue, totalMonthlyIncome }: AccountsSummar
           data-testid="accounts-net"
           className={`font-serif text-lg ${isNegative ? 'text-status-critical' : 'text-status-success'}`}
         >
-          ₱{net.toFixed(0)}
+          ₱{formatCurrency(net, 0)}
         </span>
       </div>
     </div>

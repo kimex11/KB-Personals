@@ -1,5 +1,6 @@
 import type { BudgetCategory } from '@/lib/budget-types';
 import { BAR_COLOR_CLASS, CARD_TINT_COLOR_CLASS, ICON_BG_COLOR_CLASS, ICON_TEXT_COLOR_CLASS } from '@/lib/category-colors';
+import { formatCurrency } from '@/lib/format-currency';
 
 export function BudgetCategoryCard({ category }: { category: BudgetCategory }) {
   const { icon: Icon, name, limit, spent, colorSlot } = category;
@@ -39,7 +40,7 @@ export function BudgetCategoryCard({ category }: { category: BudgetCategory }) {
         />
       </div>
       <span className="text-xs text-neutral-500">
-        ₱{spent.toFixed(0)} of ₱{limit.toFixed(0)}
+        ₱{formatCurrency(spent, 0)} of ₱{formatCurrency(limit, 0)}
       </span>
     </div>
   );

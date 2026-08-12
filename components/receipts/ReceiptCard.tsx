@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { FileText, Pencil, Check, X } from 'lucide-react';
 import type { StoredReceipt } from '@/lib/receipts-types';
 import { formatFileSize } from '@/lib/receipts-utils';
+import { formatCurrency } from '@/lib/format-currency';
 import type { ExtractedReceiptFields, OcrStatus } from '@/lib/receipt-ocr-types';
 
 export interface LinkableBill {
@@ -162,7 +163,7 @@ export function ReceiptCard({
             {extractedFields.merchant && <p className="text-[10px] text-neutral-600">{extractedFields.merchant}</p>}
             {extractedFields.date && <p className="text-[10px] text-neutral-400">{extractedFields.date}</p>}
             {extractedFields.amount !== null && (
-              <p className="text-[10px] font-medium text-gold">₱{extractedFields.amount.toFixed(2)}</p>
+              <p className="text-[10px] font-medium text-gold">₱{formatCurrency(extractedFields.amount)}</p>
             )}
           </div>
         )}

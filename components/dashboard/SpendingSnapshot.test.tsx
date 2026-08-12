@@ -5,8 +5,8 @@ import { SpendingSnapshot } from './SpendingSnapshot';
 describe('SpendingSnapshot', () => {
   it('shows spent-of-budgeted text and remaining amount', () => {
     render(<SpendingSnapshot budgeted={3000} spent={1800} remaining={1200} />);
-    expect(screen.getByTestId('spending-snapshot')).toHaveTextContent('₱1800 of ₱3000 spent');
-    expect(screen.getByTestId('spending-snapshot')).toHaveTextContent('₱1200 remaining');
+    expect(screen.getByTestId('spending-snapshot')).toHaveTextContent('₱1,800 of ₱3,000 spent');
+    expect(screen.getByTestId('spending-snapshot')).toHaveTextContent('₱1,200 remaining');
   });
 
   it('sets the progress fill width proportional to spent/budgeted', () => {

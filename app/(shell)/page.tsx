@@ -9,6 +9,7 @@ import { useAccounts } from '@/lib/use-accounts';
 import { useIsMounted } from '@/lib/use-is-mounted';
 import { getOverdueBills, getBillsDueWithinDays, getUpcomingReminders } from '@/lib/dashboard-selectors';
 import { toISODateString } from '@/lib/date-utils';
+import { formatCurrency } from '@/lib/format-currency';
 import { isNotificationSupported, requestNotificationPermission } from '@/lib/notifications';
 import { subscribeToPush, isPushSupported } from '@/lib/push-subscription';
 import { getPreferences, upsertPreferences, type NotificationPreferences } from '@/lib/notification-preferences-repository';
@@ -80,7 +81,7 @@ export default function HomePage() {
       ...overdue.map((bill) => ({
         id: `bill:${bill.id}:overdue`,
         title: `Overdue: ${bill.title}`,
-        body: bill.amount !== undefined ? `₱${bill.amount.toFixed(2)} was due` : 'Payment is overdue',
+        body: bill.amount !== undefined ? `₱${formatCurrency(bill.amount)} was due` : 'Payment is overdue',
         priority: 'critical' as NotificationPriority,
         entityType: 'bill' as const,
         entityId: bill.id,
@@ -89,7 +90,7 @@ export default function HomePage() {
       ...dueSoon.map((bill) => ({
         id: `bill:${bill.id}:due_soon:${bill.date}`,
         title: `Due soon: ${bill.title}`,
-        body: bill.amount !== undefined ? `₱${bill.amount.toFixed(2)} due ${bill.date}` : `Due ${bill.date}`,
+        body: bill.amount !== undefined ? `₱${formatCurrency(bill.amount)} due ${bill.date}` : `Due ${bill.date}`,
         priority: 'urgent' as NotificationPriority,
         entityType: 'bill' as const,
         entityId: bill.id,
@@ -124,7 +125,7 @@ export default function HomePage() {
     {
       id: 'budget',
       label: 'Budget',
-      stat: `₱${totals.spent.toFixed(0)} of ₱${totals.budgeted.toFixed(0)}`,
+      stat: `₱${formatCurrency(totals.spent, 0)} of ₱${formatCurrency(totals.budgeted, 0)}`,
       href: '/budget',
     },
     {

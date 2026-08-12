@@ -1,3 +1,5 @@
+import { formatCurrency } from '@/lib/format-currency';
+
 interface BillsSummaryProps {
   monthlyTotal: number;
   overdueCount: number;
@@ -9,7 +11,7 @@ export function BillsSummary({ monthlyTotal, overdueCount, dueSoonCount }: Bills
     <div data-testid="bills-summary" className="grid grid-cols-3 gap-2">
       <div className="flex flex-col items-center gap-1 rounded-2xl border border-gold/20 bg-gold/5 px-2 py-3">
         <span className="text-xs text-gold">This Month</span>
-        <span className="font-serif text-lg text-neutral-900">₱{monthlyTotal.toFixed(0)}</span>
+        <span className="font-serif text-lg text-neutral-900">₱{formatCurrency(monthlyTotal, 0)}</span>
       </div>
       <div className="flex flex-col items-center gap-1 rounded-2xl border border-status-critical/30 bg-status-critical/5 px-2 py-3">
         <span className="text-xs text-status-critical">Overdue</span>

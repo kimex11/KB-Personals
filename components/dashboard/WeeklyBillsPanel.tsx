@@ -1,6 +1,7 @@
 import type { CalendarEvent } from '@/lib/types';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { formatRelativeDate } from '@/lib/date-utils';
+import { formatCurrency } from '@/lib/format-currency';
 
 interface WeeklyBillsPanelProps {
   bills: CalendarEvent[];
@@ -26,7 +27,7 @@ export function WeeklyBillsPanel({ bills, referenceDate = new Date(), onMarkPaid
                 <p className="text-sm font-medium text-neutral-900">{bill.title}</p>
                 <p className="text-xs text-neutral-500">
                   {formatRelativeDate(bill.date, referenceDate)}
-                  {bill.amount !== undefined ? ` · ₱${bill.amount.toFixed(2)}` : ''}
+                  {bill.amount !== undefined ? ` · ₱${formatCurrency(bill.amount)}` : ''}
                 </p>
               </div>
               <button

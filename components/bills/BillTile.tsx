@@ -3,6 +3,7 @@ import { getBillStatus } from '@/lib/bills-selectors';
 import { BillStatusBadge } from './BillStatusBadge';
 import { RowActionsMenu } from '@/components/shared/RowActionsMenu';
 import { formatRelativeDate } from '@/lib/date-utils';
+import { formatCurrency } from '@/lib/format-currency';
 
 const RECURRENCE_LABEL: Record<NonNullable<Bill['recurrence']>, string> = {
   weekly: 'Weekly',
@@ -80,7 +81,7 @@ export function BillTile({ bill, onTogglePaid, referenceDate = new Date(), isDup
       </div>
       <div className="flex items-center justify-between">
         <span data-testid="bill-amount" className={`font-serif text-sm ${STATUS_AMOUNT_COLOR[status]}`}>
-          ₱{bill.amount.toFixed(2)}
+          ₱{formatCurrency(bill.amount)}
         </span>
         <BillStatusBadge status={status} />
       </div>

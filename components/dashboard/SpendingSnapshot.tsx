@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { formatCurrency } from '@/lib/format-currency';
 
 interface SpendingSnapshotProps {
   budgeted: number;
@@ -21,7 +22,7 @@ export function SpendingSnapshot({ budgeted, spent, remaining }: SpendingSnapsho
         </Link>
       </div>
       <p className="text-sm text-neutral-500">
-        ₱{spent.toFixed(0)} of ₱{budgeted.toFixed(0)} spent
+        ₱{formatCurrency(spent, 0)} of ₱{formatCurrency(budgeted, 0)} spent
       </p>
       <div
         role="progressbar"
@@ -38,7 +39,7 @@ export function SpendingSnapshot({ budgeted, spent, remaining }: SpendingSnapsho
         />
       </div>
       <span className={`text-xs ${remaining < 0 ? 'text-status-critical' : 'text-neutral-500'}`}>
-        ₱{remaining.toFixed(0)} remaining
+        ₱{formatCurrency(remaining, 0)} remaining
       </span>
     </div>
   );

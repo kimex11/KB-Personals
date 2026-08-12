@@ -46,7 +46,7 @@ export function groupByPriority(items: NotifiableItem[]): GroupedNotification[] 
   for (const [priority, group] of byPriority) {
     if (group.length === 1) {
       const item = group[0];
-      const amountText = item.amount !== undefined ? `₱${item.amount.toFixed(2)} ` : '';
+      const amountText = item.amount !== undefined ? `₱${item.amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ` : '';
       groups.push({
         priority,
         title: item.title,
@@ -56,7 +56,7 @@ export function groupByPriority(items: NotifiableItem[]): GroupedNotification[] 
       });
     } else {
       const total = group.reduce((sum, item) => sum + (item.amount ?? 0), 0);
-      const totalText = total > 0 ? `: ₱${total.toFixed(2)} total` : '';
+      const totalText = total > 0 ? `: ₱${total.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} total` : '';
       groups.push({
         priority,
         title: `${group.length} ${ENTITY_NOUN[priority]} ${PRIORITY_VERB[priority]}`,

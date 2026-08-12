@@ -1,5 +1,6 @@
 import { differenceInCalendarDays, parseISO } from 'date-fns';
 import type { CalendarEvent } from '@/lib/types';
+import { formatCurrency } from '@/lib/format-currency';
 
 interface AlertsBannerProps {
   overdueBills: CalendarEvent[];
@@ -23,7 +24,7 @@ export function AlertsBanner({ overdueBills, referenceDate = new Date() }: Alert
               <span className="text-sm text-neutral-900">{bill.title}</span>
               <span className="text-xs text-status-critical">
                 {daysOverdue} {daysOverdue === 1 ? 'day' : 'days'} overdue
-                {bill.amount !== undefined ? ` · ₱${bill.amount.toFixed(2)}` : ''}
+                {bill.amount !== undefined ? ` · ₱${formatCurrency(bill.amount)}` : ''}
               </span>
             </div>
           );
