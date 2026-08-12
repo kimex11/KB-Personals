@@ -5,6 +5,7 @@ export interface CreditCardDue {
   statementBalance: number;
   minimumPayment: number;
   dueDate: string; // ISO 'yyyy-MM-dd'
+  balanceAnchorAt: string; // ISO timestamp — payments before this point applied to a superseded statement balance
 }
 
 export interface IncomeSource {

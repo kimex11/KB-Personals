@@ -1,14 +1,18 @@
 import { describe, expect, it, vi, afterEach } from 'vitest';
 import { renderHook, waitFor, act } from '@testing-library/react';
 
-const { listPaymentsForCardMock, recordCardPaymentMock } = vi.hoisted(() => ({
+const { listPaymentsForCardMock, recordCardPaymentMock, updateCardPaymentMock, deleteCardPaymentMock } = vi.hoisted(() => ({
   listPaymentsForCardMock: vi.fn(),
   recordCardPaymentMock: vi.fn(),
+  updateCardPaymentMock: vi.fn(),
+  deleteCardPaymentMock: vi.fn(),
 }));
 
 vi.mock('./credit-card-payments-repository', () => ({
   listPaymentsForCard: listPaymentsForCardMock,
   recordCardPayment: recordCardPaymentMock,
+  updateCardPayment: updateCardPaymentMock,
+  deleteCardPayment: deleteCardPaymentMock,
 }));
 
 import { useCardPayments } from './use-card-payments';
@@ -65,5 +69,33 @@ describe('useCardPayments', () => {
     });
 
     expect(result.current.error).toBe('cannot record payment');
+  });
+
+  it('updatePayment() calls the repository and refreshes', async () => {
+    listPaymentsForCardMock.mockResolvedValueOnce([payment]).mockResolvedValueOnce([{ ...payment, amount: 250 }]);
+    updateCardPaymentMock.mockResolvedValue(undefined);
+    const { result } = renderHook(() => useCardPayments('card-1'));
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    await act(async () => {
+      await result.current.updatePayment('pay-1', { amount: 250 });
+    });
+
+    expect(updateCardPaymentMock).toHaveBeenCalledWith('pay-1', { amount: 250 });
+    expect(result.current.payments).toEqual([{ ...payment, amount: 250 }]);
+  });
+
+  it('deletePayment() calls the repository and refreshes', async () => {
+    listPaymentsForCardMock.mockResolvedValueOnce([payment]).mockResolvedValueOnce([]);
+    deleteCardPaymentMock.mockResolvedValue(undefined);
+    const { result } = renderHook(() => useCardPayments('card-1'));
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    await act(async () => {
+      await result.current.deletePayment('pay-1');
+    });
+
+    expect(deleteCardPaymentMock).toHaveBeenCalledWith('pay-1');
+    expect(result.current.payments).toEqual([]);
   });
 });

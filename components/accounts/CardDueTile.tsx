@@ -1,10 +1,12 @@
 import Link from 'next/link';
 import type { CreditCardDue, DueStatus } from '@/lib/accounts-types';
 import { getDueStatus } from '@/lib/accounts-selectors';
+import { remainingCardBalance } from '@/lib/credit-card-payment-selectors';
 import { CardDueStatusBadge } from './CardDueStatusBadge';
 import { RowActionsMenu } from '@/components/shared/RowActionsMenu';
 import { formatRelativeDate } from '@/lib/date-utils';
 import { formatCurrency } from '@/lib/format-currency';
+import type { CreditCardPayment } from '@/lib/credit-card-payments-repository';
 
 const STATUS_TINT: Record<DueStatus, string> = {
   overdue: 'bg-status-critical/10',
@@ -20,13 +22,15 @@ const STATUS_BALANCE_COLOR: Record<DueStatus, string> = {
 
 interface CardDueTileProps {
   card: CreditCardDue;
+  payments?: CreditCardPayment[];
   referenceDate?: Date;
   onEdit?: (card: CreditCardDue) => void;
   onDelete?: (card: CreditCardDue) => void;
 }
 
-export function CardDueTile({ card, referenceDate = new Date(), onEdit, onDelete }: CardDueTileProps) {
+export function CardDueTile({ card, payments = [], referenceDate = new Date(), onEdit, onDelete }: CardDueTileProps) {
   const status = getDueStatus(card, referenceDate);
+  const balance = remainingCardBalance(card, payments);
 
   return (
     <div data-testid="card-due-row" className={`flex flex-col gap-2 rounded-2xl p-4 ${STATUS_TINT[status]}`}>
@@ -46,7 +50,7 @@ export function CardDueTile({ card, referenceDate = new Date(), onEdit, onDelete
       <div className="flex items-center justify-between">
         <div className="flex flex-col">
           <span data-testid="card-due-balance" className={`font-serif text-sm ${STATUS_BALANCE_COLOR[status]}`}>
-            ₱{formatCurrency(card.statementBalance)}
+            ₱{formatCurrency(balance)}
           </span>
           <span className="text-[10px] text-neutral-400">Min ₱{formatCurrency(card.minimumPayment)}</span>
         </div>

@@ -1,9 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Plus } from 'lucide-react';
 import { useAccounts } from '@/lib/use-accounts';
-import { totalStatementBalance, totalIncome } from '@/lib/accounts-selectors';
+import { totalIncome } from '@/lib/accounts-selectors';
+import { listAllCreditCardPayments, type CreditCardPayment } from '@/lib/credit-card-payments-repository';
+import { totalRemainingCardBalance } from '@/lib/credit-card-payment-selectors';
 import { AccountsSummary } from '@/components/accounts/AccountsSummary';
 import { CardDueTile } from '@/components/accounts/CardDueTile';
 import { IncomeTile } from '@/components/accounts/IncomeTile';
@@ -29,7 +31,16 @@ export default function AccountsPage() {
   const [editingIncome, setEditingIncome] = useState<IncomeSource | undefined>(undefined);
   const [deleteIncomeTarget, setDeleteIncomeTarget] = useState<IncomeSource | null>(null);
 
-  const totalDue = totalStatementBalance(cards);
+  const [cardPayments, setCardPayments] = useState<CreditCardPayment[]>([]);
+  useEffect(() => {
+    listAllCreditCardPayments().then(setCardPayments).catch(() => {});
+  }, []);
+  const paymentsByCardId = cardPayments.reduce<Record<string, CreditCardPayment[]>>((acc, payment) => {
+    (acc[payment.cardId] ??= []).push(payment);
+    return acc;
+  }, {});
+
+  const totalDue = totalRemainingCardBalance(cards, paymentsByCardId);
   const income = totalIncome(incomeSources);
 
   function openAddCard() {
@@ -95,6 +106,7 @@ export default function AccountsPage() {
                   <CardDueTile
                     key={card.id}
                     card={card}
+                    payments={paymentsByCardId[card.id] ?? []}
                     referenceDate={new Date()}
                     onEdit={openEditCard}
                     onDelete={setDeleteCardTarget}

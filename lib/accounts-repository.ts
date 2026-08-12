@@ -8,6 +8,7 @@ interface CardRow {
   statement_balance: number;
   minimum_payment: number;
   due_date: string;
+  balance_anchor_at: string;
   created_at: string;
 }
 
@@ -27,6 +28,7 @@ function rowToCard(row: CardRow): CreditCardDue {
     statementBalance: row.statement_balance,
     minimumPayment: row.minimum_payment,
     dueDate: row.due_date,
+    balanceAnchorAt: row.balance_anchor_at,
   };
 }
 
@@ -77,7 +79,10 @@ export async function updateCreditCardDue(
   const payload: Record<string, unknown> = {};
   if (patch.cardName !== undefined) payload.card_name = patch.cardName;
   if (patch.last4 !== undefined) payload.last4 = patch.last4;
-  if (patch.statementBalance !== undefined) payload.statement_balance = patch.statementBalance;
+  if (patch.statementBalance !== undefined) {
+    payload.statement_balance = patch.statementBalance;
+    payload.balance_anchor_at = new Date().toISOString();
+  }
   if (patch.minimumPayment !== undefined) payload.minimum_payment = patch.minimumPayment;
   if (patch.dueDate !== undefined) payload.due_date = patch.dueDate;
 

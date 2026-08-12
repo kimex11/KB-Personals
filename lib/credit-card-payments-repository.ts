@@ -61,18 +61,37 @@ export interface RecordCardPaymentInput {
   notes?: string | null;
 }
 
+export class DuplicatePaymentError extends Error {
+  constructor() {
+    super('This payment has already been recorded for this card.');
+    this.name = 'DuplicatePaymentError';
+  }
+}
+
+// The card's statement_balance is a fixed anchor (set on creation or whenever
+// edited directly, e.g. a new billing cycle) — it is never mutated by
+// recording a payment. The remaining balance is always the live sum of the
+// ledger since that anchor, so editing or deleting a payment automatically
+// recalculates it with no separate bookkeeping step.
 export async function recordCardPayment(cardId: string, input: RecordCardPaymentInput): Promise<CreditCardPayment> {
   const supabase = createClient();
 
   const { data: cardData, error: cardError } = await supabase
     .from('credit_card_dues')
-    .select('card_name, statement_balance')
+    .select('card_name, statement_balance, balance_anchor_at')
     .eq('id', cardId)
     .single();
   if (cardError) throw cardError;
+  const cardRow = cardData as { card_name: string; statement_balance: number; balance_anchor_at: string };
 
-  const cardRow = cardData as { card_name: string; statement_balance: number };
-  const balanceBefore = cardRow.statement_balance;
+  const existingPayments = await listPaymentsForCard(cardId);
+  const isDuplicate = existingPayments.some((payment) => payment.amount === input.amount && payment.paidAt === input.paidAt);
+  if (isDuplicate) throw new DuplicatePaymentError();
+
+  const paidSinceAnchor = existingPayments
+    .filter((payment) => payment.paidAt >= cardRow.balance_anchor_at)
+    .reduce((sum, payment) => sum + payment.amount, 0);
+  const balanceBefore = cardRow.statement_balance - paidSinceAnchor;
   const balanceAfter = balanceBefore - input.amount;
 
   const { data: paymentData, error: insertError } = await supabase
@@ -90,12 +109,6 @@ export async function recordCardPayment(cardId: string, input: RecordCardPayment
     .single();
   if (insertError) throw insertError;
 
-  const { error: updateError } = await supabase
-    .from('credit_card_dues')
-    .update({ statement_balance: balanceAfter })
-    .eq('id', cardId);
-  if (updateError) throw updateError;
-
   logActivity({
     action: 'update',
     entityType: 'credit_card_due',
@@ -106,4 +119,40 @@ export async function recordCardPayment(cardId: string, input: RecordCardPayment
   }).catch(() => {});
 
   return rowToPayment(paymentData as CreditCardPaymentRow);
+}
+
+export interface UpdateCardPaymentInput {
+  amount?: number;
+  paidAt?: string;
+  method?: string | null;
+  notes?: string | null;
+}
+
+export async function updateCardPayment(id: string, patch: UpdateCardPaymentInput): Promise<void> {
+  const supabase = createClient();
+  const payload: Record<string, unknown> = {};
+  if (patch.amount !== undefined) payload.amount = patch.amount;
+  if (patch.paidAt !== undefined) payload.paid_at = patch.paidAt;
+  if (patch.method !== undefined) payload.method = patch.method;
+  if (patch.notes !== undefined) payload.notes = patch.notes;
+
+  // Balance_after is a point-in-time snapshot for the trail display; keep it
+  // self-consistent with a changed amount without touching balance_before
+  // (the balance immediately prior to this payment didn't change) or any
+  // other row (the current remaining balance is computed live from amounts).
+  if (patch.amount !== undefined) {
+    const { data, error: fetchError } = await supabase.from('credit_card_payments').select('balance_before').eq('id', id).single();
+    if (fetchError) throw fetchError;
+    const row = data as { balance_before: number };
+    payload.balance_after = row.balance_before - patch.amount;
+  }
+
+  const { error } = await supabase.from('credit_card_payments').update(payload).eq('id', id);
+  if (error) throw error;
+}
+
+export async function deleteCardPayment(id: string): Promise<void> {
+  const supabase = createClient();
+  const { error } = await supabase.from('credit_card_payments').delete().eq('id', id);
+  if (error) throw error;
 }

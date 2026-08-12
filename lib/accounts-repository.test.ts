@@ -43,6 +43,7 @@ const cardRow = {
   statement_balance: 842.5,
   minimum_payment: 45,
   due_date: '2026-08-16',
+  balance_anchor_at: '2026-08-01T00:00:00.000Z',
   created_at: '2026-08-15T10:00:00.000Z',
 };
 
@@ -51,7 +52,15 @@ describe('listCreditCardDues', () => {
     selectOrderMock.mockResolvedValue({ data: [cardRow], error: null });
     const result = await listCreditCardDues();
     expect(result).toEqual([
-      { id: 'card-1', cardName: 'Visa Platinum', last4: '4821', statementBalance: 842.5, minimumPayment: 45, dueDate: '2026-08-16' },
+      {
+        id: 'card-1',
+        cardName: 'Visa Platinum',
+        last4: '4821',
+        statementBalance: 842.5,
+        minimumPayment: 45,
+        dueDate: '2026-08-16',
+        balanceAnchorAt: '2026-08-01T00:00:00.000Z',
+      },
     ]);
     expect(selectOrderMock).toHaveBeenCalledWith('due_date', { ascending: true });
   });
@@ -79,16 +88,32 @@ describe('createCreditCardDue', () => {
       minimum_payment: 45,
       due_date: '2026-08-16',
     });
-    expect(result).toEqual({ id: 'card-1', cardName: 'Visa Platinum', last4: '4821', statementBalance: 842.5, minimumPayment: 45, dueDate: '2026-08-16' });
+    expect(result).toEqual({
+      id: 'card-1',
+      cardName: 'Visa Platinum',
+      last4: '4821',
+      statementBalance: 842.5,
+      minimumPayment: 45,
+      dueDate: '2026-08-16',
+      balanceAnchorAt: '2026-08-01T00:00:00.000Z',
+    });
   });
 });
 
 describe('updateCreditCardDue', () => {
   it('updates only the provided fields', async () => {
     updateEqMock.mockResolvedValue({ error: null });
-    await updateCreditCardDue('card-1', { statementBalance: 900 });
-    expect(updateMock).toHaveBeenCalledWith({ statement_balance: 900 });
+    await updateCreditCardDue('card-1', { minimumPayment: 60 });
+    expect(updateMock).toHaveBeenCalledWith({ minimum_payment: 60 });
     expect(updateEqMock).toHaveBeenCalledWith('id', 'card-1');
+  });
+
+  it('re-anchors the balance timestamp whenever the statement balance is changed', async () => {
+    updateEqMock.mockResolvedValue({ error: null });
+    await updateCreditCardDue('card-1', { statementBalance: 900 });
+    expect(updateMock).toHaveBeenCalledWith(
+      expect.objectContaining({ statement_balance: 900, balance_anchor_at: expect.any(String) })
+    );
   });
 
   it('throws on error', async () => {

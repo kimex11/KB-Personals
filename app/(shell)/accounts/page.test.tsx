@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-const card = { id: 'card-1', cardName: 'Visa Platinum', last4: '4821', statementBalance: 842.5, minimumPayment: 45, dueDate: '2026-08-16' };
+const card = { id: 'card-1', cardName: 'Visa Platinum', last4: '4821', statementBalance: 842.5, minimumPayment: 45, dueDate: '2026-08-16', balanceAnchorAt: '2026-08-01T00:00:00.000Z' };
 const income = { id: 'income-1', name: 'Salary', amount: 3200, date: '2026-08-20' };
 
 const createCardMock = vi.fn().mockResolvedValue(undefined);
@@ -12,10 +12,17 @@ const createIncomeMock = vi.fn().mockResolvedValue(undefined);
 const updateIncomeMock = vi.fn().mockResolvedValue(undefined);
 const deleteIncomeMock = vi.fn().mockResolvedValue(undefined);
 
-const { useAccountsMock } = vi.hoisted(() => ({ useAccountsMock: vi.fn() }));
+const { useAccountsMock, listAllCreditCardPaymentsMock } = vi.hoisted(() => ({
+  useAccountsMock: vi.fn(),
+  listAllCreditCardPaymentsMock: vi.fn().mockResolvedValue([]),
+}));
 
 vi.mock('@/lib/use-accounts', () => ({
   useAccounts: useAccountsMock,
+}));
+
+vi.mock('@/lib/credit-card-payments-repository', () => ({
+  listAllCreditCardPayments: listAllCreditCardPaymentsMock,
 }));
 
 import AccountsPage from './page';

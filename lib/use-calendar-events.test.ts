@@ -37,7 +37,7 @@ describe('useCalendarEvents', () => {
       { id: 'exp-1', categoryId: 'cat-1', category: 'Groceries', categoryColorSlot: 2, amount: 850, date: '2026-08-12', description: 'Weekly run', paymentMethod: 'Cash' },
     ];
     const cards: CreditCardDue[] = [
-      { id: 'card-1', cardName: 'Visa Platinum', last4: '4821', statementBalance: 542.5, minimumPayment: 45, dueDate: '2026-08-20' },
+      { id: 'card-1', cardName: 'Visa Platinum', last4: '4821', statementBalance: 542.5, minimumPayment: 45, dueDate: '2026-08-20', balanceAnchorAt: '2026-08-01T00:00:00.000Z' },
     ];
     const cardPayments: CreditCardPayment[] = [
       { id: 'pay-1', cardId: 'card-1', amount: 300, balanceBefore: 842.5, balanceAfter: 542.5, paidAt: '2026-08-12T10:00:00.000Z', method: 'Bank transfer', notes: null },

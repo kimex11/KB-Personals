@@ -3,7 +3,27 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { RecordPaymentForm } from './RecordPaymentForm';
 
+const existingPayment = {
+  id: 'pay-1',
+  cardId: 'card-1',
+  amount: 300,
+  balanceBefore: 842.5,
+  balanceAfter: 542.5,
+  paidAt: '2026-08-10T10:00:00.000Z',
+  method: 'Bank transfer',
+  notes: 'Paid from savings',
+};
+
 describe('RecordPaymentForm', () => {
+  it('pre-fills fields when editing an existing payment', () => {
+    render(<RecordPaymentForm open onOpenChange={() => {}} initialPayment={existingPayment} onSubmit={vi.fn()} />);
+    expect(screen.getByLabelText(/amount/i)).toHaveValue('300');
+    expect(screen.getByLabelText(/payment method/i)).toHaveValue('Bank transfer');
+    expect(screen.getByLabelText(/notes/i)).toHaveValue('Paid from savings');
+    expect(screen.getByRole('heading', { name: /edit payment/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /save changes/i })).toBeInTheDocument();
+  });
+
   it('renders empty amount/method/notes fields and a heading', () => {
     render(<RecordPaymentForm open onOpenChange={() => {}} onSubmit={vi.fn()} />);
     expect(screen.getByLabelText(/amount/i)).toHaveValue('');

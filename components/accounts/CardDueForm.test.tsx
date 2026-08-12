@@ -11,6 +11,7 @@ const existingCard: CreditCardDue = {
   statementBalance: 842.5,
   minimumPayment: 45,
   dueDate: '2026-08-16',
+  balanceAnchorAt: '2026-08-01T00:00:00.000Z',
 };
 
 describe('CardDueForm', () => {

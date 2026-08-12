@@ -6,22 +6,45 @@ import Link from 'next/link';
 import { ArrowLeft, Plus } from 'lucide-react';
 import { useAccounts } from '@/lib/use-accounts';
 import { useCardPayments } from '@/lib/use-card-payments';
-import { totalPaid, lastPaymentDate } from '@/lib/credit-card-payment-selectors';
+import { totalPaid, lastPaymentDate, paymentsSinceAnchor, remainingCardBalance } from '@/lib/credit-card-payment-selectors';
 import { CardPaymentSummary } from '@/components/accounts/CardPaymentSummary';
 import { PaymentHistoryList } from '@/components/accounts/PaymentHistoryList';
 import { RecordPaymentForm } from '@/components/accounts/RecordPaymentForm';
+import { ConfirmDeleteDialog } from '@/components/shared/ConfirmDeleteDialog';
 import { Button } from '@/components/ui/button';
 import { useIsMounted } from '@/lib/use-is-mounted';
+import type { CreditCardPayment } from '@/lib/credit-card-payments-repository';
 
 export default function CardDetailPage() {
   const params = useParams<{ id: string }>();
   const isMounted = useIsMounted();
   const { cards, loading: cardsLoading } = useAccounts();
-  const { payments, loading: paymentsLoading, error, recordPayment } = useCardPayments(params.id);
+  const { payments, loading: paymentsLoading, error, recordPayment, updatePayment, deletePayment } = useCardPayments(params.id);
   const [formOpen, setFormOpen] = useState(false);
+  const [editingPayment, setEditingPayment] = useState<CreditCardPayment | undefined>(undefined);
+  const [deleteTarget, setDeleteTarget] = useState<CreditCardPayment | null>(null);
 
   const card = cards.find((c) => c.id === params.id);
   const loading = cardsLoading || paymentsLoading;
+  const currentCyclePayments = card ? paymentsSinceAnchor(card, payments) : payments;
+
+  function openAddForm() {
+    setEditingPayment(undefined);
+    setFormOpen(true);
+  }
+
+  function openEditForm(payment: CreditCardPayment) {
+    setEditingPayment(payment);
+    setFormOpen(true);
+  }
+
+  async function handleSubmit(input: { amount: number; paidAt: string; method?: string | null; notes?: string | null }) {
+    if (editingPayment) {
+      await updatePayment(editingPayment.id, input);
+    } else {
+      await recordPayment(input);
+    }
+  }
 
   return (
     <div data-testid="card-detail-page" className="flex flex-col gap-4 px-4 pb-24 pt-4">
@@ -51,18 +74,33 @@ export default function CardDetailPage() {
       {isMounted && !loading && card && (
         <>
           <CardPaymentSummary
-            remainingBalance={card.statementBalance}
-            totalPaid={totalPaid(payments)}
-            paymentsMade={payments.length}
-            lastPaymentDate={lastPaymentDate(payments)}
+            remainingBalance={remainingCardBalance(card, payments)}
+            totalPaid={totalPaid(currentCyclePayments)}
+            paymentsMade={currentCyclePayments.length}
+            lastPaymentDate={lastPaymentDate(currentCyclePayments)}
             nextDueDate={card.dueDate}
           />
-          <Button onClick={() => setFormOpen(true)}>
+          <Button onClick={openAddForm}>
             <Plus className="h-4 w-4" />
             Record Payment
           </Button>
-          <PaymentHistoryList payments={payments} />
-          <RecordPaymentForm open={formOpen} onOpenChange={setFormOpen} onSubmit={recordPayment} />
+          <PaymentHistoryList payments={payments} onEdit={openEditForm} onDelete={setDeleteTarget} />
+          <RecordPaymentForm
+            key={`${editingPayment?.id ?? 'new'}-${formOpen}`}
+            open={formOpen}
+            onOpenChange={setFormOpen}
+            initialPayment={editingPayment}
+            onSubmit={handleSubmit}
+          />
+          {deleteTarget && (
+            <ConfirmDeleteDialog
+              open={!!deleteTarget}
+              onOpenChange={(open) => !open && setDeleteTarget(null)}
+              title="Delete this payment?"
+              description="This can't be undone. The card's remaining balance will be recalculated automatically."
+              onConfirm={() => deletePayment(deleteTarget.id)}
+            />
+          )}
         </>
       )}
     </div>

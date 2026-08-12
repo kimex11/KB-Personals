@@ -1,7 +1,15 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { listPaymentsForCard, recordCardPayment, type CreditCardPayment, type RecordCardPaymentInput } from './credit-card-payments-repository';
+import {
+  listPaymentsForCard,
+  recordCardPayment,
+  updateCardPayment,
+  deleteCardPayment,
+  type CreditCardPayment,
+  type RecordCardPaymentInput,
+  type UpdateCardPaymentInput,
+} from './credit-card-payments-repository';
 
 export interface UseCardPaymentsResult {
   payments: CreditCardPayment[];
@@ -9,6 +17,8 @@ export interface UseCardPaymentsResult {
   error: string | null;
   refresh: () => Promise<void>;
   recordPayment: (input: RecordCardPaymentInput) => Promise<void>;
+  updatePayment: (id: string, patch: UpdateCardPaymentInput) => Promise<void>;
+  deletePayment: (id: string) => Promise<void>;
 }
 
 export function useCardPayments(cardId: string): UseCardPaymentsResult {
@@ -59,5 +69,7 @@ export function useCardPayments(cardId: string): UseCardPaymentsResult {
     error,
     refresh,
     recordPayment: (input) => runMutation(() => recordCardPayment(cardId, input)),
+    updatePayment: (id, patch) => runMutation(() => updateCardPayment(id, patch)),
+    deletePayment: (id) => runMutation(() => deleteCardPayment(id)),
   };
 }

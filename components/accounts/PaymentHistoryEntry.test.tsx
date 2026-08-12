@@ -1,5 +1,6 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { PaymentHistoryEntry } from './PaymentHistoryEntry';
 import type { CreditCardPayment } from '@/lib/credit-card-payments-repository';
 
@@ -25,5 +26,25 @@ describe('PaymentHistoryEntry', () => {
   it('omits notes when absent', () => {
     render(<PaymentHistoryEntry payment={{ ...payment, notes: null }} />);
     expect(screen.queryByTestId('payment-notes')).not.toBeInTheDocument();
+  });
+
+  it('calls onEdit/onDelete via the actions menu', async () => {
+    const onEdit = vi.fn();
+    const onDelete = vi.fn();
+    const user = userEvent.setup();
+    render(<PaymentHistoryEntry payment={payment} onEdit={onEdit} onDelete={onDelete} />);
+
+    await user.click(screen.getByRole('button', { name: /actions for/i }));
+    await user.click(await screen.findByRole('menuitem', { name: /edit/i }));
+    expect(onEdit).toHaveBeenCalledWith(payment);
+
+    await user.click(screen.getByRole('button', { name: /actions for/i }));
+    await user.click(await screen.findByRole('menuitem', { name: /delete/i }));
+    expect(onDelete).toHaveBeenCalledWith(payment);
+  });
+
+  it('omits the actions menu when no handlers are given', () => {
+    render(<PaymentHistoryEntry payment={payment} />);
+    expect(screen.queryByRole('button', { name: /actions for/i })).not.toBeInTheDocument();
   });
 });
